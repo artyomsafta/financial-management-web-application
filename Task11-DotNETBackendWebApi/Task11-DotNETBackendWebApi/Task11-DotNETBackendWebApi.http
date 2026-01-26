@@ -1,0 +1,6 @@
+@Task11_DotNETBackendWebApi_HostAddress = http://localhost:5234
+
+GET {{Task11_DotNETBackendWebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
