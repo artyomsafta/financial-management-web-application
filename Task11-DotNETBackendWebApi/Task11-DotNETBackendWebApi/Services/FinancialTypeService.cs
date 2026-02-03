@@ -1,0 +1,131 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Task11_DotNETBackendWebApi.Data;
+using Task11_DotNETBackendWebApi.Data.Entities;
+using Task11_DotNETBackendWebApi.Models;
+using Task11_DotNETBackendWebApi.Models.DTOs;
+using Task11_DotNETBackendWebApi.Services.Contracts;
+
+namespace Task11_DotNETBackendWebApi.Services;
+
+public class FinancialTypeService : IFinancialTypeService
+{
+    private readonly AppDbContext _context;
+    private readonly ILogger<FinancialTypeService> _logger;
+
+    public FinancialTypeService(AppDbContext context, ILogger<FinancialTypeService> logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
+
+    public async Task<IEnumerable<FinancialTypeDto>> GetAllAsync()
+    {
+        return await _context.FinancialTypes
+            .Select(t => new FinancialTypeDto
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Description = t.Description
+            })
+            .ToListAsync();
+    }
+
+    public async Task<FinancialTypeDto?> GetByIdAsync(Guid id)
+    {
+        var type = await _context.FinancialTypes.FindAsync(id);
+        if (type is null)
+        {
+            return null;
+        }
+
+        return new FinancialTypeDto
+        {
+            Id = type.Id,
+            Name = type.Name,
+            Description = type.Description
+        };
+    }
+
+    public async Task<FinancialTypeDto> CreateAsync(FinancialTypeRequest request)
+    {
+        if (await _context.FinancialTypes.AnyAsync(t => t.Name.ToLower() == request.Name.Trim().ToLower()))
+        {
+            throw new InvalidOperationException("A financial type with the same name already exists.");
+        }
+
+        var newType = new FinancialType
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name.Trim(),
+            Description = request.Description.Trim()
+        };
+
+        try
+        {
+            _context.FinancialTypes.Add(newType);
+            await _context.SaveChangesAsync();
+
+            return new FinancialTypeDto
+            {
+                Id = newType.Id,
+                Name = newType.Name,
+                Description = newType.Description
+            };
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "An error occurred while creating the financial type {Name}", request.Name);
+            throw;
+        }
+    }
+
+    public async Task<bool> UpdateAsync(Guid id, FinancialTypeRequest request)
+    {
+        var existingType = await _context.FinancialTypes.FindAsync(id);
+        if (existingType is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            existingType.Name = request.Name;
+            existingType.Description = request.Description;
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "An error occurred while updating the financial type {Name}", request.Name);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        var type = await _context.FinancialTypes.FindAsync(id);
+        if (type is null)
+        {
+            return false;
+        }
+
+        if (type.FinancialOperations.Any(o => !o.IsDeleted))
+        {
+            throw new InvalidOperationException("You cannot delete a type that has financial operations.");
+        }
+
+        try
+        {
+            _context.FinancialTypes.Remove(type);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "An error occurred while deleting the financial type {Name}", type.Name);
+            throw;
+        }
+    }
+}

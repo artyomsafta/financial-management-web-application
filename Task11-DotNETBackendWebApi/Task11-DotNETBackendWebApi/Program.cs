@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
+using Task11_DotNETBackendWebApi.Services;
+using Task11_DotNETBackendWebApi.Services.Contracts;
 
 namespace Task11_DotNETBackendWebApi;
 
@@ -15,15 +17,22 @@ public class Program
             options.UseSqlServer(connectionString);
         });
 
+        builder.Services.AddScoped<IFinancialTypeService, FinancialTypeService>();
+
         builder.Services.AddControllers();
-        builder.Services.AddOpenApi(); //replace it with Swagger (as required by the task)
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
 
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi();
-            //app.UseSwaggerUI() use here to work with UI Swagger!
+            app.UseSwagger();
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+                options.RoutePrefix = "swagger";
+            });
         }
 
         app.UseHttpsRedirection();

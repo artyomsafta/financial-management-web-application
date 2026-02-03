@@ -8,8 +8,8 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options) { }
 
-    public DbSet<FinancialType> FinancialTypes { get; set; }
-    public DbSet<FinancialOperation> FinancialOperations { get; set; }
+    public DbSet<FinancialType> FinancialTypes { get; set; } = null!;
+    public DbSet<FinancialOperation> FinancialOperations { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

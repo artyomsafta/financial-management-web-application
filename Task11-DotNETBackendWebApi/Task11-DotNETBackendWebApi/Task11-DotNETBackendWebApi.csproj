@@ -19,11 +19,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-    <Folder Include="Services\Contracts\" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.1" />
   </ItemGroup>
 
 </Project>
