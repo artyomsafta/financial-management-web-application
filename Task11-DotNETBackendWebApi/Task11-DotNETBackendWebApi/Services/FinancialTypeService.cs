@@ -104,7 +104,9 @@ public class FinancialTypeService : IFinancialTypeService
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var type = await _context.FinancialTypes.FindAsync(id);
+        var type = await _context.FinancialTypes
+            .Include(t => t.FinancialOperations)
+            .FirstOrDefaultAsync(t => t.Id == id);
         if (type is null)
         {
             return false;

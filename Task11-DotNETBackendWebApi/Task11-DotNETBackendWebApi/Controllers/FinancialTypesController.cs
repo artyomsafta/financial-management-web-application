@@ -53,7 +53,6 @@ public class FinancialTypesController : ControllerBase
     public async Task<IActionResult> Update(Guid id, [FromBody] FinancialTypeRequest request)
     {
         var isUpdated = await _typeService.UpdateAsync(id, request);
-
         if (!isUpdated)
         {
             return NotFound();
@@ -65,13 +64,19 @@ public class FinancialTypesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var isDeleted = await _typeService.DeleteAsync(id);
-
-        if (!isDeleted)
+        try
         {
-            return NotFound();
-        }
+            var isDeleted = await _typeService.DeleteAsync(id);
+            if (!isDeleted)
+            {
+                return NotFound();
+            }
 
-        return NoContent();
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

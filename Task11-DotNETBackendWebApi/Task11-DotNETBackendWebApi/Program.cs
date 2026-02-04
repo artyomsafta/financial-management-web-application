@@ -18,6 +18,7 @@ public class Program
         });
 
         builder.Services.AddScoped<IFinancialTypeService, FinancialTypeService>();
+        builder.Services.AddScoped<IFinancialOperationService, FinancialOperationService>();
 
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
