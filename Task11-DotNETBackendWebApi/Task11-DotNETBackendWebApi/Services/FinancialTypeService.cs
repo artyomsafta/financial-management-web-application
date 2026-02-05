@@ -25,7 +25,8 @@ public class FinancialTypeService : IFinancialTypeService
             {
                 Id = t.Id,
                 Name = t.Name,
-                Description = t.Description
+                Description = t.Description,
+                IsIncome = t.IsIncome
             })
             .ToListAsync();
     }
@@ -42,7 +43,8 @@ public class FinancialTypeService : IFinancialTypeService
         {
             Id = type.Id,
             Name = type.Name,
-            Description = type.Description
+            Description = type.Description,
+            IsIncome = type.IsIncome
         };
     }
 
@@ -57,7 +59,8 @@ public class FinancialTypeService : IFinancialTypeService
         {
             Id = Guid.NewGuid(),
             Name = request.Name.Trim(),
-            Description = request.Description.Trim()
+            Description = request.Description.Trim(),
+            IsIncome = request.IsIncome
         };
 
         try
@@ -69,7 +72,8 @@ public class FinancialTypeService : IFinancialTypeService
             {
                 Id = newType.Id,
                 Name = newType.Name,
-                Description = newType.Description
+                Description = newType.Description,
+                IsIncome = newType.IsIncome
             };
         }
         catch (DbUpdateException ex)
@@ -91,6 +95,7 @@ public class FinancialTypeService : IFinancialTypeService
         {
             existingType.Name = request.Name;
             existingType.Description = request.Description;
+            existingType.IsIncome = request.IsIncome;
             await _context.SaveChangesAsync();
 
             return true;

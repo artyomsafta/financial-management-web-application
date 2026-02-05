@@ -33,6 +33,10 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Description)
                 .HasMaxLength(255)
                 .HasColumnName("DESCRIPTION");
+            entity.Property(e => e.IsIncome)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasColumnName("IS_INCOME");
 
             entity.HasMany(ft => ft.FinancialOperations)
                 .WithOne(fo => fo.Type)

@@ -79,4 +79,32 @@ public class FinancialOperationsController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpGet("report/daily")]
+    public async Task<ActionResult<ReportDto>> GetDailyReport([FromQuery] DateTime date)
+    {
+        try
+        {
+            var report = await _operationService.GetDailyReportAsync(date);
+            return Ok(report);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("report/period")]
+    public async Task<ActionResult<ReportDto>> GetPeriodReport([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+    {
+        try
+        {
+            var report = await _operationService.GetPeriodReportAsync(startDate, endDate);
+            return Ok(report);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

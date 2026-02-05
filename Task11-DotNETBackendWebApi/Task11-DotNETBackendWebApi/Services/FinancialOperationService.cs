@@ -151,4 +151,52 @@ public class FinancialOperationService : IFinancialOperationService
             throw;
         }
     }
+
+    public async Task<ReportDto> GetDailyReportAsync(DateTime date)
+    {
+        return await GetPeriodReportAsync(date, date);
+    }
+
+    public async Task<ReportDto> GetPeriodReportAsync(DateTime start, DateTime end)
+    {
+        if (start > end)
+        {
+            throw new ArgumentException("The start date must be earlier or equal to the end date.");
+        }
+
+        var startDate = start.Date;
+        var endDate = end.Date.AddDays(1).AddTicks(-1);
+
+        var operations = await _context.FinancialOperations
+                .Include(o => o.Type)
+                .Where(o => o.Date >= startDate && o.Date <= endDate)
+                .ToListAsync();
+
+        var totalIncome = operations
+                .Where(o => o.Type.IsIncome is true)
+                .Sum(o => o.Amount);
+
+        var totalExpenses = operations
+                .Where(o => o.Type.IsIncome is false)
+                .Sum(o => o.Amount);
+
+        return new ReportDto
+        {
+            TotalIncome = totalIncome,
+            TotalExpenses = totalExpenses,
+            NetResult = totalIncome - totalExpenses,
+            Operations = operations
+                .Select(o => new FinancialOperationDto
+                {
+                    Id = o.Id,
+                    Amount = o.Amount,
+                    Date = o.Date,
+                    Note = o.Note,
+                    TypeId = o.FinancialTypeId,
+                    TypeName = o.Type.Name
+                })
+                .OrderByDescending(o => o.Date)
+                .ToList()
+        };
+    }
 }
