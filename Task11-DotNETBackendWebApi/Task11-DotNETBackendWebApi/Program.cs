@@ -17,6 +17,8 @@ public class Program
             options.UseSqlServer(connectionString);
         });
 
+        builder.Services.AddScoped<DbSeeder>();
+        builder.Services.AddScoped<DbInitializer>();
         builder.Services.AddScoped<IFinancialTypeService, FinancialTypeService>();
         builder.Services.AddScoped<IFinancialOperationService, FinancialOperationService>();
 
@@ -25,6 +27,7 @@ public class Program
         builder.Services.AddSwaggerGen();
 
         var app = builder.Build();
+        app.InitDatabase();
 
         if (app.Environment.IsDevelopment())
         {

@@ -7,41 +7,42 @@ namespace Task11_DotNETBackendWebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class FinancialTypesController : ControllerBase
+// [Authorize(Roles = "Admin")] TODO: Uncomment this line to restrict access to admin users only when authentication and authorization are implemented
+public class UsersController : ControllerBase
 {
-    private readonly IFinancialTypeService _typeService;
+    private readonly IUserService _userService;
 
-    public FinancialTypesController(IFinancialTypeService typeService)
+    public UsersController(IUserService userService)
     {
-        _typeService = typeService;
+        _userService = userService;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<FinancialTypeDto>>> GetAll()
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetAll()
     {
-        var types = await _typeService.GetAllAsync();
-        return Ok(types);
+        var users = await _userService.GetAllAsync();
+        return Ok(users);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<FinancialTypeDto>> GetById(Guid id)
+    public async Task<ActionResult<UserDto>> GetById(Guid id)
     {
-        var type = await _typeService.GetByIdAsync(id);
-        if (type is null)
+        var user = await _userService.GetByIdAsync(id);
+        if (user is null)
         {
-            return NotFound(new { message = $"Type with ID {id} not found" });
+            return NotFound(new { message = $"User with ID {id} not found" });
         }
 
-        return Ok(type);
+        return Ok(user);
     }
 
     [HttpPost]
-    public async Task<ActionResult<FinancialTypeDto>> Create([FromBody] FinancialTypeRequest request)
+    public async Task<ActionResult<UserDto>> Create([FromBody] UserRegisterRequest request)
     {
         try
         {
-            var createdType = await _typeService.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = createdType.Id }, createdType);
+            var createdUser = await _userService.CreateAsync(request);
+            return CreatedAtAction(nameof(GetById), new { id = createdUser.Id }, createdUser);
         }
         catch (InvalidOperationException ex)
         {
@@ -50,11 +51,11 @@ public class FinancialTypesController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] FinancialTypeRequest request)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UserRegisterRequest request)
     {
         try
         {
-            var isUpdated = await _typeService.UpdateAsync(id, request);
+            var isUpdated = await _userService.UpdateAsync(id, request);
             if (!isUpdated)
             {
                 return NotFound();
@@ -73,7 +74,7 @@ public class FinancialTypesController : ControllerBase
     {
         try
         {
-            var isDeleted = await _typeService.DeleteAsync(id);
+            var isDeleted = await _userService.DeleteAsync(id);
             if (!isDeleted)
             {
                 return NotFound();

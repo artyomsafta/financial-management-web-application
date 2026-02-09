@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Azure;
+using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
 using Task11_DotNETBackendWebApi.Models;
@@ -44,15 +45,7 @@ public class FinancialOperationService : IFinancialOperationService
             return null;
         }
 
-        return new FinancialOperationDto
-        {
-            Id = operation.Id,
-            Amount = operation.Amount,
-            Date = operation.Date,
-            Note = operation.Note,
-            TypeId = operation.FinancialTypeId,
-            TypeName = operation.Type.Name
-        };
+        return MapToDto(operation);
     }
 
     public async Task<FinancialOperationDto> CreateAsync(FinancialOperationRequest request)
@@ -68,7 +61,7 @@ public class FinancialOperationService : IFinancialOperationService
             Id = Guid.NewGuid(),
             Amount = request.Amount,
             Date = request.Date,
-            Note = request.Note,
+            Note = request.Note.Trim(),
             FinancialTypeId = request.TypeId,
             IsDeleted = false
         };
@@ -78,15 +71,7 @@ public class FinancialOperationService : IFinancialOperationService
             _context.FinancialOperations.Add(newOperation);
             await _context.SaveChangesAsync();
 
-            return new FinancialOperationDto
-            {
-                Id = newOperation.Id,
-                Amount = newOperation.Amount,
-                Date = newOperation.Date,
-                Note = newOperation.Note,
-                TypeId = newOperation.FinancialTypeId,
-                TypeName = (await _context.FinancialTypes.FindAsync(newOperation.FinancialTypeId))?.Name ?? string.Empty
-            };
+            return MapToDto(newOperation);
         }
         catch (DbUpdateException ex)
         {
@@ -118,7 +103,7 @@ public class FinancialOperationService : IFinancialOperationService
         {
             operation.Amount = request.Amount;
             operation.Date = request.Date;
-            operation.Note = request.Note;
+            operation.Note = request.Note.Trim();
             await _context.SaveChangesAsync();
 
             return true;
@@ -197,6 +182,19 @@ public class FinancialOperationService : IFinancialOperationService
                 })
                 .OrderByDescending(o => o.Date)
                 .ToList()
+        };
+    }
+
+    private FinancialOperationDto MapToDto(FinancialOperation operation)
+    {
+        return new FinancialOperationDto
+        {
+            Id = operation.Id,
+            Amount = operation.Amount,
+            Date = operation.Date,
+            Note = operation.Note,
+            TypeId = operation.FinancialTypeId,
+            TypeName = operation.Type.Name
         };
     }
 }

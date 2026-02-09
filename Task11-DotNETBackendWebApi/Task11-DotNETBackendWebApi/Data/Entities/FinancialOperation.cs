@@ -10,4 +10,6 @@ public class FinancialOperation
 
     public Guid FinancialTypeId { get; set; }
     public FinancialType Type { get; set; }
+
+    // TODO: make the relationship between FinancialOperation and Wallet entities
 }

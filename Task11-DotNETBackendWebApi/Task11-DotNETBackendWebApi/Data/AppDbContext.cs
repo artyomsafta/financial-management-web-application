@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
 
     public DbSet<FinancialType> FinancialTypes { get; set; } = null!;
     public DbSet<FinancialOperation> FinancialOperations { get; set; } = null!;
+    public DbSet<User> Users { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -77,6 +78,34 @@ public class AppDbContext : DbContext
                 .HasColumnName("FINANCIAL_TYPE_ID");
 
             entity.HasQueryFilter(fo => !fo.IsDeleted);
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {   
+            entity.ToTable("USERS");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Username)
+                .IsUnique()
+                .HasDatabaseName("IX_USERS_USERNAME");
+
+            entity.Property(e => e.Id)
+                .IsRequired()
+                .ValueGeneratedOnAdd()
+                .HasColumnName("ID");
+
+            entity.Property(e => e.Username)
+                .IsRequired()
+                .HasColumnName("USERNAME");
+
+            entity.Property(e => e.PasswordHash)
+                .IsRequired()
+                .HasColumnName("PASSWORD_HASH");
+
+            entity.Property(e => e.Role)
+                .IsRequired()
+                .HasColumnName("ROLE");
+
+            //TODO: implement the relationship between User and Wallet
         });
     }
 }

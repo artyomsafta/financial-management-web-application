@@ -39,13 +39,7 @@ public class FinancialTypeService : IFinancialTypeService
             return null;
         }
 
-        return new FinancialTypeDto
-        {
-            Id = type.Id,
-            Name = type.Name,
-            Description = type.Description,
-            IsIncome = type.IsIncome
-        };
+        return MapToDto(type);
     }
 
     public async Task<FinancialTypeDto> CreateAsync(FinancialTypeRequest request)
@@ -68,13 +62,7 @@ public class FinancialTypeService : IFinancialTypeService
             _context.FinancialTypes.Add(newType);
             await _context.SaveChangesAsync();
 
-            return new FinancialTypeDto
-            {
-                Id = newType.Id,
-                Name = newType.Name,
-                Description = newType.Description,
-                IsIncome = newType.IsIncome
-            };
+            return MapToDto(newType);
         }
         catch (DbUpdateException ex)
         {
@@ -85,6 +73,11 @@ public class FinancialTypeService : IFinancialTypeService
 
     public async Task<bool> UpdateAsync(Guid id, FinancialTypeRequest request)
     {
+        if (await _context.FinancialTypes.AnyAsync(t => t.Name.ToLower() == request.Name.Trim().ToLower()))
+        {
+            throw new InvalidOperationException("A financial type with the same name already exists.");
+        }
+
         var existingType = await _context.FinancialTypes.FindAsync(id);
         if (existingType is null)
         {
@@ -93,8 +86,8 @@ public class FinancialTypeService : IFinancialTypeService
 
         try
         {
-            existingType.Name = request.Name;
-            existingType.Description = request.Description;
+            existingType.Name = request.Name.Trim();
+            existingType.Description = request.Description.Trim();
             existingType.IsIncome = request.IsIncome;
             await _context.SaveChangesAsync();
 
@@ -134,5 +127,16 @@ public class FinancialTypeService : IFinancialTypeService
             _logger.LogError(ex, "An error occurred while deleting the financial type {Name}", type.Name);
             throw;
         }
+    }
+
+    private FinancialTypeDto MapToDto(FinancialType type)
+    {
+        return new FinancialTypeDto
+        {
+            Id = type.Id,
+            Name = type.Name,
+            Description = type.Description,
+            IsIncome = type.IsIncome
+        };
     }
 }
