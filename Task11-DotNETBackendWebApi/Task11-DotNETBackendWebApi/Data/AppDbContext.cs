@@ -39,10 +39,16 @@ public class AppDbContext : DbContext
                 .HasDefaultValue(false)
                 .HasColumnName("IS_INCOME");
 
+            entity.Property(e => e.IsDeleted)
+                .IsRequired()
+                .HasColumnName("IS_DELETED");
+
             entity.HasMany(ft => ft.FinancialOperations)
                 .WithOne(fo => fo.Type)
                 .HasForeignKey(fo => fo.FinancialTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(ft => !ft.IsDeleted);
         });
 
         modelBuilder.Entity<FinancialOperation>(entity =>
@@ -104,6 +110,12 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Role)
                 .IsRequired()
                 .HasColumnName("ROLE");
+
+            entity.Property(e => e.IsDeleted)
+                .IsRequired()
+                .HasColumnName("IS_DELETED");
+
+            entity.HasQueryFilter(u => !u.IsDeleted);
 
             //TODO: implement the relationship between User and Wallet
         });

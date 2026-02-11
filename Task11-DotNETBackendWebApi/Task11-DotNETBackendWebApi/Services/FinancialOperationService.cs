@@ -132,7 +132,7 @@ public class FinancialOperationService : IFinancialOperationService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while soft deleting the financial operation.");
+            _logger.LogError(ex, "An error occurred while soft deleting the financial operation {Id}", operation.Id);
             throw;
         }
     }

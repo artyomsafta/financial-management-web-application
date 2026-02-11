@@ -74,7 +74,7 @@ public class UsersController : ControllerBase
     {
         try
         {
-            var isDeleted = await _userService.DeleteAsync(id);
+            var isDeleted = await _userService.SoftDeleteAsync(id);
             if (!isDeleted)
             {
                 return NotFound();

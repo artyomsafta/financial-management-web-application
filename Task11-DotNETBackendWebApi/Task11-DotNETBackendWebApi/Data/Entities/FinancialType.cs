@@ -6,6 +6,7 @@ public class FinancialType
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool IsIncome { get; set; }
+    public bool IsDeleted { get; set; } = false;
 
     public List<FinancialOperation> FinancialOperations { get; set; } = new();
 }

@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Services;
 using Task11_DotNETBackendWebApi.Services.Contracts;
+using System.Text;
 
 namespace Task11_DotNETBackendWebApi;
 
@@ -21,10 +24,26 @@ public class Program
         builder.Services.AddScoped<DbInitializer>();
         builder.Services.AddScoped<IFinancialTypeService, FinancialTypeService>();
         builder.Services.AddScoped<IFinancialOperationService, FinancialOperationService>();
+        builder.Services.AddScoped<IUserAuthService, UserAuthService>();
 
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetSection("Jwt:Key").Value!)),
+                    ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    ValidateLifetime = true
+                };
+            });
 
         var app = builder.Build();
         app.InitDatabase();
@@ -40,6 +59,7 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+        app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
 

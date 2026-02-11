@@ -73,7 +73,7 @@ public class FinancialTypesController : ControllerBase
     {
         try
         {
-            var isDeleted = await _typeService.DeleteAsync(id);
+            var isDeleted = await _typeService.SoftDeleteAsync(id);
             if (!isDeleted)
             {
                 return NotFound();

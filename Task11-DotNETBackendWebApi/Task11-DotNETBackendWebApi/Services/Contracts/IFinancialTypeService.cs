@@ -9,5 +9,5 @@ public interface IFinancialTypeService
     Task<FinancialTypeDto?> GetByIdAsync(Guid id);
     Task<FinancialTypeDto> CreateAsync(FinancialTypeRequest request);
     Task<bool> UpdateAsync(Guid id, FinancialTypeRequest request);
-    Task<bool> DeleteAsync(Guid id);
+    Task<bool> SoftDeleteAsync(Guid id);
 }

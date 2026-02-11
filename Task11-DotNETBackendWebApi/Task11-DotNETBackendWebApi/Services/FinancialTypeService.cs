@@ -100,7 +100,7 @@ public class FinancialTypeService : IFinancialTypeService
         }
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> SoftDeleteAsync(Guid id)
     {
         var type = await _context.FinancialTypes
             .Include(t => t.FinancialOperations)
@@ -117,14 +117,14 @@ public class FinancialTypeService : IFinancialTypeService
 
         try
         {
-            _context.FinancialTypes.Remove(type);
+            type.IsDeleted = true;
             await _context.SaveChangesAsync();
 
             return true;
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while deleting the financial type {Name}", type.Name);
+            _logger.LogError(ex, "An error occurred while soft deleting the financial type {Name}", type.Name);
             throw;
         }
     }

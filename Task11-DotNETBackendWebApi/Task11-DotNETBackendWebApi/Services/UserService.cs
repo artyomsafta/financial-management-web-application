@@ -101,7 +101,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> SoftDeleteAsync(Guid id)
     {
         var user = await _context.Users
 
@@ -123,14 +123,14 @@ public class UserService : IUserService
 
         try
         {
-            _context.Users.Remove(user);
+            user.IsDeleted = true;
             await _context.SaveChangesAsync();
 
             return true;
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while deleting user {Username}", user.Username);
+            _logger.LogError(ex, "An error occurred while soft deleting user {Username}", user.Username);
             throw;
         }
     }
