@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Task11_DotNETBackendWebApi.Helpers.Enums;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -7,7 +9,7 @@ namespace Task11_DotNETBackendWebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-// [Authorize(Roles = "Admin")] TODO: Uncomment this line to restrict access to admin users only when authentication and authorization are implemented
+[Authorize]
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -18,6 +20,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = nameof(UserRoles.Admin))]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetAll()
     {
         var users = await _userService.GetAllAsync();
@@ -37,6 +40,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<ActionResult<UserDto>> Create([FromBody] UserRegisterRequest request)
     {
         try
@@ -70,6 +74,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = nameof(UserRoles.Admin))]
     public async Task<IActionResult> Delete(Guid id)
     {
         try

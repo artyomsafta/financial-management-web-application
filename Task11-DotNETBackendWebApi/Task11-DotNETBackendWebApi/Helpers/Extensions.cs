@@ -1,6 +1,6 @@
 ﻿using Task11_DotNETBackendWebApi.Data;
 
-namespace Task11_DotNETBackendWebApi.Services;
+namespace Task11_DotNETBackendWebApi.Helpers;
 
 public static class Extensions
 {

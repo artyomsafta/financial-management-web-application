@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Task11_DotNETBackendWebApi.Helpers.Enums;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -7,6 +9,7 @@ namespace Task11_DotNETBackendWebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class FinancialTypesController : ControllerBase
 {
     private readonly IFinancialTypeService _typeService;
@@ -69,6 +72,7 @@ public class FinancialTypesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = nameof(UserRoles.Admin))]
     public async Task<IActionResult> Delete(Guid id)
     {
         try

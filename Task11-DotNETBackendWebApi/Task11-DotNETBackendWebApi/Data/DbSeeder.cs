@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Task11_DotNETBackendWebApi.Data.Entities;
+using Task11_DotNETBackendWebApi.Helpers.Enums;
 
 namespace Task11_DotNETBackendWebApi.Data;
 
@@ -35,7 +36,7 @@ public class DbSeeder
             {
                 Id = Guid.NewGuid(),
                 Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__",
-                Role = "Admin"
+                Role = nameof(UserRoles.Admin)
             };
             adminUser.PasswordHash = hasher.HashPassword(adminUser, "__REMOVED_BOOTSTRAP_ADMIN_PASSWORD__");
 
