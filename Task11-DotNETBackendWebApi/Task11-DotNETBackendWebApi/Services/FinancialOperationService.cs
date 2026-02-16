@@ -1,4 +1,4 @@
-﻿using Azure;
+﻿using Azure.Core;
 using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
@@ -48,13 +48,12 @@ public class FinancialOperationService : IFinancialOperationService
         return MapToDto(operation);
     }
 
+
+    //TODO: fix unhandled null reference exception at 73 row when type is not loaded, because of lazy loading
+
     public async Task<FinancialOperationDto> CreateAsync(FinancialOperationRequest request)
-    {
-        var typeExists = await _context.FinancialTypes.AnyAsync(t => t.Id == request.TypeId);
-        if (!typeExists)
-        {
-            throw new InvalidOperationException("The specified type of operation does not exist.");
-        }
+    {      
+        await EnsureTypeExistsAsync(request.TypeId);
 
         var newOperation = new FinancialOperation
         {
@@ -90,12 +89,7 @@ public class FinancialOperationService : IFinancialOperationService
 
         if (operation.FinancialTypeId != request.TypeId)
         {
-            var typeExists = await _context.FinancialTypes.AnyAsync(t => t.Id == request.TypeId);
-            if (!typeExists)
-            {
-                throw new InvalidOperationException("The specified type of operation does not exist.");
-            }
-
+            await EnsureTypeExistsAsync(request.TypeId);
             operation.FinancialTypeId = request.TypeId;
         }
 
@@ -110,7 +104,7 @@ public class FinancialOperationService : IFinancialOperationService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while updating the financial operation.");
+            _logger.LogError(ex, "An error occurred while updating the financial operation with id {Id}.", operation.Id);
             throw;
         }
     }
@@ -196,5 +190,14 @@ public class FinancialOperationService : IFinancialOperationService
             TypeId = operation.FinancialTypeId,
             TypeName = operation.Type.Name
         };
+    }
+
+    private async Task EnsureTypeExistsAsync(Guid typeId)
+    {
+        var typeExists = await _context.FinancialTypes.AnyAsync(t => t.Id == typeId);
+        if (!typeExists)
+        {
+            throw new InvalidOperationException("The specified type of operation does not exist.");
+        }
     }
 }

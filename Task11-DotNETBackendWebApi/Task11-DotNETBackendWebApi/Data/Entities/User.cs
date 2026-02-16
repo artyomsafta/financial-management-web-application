@@ -10,6 +10,5 @@ public class User
     public string Role { get; set; } = nameof(UserRoles.User);
     public bool IsDeleted { get; set; } = false;
 
-    // TODO: implement the Wallet entity and uncomment the following line when will be ready to implement the relationship between User and Wallet (task №6)
-    // public ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
+    public List<Wallet> Wallets { get; set; } = new();
 }

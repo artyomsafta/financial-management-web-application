@@ -46,10 +46,7 @@ public class UserService : IUserService
 
     public async Task<UserDto> CreateAsync(UserRegisterRequest request)
     {
-        if (await _context.Users.AnyAsync(u => u.Username.ToLower() == request.Username.Trim().ToLower()))
-        {
-            throw new InvalidOperationException("A user with the same name already exists.");
-        }
+        await EnsureUsernameNotTakenAync(request.Username);
 
         var newUser = new User
         {
@@ -74,10 +71,7 @@ public class UserService : IUserService
 
     public async Task<bool> UpdateAsync(Guid id, UserRegisterRequest request)
     {
-        if (await _context.Users.AnyAsync(u => u.Username.ToLower() == request.Username.Trim().ToLower()))
-        {
-            throw new InvalidOperationException("A user with the same name already exists.");
-        }
+        await EnsureUsernameNotTakenAync(request.Username);
 
         var existingUser = await _context.Users.FindAsync(id);
         if (existingUser is null) 
@@ -104,22 +98,17 @@ public class UserService : IUserService
     public async Task<bool> SoftDeleteAsync(Guid id)
     {
         var user = await _context.Users
-
-            //TODO: include wallets of the user to check if there are any non-deleted wallets before allowing deletion
-            //.Include(...)
-
+            .Include(u => u.Wallets)
             .FirstOrDefaultAsync(u => u.Id == id);
         if (user is null)
         {
             return false;
         }
 
-        //TODO: check if there are any non-deleted wallets for the user and prevent deletion if there are any
-
-        //if (...)
-        //{
-        //    throw new InvalidOperationException("You cannot delete a user that has active wallets.");
-        //}
+        if (user.Wallets.Any(w => !w.IsDeleted))
+        {
+            throw new InvalidOperationException("You cannot delete a user that has active wallets.");
+        }
 
         try
         {
@@ -143,5 +132,13 @@ public class UserService : IUserService
             Username = user.Username,
             Role = user.Role
         };
+    }
+
+    private async Task EnsureUsernameNotTakenAync(string username)
+    {
+        if (await _context.Users.AnyAsync(u => u.Username.ToLower() == username.Trim().ToLower()))
+        {
+            throw new InvalidOperationException("A user with the same name already exists.");
+        }
     }
 }

@@ -19,7 +19,7 @@ public class FinancialTypesController : ControllerBase
         _typeService = typeService;
     }
 
-    [HttpGet]
+    [HttpGet("all-types")]
     public async Task<ActionResult<IEnumerable<FinancialTypeDto>>> GetAll()
     {
         var types = await _typeService.GetAllAsync();

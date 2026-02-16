@@ -18,7 +18,7 @@ public class FinancialOperationsController : ControllerBase
         _operationService = operationService;
     }
 
-    [HttpGet]
+    [HttpGet("all-operations")]
     public async Task<ActionResult<IEnumerable<FinancialOperationDto>>> GetAll()
     {
         var operations = await _operationService.GetAllAsync();

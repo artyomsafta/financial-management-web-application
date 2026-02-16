@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<FinancialType> FinancialTypes { get; set; } = null!;
     public DbSet<FinancialOperation> FinancialOperations { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Wallet> Wallets { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,11 +37,11 @@ public class AppDbContext : DbContext
                 .HasColumnName("DESCRIPTION");
             entity.Property(e => e.IsIncome)
                 .IsRequired()
-                .HasDefaultValue(false)
                 .HasColumnName("IS_INCOME");
 
             entity.Property(e => e.IsDeleted)
                 .IsRequired()
+                .HasDefaultValue(false)
                 .HasColumnName("IS_DELETED");
 
             entity.HasMany(ft => ft.FinancialOperations)
@@ -71,23 +72,36 @@ public class AppDbContext : DbContext
                 .HasColumnType("datetime2")
                 .HasColumnName("DATE");
 
+            entity.Property(e => e.CurrentCurrency)
+                .IsRequired()
+                .HasColumnName("CURRENT_CURRENCY");
+
+            entity.Property(e => e.TransactionComment)
+                .HasMaxLength(255)
+                .HasColumnName("TRANSACTION_COMMENT");
+
             entity.Property(e => e.Note)
                 .HasMaxLength(500)
                 .HasColumnName("NOTE");
 
             entity.Property(e => e.IsDeleted)
                 .IsRequired()
+                .HasDefaultValue(false)
                 .HasColumnName("IS_DELETED");
 
             entity.Property(e => e.FinancialTypeId)
                 .IsRequired()
                 .HasColumnName("FINANCIAL_TYPE_ID");
 
+            entity.Property(e => e.WalletId)
+                .IsRequired()
+                .HasColumnName("WALLET_ID");
+
             entity.HasQueryFilter(fo => !fo.IsDeleted);
         });
 
         modelBuilder.Entity<User>(entity =>
-        {   
+        {
             entity.ToTable("USERS");
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Username)
@@ -113,11 +127,55 @@ public class AppDbContext : DbContext
 
             entity.Property(e => e.IsDeleted)
                 .IsRequired()
+                .HasDefaultValue(false)
                 .HasColumnName("IS_DELETED");
 
-            entity.HasQueryFilter(u => !u.IsDeleted);
+            entity.HasMany(u => u.Wallets)
+                .WithOne(w => w.User)
+                .HasForeignKey(w => w.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            //TODO: implement the relationship between User and Wallet
+            entity.HasQueryFilter(u => !u.IsDeleted);
+        });
+
+        modelBuilder.Entity<Wallet>(entity =>
+        {
+            entity.ToTable("WALLETS");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id)
+                .IsRequired()
+                .ValueGeneratedOnAdd()
+                .HasColumnName("ID");
+
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasColumnName("NAME");
+
+            entity.Property(e => e.Balance)
+                .IsRequired()
+                .HasPrecision(18, 2)
+                .HasColumnName("BALANCE");
+
+            entity.Property(e => e.BaseCurrency)
+                .IsRequired()
+                .HasColumnName("BASE_CURRENCY");
+
+            entity.Property(e => e.IsDeleted)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasColumnName("IS_DELETED");
+
+            entity.Property(e => e.UserId)
+                .IsRequired()
+                .HasColumnName("USER_ID");
+
+            entity.HasMany(w => w.FinancialOperations)
+                .WithOne(fo => fo.Wallet)
+                .HasForeignKey(fo => fo.WalletId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(w => !w.IsDeleted);
         });
     }
 }

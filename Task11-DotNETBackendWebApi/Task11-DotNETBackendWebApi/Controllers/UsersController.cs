@@ -19,7 +19,7 @@ public class UsersController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet]
+    [HttpGet("all-users")]
     [Authorize(Roles = nameof(UserRoles.Admin))]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetAll()
     {

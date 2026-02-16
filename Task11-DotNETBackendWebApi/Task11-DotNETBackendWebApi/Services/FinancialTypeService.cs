@@ -44,10 +44,7 @@ public class FinancialTypeService : IFinancialTypeService
 
     public async Task<FinancialTypeDto> CreateAsync(FinancialTypeRequest request)
     {
-        if (await _context.FinancialTypes.AnyAsync(t => t.Name.ToLower() == request.Name.Trim().ToLower()))
-        {
-            throw new InvalidOperationException("A financial type with the same name already exists.");
-        }
+        await EnsureTypeNameNotTakenAync(request.Name);
 
         var newType = new FinancialType
         {
@@ -73,10 +70,7 @@ public class FinancialTypeService : IFinancialTypeService
 
     public async Task<bool> UpdateAsync(Guid id, FinancialTypeRequest request)
     {
-        if (await _context.FinancialTypes.AnyAsync(t => t.Name.ToLower() == request.Name.Trim().ToLower()))
-        {
-            throw new InvalidOperationException("A financial type with the same name already exists.");
-        }
+        await EnsureTypeNameNotTakenAync(request.Name);
 
         var existingType = await _context.FinancialTypes.FindAsync(id);
         if (existingType is null)
@@ -138,5 +132,13 @@ public class FinancialTypeService : IFinancialTypeService
             Description = type.Description,
             IsIncome = type.IsIncome
         };
+    }
+
+    private async Task EnsureTypeNameNotTakenAync(string typeName)
+    {
+        if (await _context.FinancialTypes.AnyAsync(t => t.Name.ToLower() == typeName.Trim().ToLower()))
+        {
+            throw new InvalidOperationException("A financial type with the same name already exists.");
+        }
     }
 }

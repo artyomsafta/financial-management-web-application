@@ -28,6 +28,7 @@ public class Program
         builder.Services.AddScoped<IFinancialOperationService, FinancialOperationService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IUserAuthService, UserAuthService>();
+        builder.Services.AddScoped<IWalletService, WalletService>();
 
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
