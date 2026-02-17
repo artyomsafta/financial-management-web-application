@@ -48,8 +48,6 @@ public class WalletService : IWalletService
         return MapToDto(wallet);
     }
 
-    //TODO: fix unhandled null reference exception at 73 row when username is not loaded, because of lazy loading
-
     public async Task<WalletDto> CreateAsync(WalletRequest request)
     {
         await EnsureUserExistsAsync(request.UserId);
@@ -70,7 +68,11 @@ public class WalletService : IWalletService
             _context.Wallets.Add(newWallet);
             await _context.SaveChangesAsync();
 
-            return MapToDto(newWallet);
+            var wallet = await _context.Wallets
+                .Include(w => w.User)
+                .FirstOrDefaultAsync(w => w.Id == newWallet.Id);
+
+            return MapToDto(wallet);
         }
         catch (DbUpdateException ex)
         {
@@ -152,6 +154,8 @@ public class WalletService : IWalletService
             Username = wallet.User.Username
         };
     }
+
+    //TODO: make these methods as extension methods
 
     private async Task EnsureUserExistsAsync(Guid userId)
     {

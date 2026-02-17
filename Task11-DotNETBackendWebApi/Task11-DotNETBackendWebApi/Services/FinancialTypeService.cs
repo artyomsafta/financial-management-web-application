@@ -134,6 +134,8 @@ public class FinancialTypeService : IFinancialTypeService
         };
     }
 
+    //TODO: make these methods as extension methods
+
     private async Task EnsureTypeNameNotTakenAync(string typeName)
     {
         if (await _context.FinancialTypes.AnyAsync(t => t.Name.ToLower() == typeName.Trim().ToLower()))

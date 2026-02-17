@@ -134,6 +134,8 @@ public class UserService : IUserService
         };
     }
 
+    //TODO: make these methods as extension methods
+
     private async Task EnsureUsernameNotTakenAync(string username)
     {
         if (await _context.Users.AnyAsync(u => u.Username.ToLower() == username.Trim().ToLower()))

@@ -7,11 +7,17 @@ public class FinancialOperationRequest
     [Required]
     public Guid TypeId { get; set; }
 
+    [Required]
+    public Guid WalletId { get; set; }
+
     [Range(0.00, double.MaxValue, ErrorMessage = "The amount must be greater than zero.")]
     public decimal Amount { get; set; }
 
     [Required]
     public DateTime Date { get; set; }
+
+    [Required]
+    public string CurrentCurrency { get; set; }
 
     public string Note { get; set; } = string.Empty;
 }

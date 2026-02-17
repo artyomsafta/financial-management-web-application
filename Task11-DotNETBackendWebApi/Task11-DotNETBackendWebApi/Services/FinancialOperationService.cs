@@ -1,12 +1,14 @@
-﻿using Azure.Core;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
+using Task11_DotNETBackendWebApi.Helpers.Enums;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
 namespace Task11_DotNETBackendWebApi.Services;
+
+//TODO: inject ICurrencyConversionService and implement logics for currency conversion in CreateAsync and UpdateAsync methods
 
 public class FinancialOperationService : IFinancialOperationService
 {
@@ -23,14 +25,19 @@ public class FinancialOperationService : IFinancialOperationService
     {
         return await _context.FinancialOperations
             .Include(o => o.Type)
+            .Include(o => o.Wallet)
             .Select(o => new FinancialOperationDto
             {
                 Id = o.Id,
                 Amount = o.Amount,
                 Date = o.Date,
+                CurrentCurrency = o.CurrentCurrency,
+                TransactionComment = o.TransactionComment,
                 Note = o.Note,
                 TypeId = o.FinancialTypeId,
-                TypeName = o.Type.Name
+                TypeName = o.Type.Name,
+                WalletId = o.WalletId,
+                WalletName = o.Wallet.Name
             })
             .ToListAsync();
     }
@@ -39,6 +46,7 @@ public class FinancialOperationService : IFinancialOperationService
     {
         var operation = await _context.FinancialOperations
             .Include(o => o.Type)
+            .Include(o => o.Wallet)
             .FirstOrDefaultAsync(o => o.Id == id);
         if (operation is null)
         {
@@ -48,21 +56,23 @@ public class FinancialOperationService : IFinancialOperationService
         return MapToDto(operation);
     }
 
-
-    //TODO: fix unhandled null reference exception at 73 row when type is not loaded, because of lazy loading
-
     public async Task<FinancialOperationDto> CreateAsync(FinancialOperationRequest request)
     {      
         await EnsureTypeExistsAsync(request.TypeId);
+        await EnsureWalletExistsAsync(request.WalletId);
+        await EnsureCurrencyIsValidAsync(request.CurrentCurrency);
 
         var newOperation = new FinancialOperation
         {
             Id = Guid.NewGuid(),
-            Amount = request.Amount,
+            Amount = request.Amount, // TODO: return amount in base currency and implement logics for currency conversion
             Date = request.Date,
+            CurrentCurrency = request.CurrentCurrency.Trim().ToUpper(),
+            TransactionComment = $"The amount in the transaction currency is {request.Amount} {request.CurrentCurrency.Trim().ToUpper()}",
             Note = request.Note.Trim(),
+            IsDeleted = false,
             FinancialTypeId = request.TypeId,
-            IsDeleted = false
+            WalletId = request.WalletId
         };
 
         try
@@ -70,7 +80,12 @@ public class FinancialOperationService : IFinancialOperationService
             _context.FinancialOperations.Add(newOperation);
             await _context.SaveChangesAsync();
 
-            return MapToDto(newOperation);
+            var operation = await _context.FinancialOperations
+                .Include(o => o.Type)
+                .Include(o => o.Wallet)
+                .FirstOrDefaultAsync(o => o.Id == newOperation.Id);
+
+            return MapToDto(operation);
         }
         catch (DbUpdateException ex)
         {
@@ -80,7 +95,9 @@ public class FinancialOperationService : IFinancialOperationService
     }
 
     public async Task<bool> UpdateAsync(Guid id, FinancialOperationRequest request)
-    {
+    {        
+        await EnsureCurrencyIsValidAsync(request.CurrentCurrency);
+
         var operation = await _context.FinancialOperations.FindAsync(id);
         if (operation is null)
         {
@@ -92,11 +109,18 @@ public class FinancialOperationService : IFinancialOperationService
             await EnsureTypeExistsAsync(request.TypeId);
             operation.FinancialTypeId = request.TypeId;
         }
+        if (operation.WalletId != request.WalletId)
+        {
+            await EnsureWalletExistsAsync(request.WalletId);
+            operation.WalletId = request.WalletId;
+        }
 
         try
         {
-            operation.Amount = request.Amount;
+            operation.Amount = request.Amount; // TODO: return amount in base currency and implement logics for currency conversion
             operation.Date = request.Date;
+            operation.CurrentCurrency = request.CurrentCurrency.Trim().ToUpper();
+            operation.TransactionComment = $"The amount in the transaction currency is {request.Amount} {request.CurrentCurrency.Trim().ToUpper()}";
             operation.Note = request.Note.Trim();
             await _context.SaveChangesAsync();
 
@@ -148,6 +172,7 @@ public class FinancialOperationService : IFinancialOperationService
 
         var operations = await _context.FinancialOperations
                 .Include(o => o.Type)
+                .Include(o => o.Wallet)
                 .Where(o => o.Date >= startDate && o.Date <= endDate)
                 .ToListAsync();
 
@@ -170,9 +195,13 @@ public class FinancialOperationService : IFinancialOperationService
                     Id = o.Id,
                     Amount = o.Amount,
                     Date = o.Date,
+                    CurrentCurrency = o.CurrentCurrency,
+                    TransactionComment = o.TransactionComment,
                     Note = o.Note,
                     TypeId = o.FinancialTypeId,
-                    TypeName = o.Type.Name
+                    TypeName = o.Type.Name,
+                    WalletId = o.WalletId,
+                    WalletName = o.Wallet.Name
                 })
                 .OrderByDescending(o => o.Date)
                 .ToList()
@@ -186,11 +215,17 @@ public class FinancialOperationService : IFinancialOperationService
             Id = operation.Id,
             Amount = operation.Amount,
             Date = operation.Date,
+            CurrentCurrency = operation.CurrentCurrency,
+            TransactionComment = operation.TransactionComment,
             Note = operation.Note,
             TypeId = operation.FinancialTypeId,
-            TypeName = operation.Type.Name
+            TypeName = operation.Type.Name,
+            WalletId = operation.WalletId,
+            WalletName = operation.Wallet.Name
         };
     }
+
+    //TODO: make these methods as extension methods
 
     private async Task EnsureTypeExistsAsync(Guid typeId)
     {
@@ -198,6 +233,23 @@ public class FinancialOperationService : IFinancialOperationService
         if (!typeExists)
         {
             throw new InvalidOperationException("The specified type of operation does not exist.");
+        }
+    }
+
+    private async Task EnsureWalletExistsAsync(Guid walletId)
+    {
+        var walletExists = await _context.Wallets.AnyAsync(w => w.Id == walletId);
+        if (!walletExists)
+        {
+            throw new InvalidOperationException("The specified wallet does not exist.");
+        }   
+    }
+
+    private async Task EnsureCurrencyIsValidAsync(string currencyCode)
+    {
+        if (!Enum.TryParse<Currencies>(currencyCode.Trim().ToUpper(), out _))
+        {
+            throw new ArgumentException($"The specified currency code: {currencyCode} was not found.");
         }
     }
 }
