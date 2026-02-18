@@ -1,23 +1,23 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Helpers.Enums;
+using Task11_DotNETBackendWebApi.Helpers;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
 namespace Task11_DotNETBackendWebApi.Services;
 
-//TODO: inject ICurrencyConversionService and implement logics for currency conversion in CreateAsync and UpdateAsync methods
-
 public class FinancialOperationService : IFinancialOperationService
 {
     private readonly AppDbContext _context;
+    private readonly ICurrencyRatesService _currencyRatesService;
     private readonly ILogger<FinancialOperationService> _logger;
 
-    public FinancialOperationService(AppDbContext context, ILogger<FinancialOperationService> logger)
+    public FinancialOperationService(AppDbContext context, ICurrencyRatesService currencyRatesService, ILogger<FinancialOperationService> logger)
     {
         _context = context;
+        _currencyRatesService = currencyRatesService;
         _logger = logger;
     }
 
@@ -57,10 +57,11 @@ public class FinancialOperationService : IFinancialOperationService
     }
 
     public async Task<FinancialOperationDto> CreateAsync(FinancialOperationRequest request)
-    {      
-        await EnsureTypeExistsAsync(request.TypeId);
-        await EnsureWalletExistsAsync(request.WalletId);
-        await EnsureCurrencyIsValidAsync(request.CurrentCurrency);
+    {
+        request.CurrentCurrency.EnsureCurrencyIsValid();
+        request.Date.EnsureDateIsAcceptable();
+        await _context.FinancialTypes.EnsureTypeExistsAsync(request.TypeId);
+        await _context.Wallets.EnsureWalletExistsAsync(request.WalletId);
 
         var newOperation = new FinancialOperation
         {
@@ -90,13 +91,14 @@ public class FinancialOperationService : IFinancialOperationService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while creating a new financial operation.");
-            throw;
+            throw new InvalidOperationException("Operation aborted due to database connection error");
         }
     }
 
     public async Task<bool> UpdateAsync(Guid id, FinancialOperationRequest request)
     {        
-        await EnsureCurrencyIsValidAsync(request.CurrentCurrency);
+        request.CurrentCurrency.EnsureCurrencyIsValid();
+        request.Date.EnsureDateIsAcceptable();
 
         var operation = await _context.FinancialOperations.FindAsync(id);
         if (operation is null)
@@ -106,12 +108,12 @@ public class FinancialOperationService : IFinancialOperationService
 
         if (operation.FinancialTypeId != request.TypeId)
         {
-            await EnsureTypeExistsAsync(request.TypeId);
+            await _context.FinancialTypes.EnsureTypeExistsAsync(request.TypeId);
             operation.FinancialTypeId = request.TypeId;
         }
         if (operation.WalletId != request.WalletId)
         {
-            await EnsureWalletExistsAsync(request.WalletId);
+            await _context.Wallets.EnsureWalletExistsAsync(request.WalletId);
             operation.WalletId = request.WalletId;
         }
 
@@ -129,7 +131,7 @@ public class FinancialOperationService : IFinancialOperationService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while updating the financial operation with id {Id}.", operation.Id);
-            throw;
+            throw new InvalidOperationException("Operation aborted due to database connection error");
         }
     }
 
@@ -151,7 +153,7 @@ public class FinancialOperationService : IFinancialOperationService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while soft deleting the financial operation {Id}", operation.Id);
-            throw;
+            throw new InvalidOperationException("Operation aborted due to database connection error");
         }
     }
 
@@ -223,33 +225,5 @@ public class FinancialOperationService : IFinancialOperationService
             WalletId = operation.WalletId,
             WalletName = operation.Wallet.Name
         };
-    }
-
-    //TODO: make these methods as extension methods
-
-    private async Task EnsureTypeExistsAsync(Guid typeId)
-    {
-        var typeExists = await _context.FinancialTypes.AnyAsync(t => t.Id == typeId);
-        if (!typeExists)
-        {
-            throw new InvalidOperationException("The specified type of operation does not exist.");
-        }
-    }
-
-    private async Task EnsureWalletExistsAsync(Guid walletId)
-    {
-        var walletExists = await _context.Wallets.AnyAsync(w => w.Id == walletId);
-        if (!walletExists)
-        {
-            throw new InvalidOperationException("The specified wallet does not exist.");
-        }   
-    }
-
-    private async Task EnsureCurrencyIsValidAsync(string currencyCode)
-    {
-        if (!Enum.TryParse<Currencies>(currencyCode.Trim().ToUpper(), out _))
-        {
-            throw new ArgumentException($"The specified currency code: {currencyCode} was not found.");
-        }
     }
 }

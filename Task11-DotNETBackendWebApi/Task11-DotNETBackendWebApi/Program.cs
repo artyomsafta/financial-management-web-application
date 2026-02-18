@@ -29,6 +29,7 @@ public class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IUserAuthService, UserAuthService>();
         builder.Services.AddScoped<IWalletService, WalletService>();
+        builder.Services.AddHttpClient<ICurrencyRatesService, CurrencyRatesService>();
 
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();

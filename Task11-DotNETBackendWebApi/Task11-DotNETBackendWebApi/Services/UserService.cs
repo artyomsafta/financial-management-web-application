@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
+using Task11_DotNETBackendWebApi.Helpers;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -46,7 +47,7 @@ public class UserService : IUserService
 
     public async Task<UserDto> CreateAsync(UserRegisterRequest request)
     {
-        await EnsureUsernameNotTakenAync(request.Username);
+        await _context.Users.EnsureUsernameNotTakenAync(request.Username);
 
         var newUser = new User
         {
@@ -65,13 +66,13 @@ public class UserService : IUserService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while creating a new user {Username}", request.Username);
-            throw;
+            throw new InvalidOperationException("Operation aborted due to database connection error");
         }
     }
 
     public async Task<bool> UpdateAsync(Guid id, UserRegisterRequest request)
     {
-        await EnsureUsernameNotTakenAync(request.Username);
+        await _context.Users.EnsureUsernameNotTakenAync(request.Username);
 
         var existingUser = await _context.Users.FindAsync(id);
         if (existingUser is null) 
@@ -91,7 +92,7 @@ public class UserService : IUserService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while updating user {Username}", request.Username);
-            throw;
+            throw new InvalidOperationException("Operation aborted due to database connection error");
         }
     }
 
@@ -120,7 +121,7 @@ public class UserService : IUserService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while soft deleting user {Username}", user.Username);
-            throw;
+            throw new InvalidOperationException("Operation aborted due to database connection error");
         }
     }
 
@@ -132,15 +133,5 @@ public class UserService : IUserService
             Username = user.Username,
             Role = user.Role
         };
-    }
-
-    //TODO: make these methods as extension methods
-
-    private async Task EnsureUsernameNotTakenAync(string username)
-    {
-        if (await _context.Users.AnyAsync(u => u.Username.ToLower() == username.Trim().ToLower()))
-        {
-            throw new InvalidOperationException("A user with the same name already exists.");
-        }
     }
 }

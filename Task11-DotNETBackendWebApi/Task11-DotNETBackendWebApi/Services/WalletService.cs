@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Helpers.Enums;
+using Task11_DotNETBackendWebApi.Helpers;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -50,14 +50,14 @@ public class WalletService : IWalletService
 
     public async Task<WalletDto> CreateAsync(WalletRequest request)
     {
-        await EnsureUserExistsAsync(request.UserId);
-        await EnsureCurrencyIsValidAsync(request.BaseCurrency);
+        request.BaseCurrency.EnsureCurrencyIsValid();
+        await _context.Users.EnsureUserExistsAsync(request.UserId);
 
         var newWallet = new Wallet
         {
             Id = Guid.NewGuid(),
             Name = request.Name.Trim(),
-            Balance = request.Balance,
+            Balance = 0m,
             BaseCurrency = request.BaseCurrency.Trim().ToUpper(),
             IsDeleted = false,
             UserId = request.UserId
@@ -77,12 +77,14 @@ public class WalletService : IWalletService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while creating a new wallet.");
-            throw;
+            throw new InvalidOperationException("Operation aborted due to database connection error");
         }
     }
 
     public async Task<bool> UpdateAsync(Guid id, WalletRequest request)
     {
+        request.BaseCurrency.EnsureCurrencyIsValid();
+
         var wallet = await _context.Wallets.FindAsync(id);
         if (wallet is null)
         {
@@ -91,16 +93,13 @@ public class WalletService : IWalletService
 
         if (wallet.UserId != request.UserId)
         {
-            await EnsureUserExistsAsync(request.UserId);
+            await _context.Users.EnsureUserExistsAsync(request.UserId);
             wallet.UserId = request.UserId;
         }
-
-        await EnsureCurrencyIsValidAsync(request.BaseCurrency);
 
         try 
         {
             wallet.Name = request.Name.Trim();
-            wallet.Balance = request.Balance;
             wallet.BaseCurrency = request.BaseCurrency.Trim().ToUpper();
             await _context.SaveChangesAsync();
 
@@ -109,7 +108,7 @@ public class WalletService : IWalletService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while updating the wallet with id {Id}.", wallet.Id);
-            throw;
+            throw new InvalidOperationException("Operation aborted due to database connection error");
         }
     }
 
@@ -138,7 +137,7 @@ public class WalletService : IWalletService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while soft deleting the wallet with id {Id}.", wallet.Id);
-            throw;
+            throw new InvalidOperationException("Operation aborted due to database connection error");
         }
     }
 
@@ -153,25 +152,5 @@ public class WalletService : IWalletService
             UserId = wallet.UserId,
             Username = wallet.User.Username
         };
-    }
-
-    //TODO: make these methods as extension methods
-
-    private async Task EnsureUserExistsAsync(Guid userId)
-    {
-        var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
-
-        if (!userExists)
-        {
-            throw new ArgumentException($"User with id {userId} does not exist.");
-        }
-    }
-
-    private async Task EnsureCurrencyIsValidAsync(string currencyCode)
-    {
-        if (!Enum.TryParse<Currencies>(currencyCode.Trim().ToUpper(), out _))
-        {
-            throw new ArgumentException($"The specified currency code: {currencyCode} was not found.");
-        }
     }
 }

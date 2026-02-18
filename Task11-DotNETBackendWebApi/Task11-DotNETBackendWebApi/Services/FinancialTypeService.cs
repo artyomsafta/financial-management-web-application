@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
+using Task11_DotNETBackendWebApi.Helpers;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -44,7 +45,7 @@ public class FinancialTypeService : IFinancialTypeService
 
     public async Task<FinancialTypeDto> CreateAsync(FinancialTypeRequest request)
     {
-        await EnsureTypeNameNotTakenAync(request.Name);
+        await _context.FinancialTypes.EnsureTypeNameNotTakenAync(request.Name);
 
         var newType = new FinancialType
         {
@@ -64,13 +65,13 @@ public class FinancialTypeService : IFinancialTypeService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while creating the financial type {Name}", request.Name);
-            throw;
+            throw new InvalidOperationException("Operation aborted due to database connection error");
         }
     }
 
     public async Task<bool> UpdateAsync(Guid id, FinancialTypeRequest request)
     {
-        await EnsureTypeNameNotTakenAync(request.Name);
+        await _context.FinancialTypes.EnsureTypeNameNotTakenAync(request.Name);
 
         var existingType = await _context.FinancialTypes.FindAsync(id);
         if (existingType is null)
@@ -90,7 +91,7 @@ public class FinancialTypeService : IFinancialTypeService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while updating the financial type {Name}", request.Name);
-            throw;
+            throw new InvalidOperationException("Operation aborted due to database connection error");
         }
     }
 
@@ -119,7 +120,7 @@ public class FinancialTypeService : IFinancialTypeService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while soft deleting the financial type {Name}", type.Name);
-            throw;
+            throw new InvalidOperationException("Operation aborted due to database connection error");
         }
     }
 
@@ -132,15 +133,5 @@ public class FinancialTypeService : IFinancialTypeService
             Description = type.Description,
             IsIncome = type.IsIncome
         };
-    }
-
-    //TODO: make these methods as extension methods
-
-    private async Task EnsureTypeNameNotTakenAync(string typeName)
-    {
-        if (await _context.FinancialTypes.AnyAsync(t => t.Name.ToLower() == typeName.Trim().ToLower()))
-        {
-            throw new InvalidOperationException("A financial type with the same name already exists.");
-        }
     }
 }
