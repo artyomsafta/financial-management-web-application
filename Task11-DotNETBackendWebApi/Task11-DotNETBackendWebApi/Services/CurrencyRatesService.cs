@@ -25,7 +25,7 @@ public class CurrencyRatesService : ICurrencyRatesService
 
             if (exchangeRates is not null && exchangeRates.PurchaseRate > 0)
             {
-                return exchangeRates.PurchaseRate;
+                return Math.Round(exchangeRates.PurchaseRate, 2, MidpointRounding.AwayFromZero);
             }
 
             throw new InvalidOperationException($"No exchange rates available for this currency: {currencyCode}");

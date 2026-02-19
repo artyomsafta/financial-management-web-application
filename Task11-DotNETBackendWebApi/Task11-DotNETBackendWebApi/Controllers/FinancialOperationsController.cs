@@ -73,13 +73,20 @@ public class FinancialOperationsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var isDeleted = await _operationService.SoftDeleteAsync(id);
-        if (!isDeleted)
+        try
         {
-            return NotFound();
-        }
+            var isDeleted = await _operationService.SoftDeleteAsync(id);
+            if (!isDeleted)
+            {
+                return NotFound();
+            }
 
-        return NoContent();
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpGet("report/daily")]

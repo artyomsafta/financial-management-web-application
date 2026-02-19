@@ -97,10 +97,12 @@ public class WalletService : IWalletService
             wallet.UserId = request.UserId;
         }
 
+        wallet.Name = request.Name.Trim();
+        wallet.BaseCurrency = request.BaseCurrency.Trim().ToUpper();
+
         try 
         {
-            wallet.Name = request.Name.Trim();
-            wallet.BaseCurrency = request.BaseCurrency.Trim().ToUpper();
+            _context.Wallets.Update(wallet);
             await _context.SaveChangesAsync();
 
             return true;

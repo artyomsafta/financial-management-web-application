@@ -74,16 +74,18 @@ public class UserService : IUserService
     {
         await _context.Users.EnsureUsernameNotTakenAync(request.Username);
 
-        var existingUser = await _context.Users.FindAsync(id);
-        if (existingUser is null) 
+        var user = await _context.Users.FindAsync(id);
+        if (user is null) 
         { 
             return false;
         }
 
+        user.Username = request.Username.Trim();
+        user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+
         try
         { 
-            existingUser.Username = request.Username.Trim();
-            existingUser.PasswordHash = _passwordHasher.HashPassword(existingUser, request.Password);
+            _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
             return true;

@@ -73,17 +73,19 @@ public class FinancialTypeService : IFinancialTypeService
     {
         await _context.FinancialTypes.EnsureTypeNameNotTakenAync(request.Name);
 
-        var existingType = await _context.FinancialTypes.FindAsync(id);
-        if (existingType is null)
+        var type = await _context.FinancialTypes.FindAsync(id);
+        if (type is null)
         {
             return false;
         }
 
+        type.Name = request.Name.Trim();
+        type.Description = request.Description.Trim();
+        type.IsIncome = request.IsIncome;
+
         try
         {
-            existingType.Name = request.Name.Trim();
-            existingType.Description = request.Description.Trim();
-            existingType.IsIncome = request.IsIncome;
+            _context.FinancialTypes.Update(type);
             await _context.SaveChangesAsync();
 
             return true;
