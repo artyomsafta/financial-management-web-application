@@ -10,6 +10,7 @@ public class FinancialOperationRequest
     [Required]
     public Guid WalletId { get; set; }
 
+    [Required]
     [Range(0.00, double.MaxValue, ErrorMessage = "The amount must be greater than zero.")]
     public decimal Amount { get; set; }
 

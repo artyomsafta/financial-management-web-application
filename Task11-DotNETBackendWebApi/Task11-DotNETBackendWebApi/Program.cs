@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -30,8 +31,31 @@ public class Program
         builder.Services.AddScoped<IUserAuthService, UserAuthService>();
         builder.Services.AddScoped<IWalletService, WalletService>();
         builder.Services.AddHttpClient<ICurrencyRatesService, CurrencyRatesService>();
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<IUserContext, UserContext>();
 
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+            .ConfigureApiBehaviorOptions(options =>
+            {
+                options.InvalidModelStateResponseFactory = context =>
+                {
+                    var errors = context.ModelState
+                        .Where(e => e.Value.Errors.Count > 0)
+                        .Select(e => new {
+                            Field = e.Key,
+                            Message = e.Value.Errors.First().ErrorMessage
+                        })
+                        .ToList();
+
+                    return new BadRequestObjectResult(new
+                    {
+                        Status = 400,
+                        Message = "Validation failed",
+                        Errors = errors
+                    });
+                };
+            });
+
         builder.Services.AddEndpointsApiExplorer();
 
         builder.Services.AddSwaggerGen(options =>

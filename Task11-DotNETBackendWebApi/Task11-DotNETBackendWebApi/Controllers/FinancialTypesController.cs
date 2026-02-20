@@ -39,6 +39,7 @@ public class FinancialTypesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = nameof(UserRoles.Admin))]
     public async Task<ActionResult<FinancialTypeDto>> Create([FromBody] FinancialTypeRequest request)
     {
         try
@@ -53,6 +54,7 @@ public class FinancialTypesController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = nameof(UserRoles.Admin))]
     public async Task<IActionResult> Update(Guid id, [FromBody] FinancialTypeRequest request)
     {
         try

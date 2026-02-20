@@ -2,6 +2,7 @@
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
 using Task11_DotNETBackendWebApi.Helpers;
+using Task11_DotNETBackendWebApi.Helpers.Enums;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -11,16 +12,25 @@ namespace Task11_DotNETBackendWebApi.Services;
 public class WalletService : IWalletService
 {
     private readonly AppDbContext _context;
+    private readonly IUserContext _userContext;
     private readonly ILogger<UserService> _logger;
-    public WalletService(AppDbContext context, ILogger<UserService> logger)
+    public WalletService(AppDbContext context, IUserContext userContext, ILogger<UserService> logger)
     {
         _context = context;
+        _userContext = userContext;
         _logger = logger;
     }
 
     public async Task<IEnumerable<WalletDto>> GetAllAsync()
     {
-        return await _context.Wallets
+        var query = _context.Wallets.AsQueryable();
+
+        if (!_userContext.IsAdmin)
+        {
+            query = query.Where(w => w.UserId == _userContext.UserId);
+        }
+
+        return await query
             .Include(w => w.User)
             .Select(w => new WalletDto
             {
@@ -45,12 +55,28 @@ public class WalletService : IWalletService
             return null;
         }
 
+        if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
+        {
+            throw new UnauthorizedAccessException("Access denied");
+        }
+
         return MapToDto(wallet);
     }
 
     public async Task<WalletDto> CreateAsync(WalletRequest request)
     {
+        if (!_userContext.IsAdmin && request.UserId != _userContext.UserId)
+        {
+            throw new UnauthorizedAccessException("Access denied");
+        }
+
         request.BaseCurrency.EnsureCurrencyIsValid();
+
+        if (request.BaseCurrency != (nameof(Currencies.UAH)))
+        {
+            throw new InvalidOperationException("Currently, the base currency of the wallet can only be UAH");
+        }
+
         await _context.Users.EnsureUserExistsAsync(request.UserId);
 
         var newWallet = new Wallet
@@ -83,7 +109,17 @@ public class WalletService : IWalletService
 
     public async Task<bool> UpdateAsync(Guid id, WalletRequest request)
     {
+        if (!_userContext.IsAdmin && request.UserId != _userContext.UserId)
+        {
+            throw new UnauthorizedAccessException("Access denied");
+        }
+
         request.BaseCurrency.EnsureCurrencyIsValid();
+
+        if (request.BaseCurrency != (nameof(Currencies.UAH)))
+        {
+            throw new InvalidOperationException("Currently, the base currency of the wallet can only be UAH");
+        }
 
         var wallet = await _context.Wallets.FindAsync(id);
         if (wallet is null)
@@ -119,9 +155,15 @@ public class WalletService : IWalletService
         var wallet = await _context.Wallets
             .Include(w => w.FinancialOperations)
             .FirstOrDefaultAsync(w => w.Id == id);
+
         if (wallet is null)
         {
             return false;
+        }
+
+        if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
+        {
+            throw new UnauthorizedAccessException("Access denied");
         }
 
         if (wallet.FinancialOperations.Any(o => !o.IsDeleted))

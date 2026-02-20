@@ -30,13 +30,20 @@ public class UsersController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<UserDto>> GetById(Guid id)
     {
-        var user = await _userService.GetByIdAsync(id);
-        if (user is null)
+        try
         {
-            return NotFound(new { message = $"User with ID {id} not found" });
-        }
+            var user = await _userService.GetByIdAsync(id);
+            if (user is null)
+            {
+                return NotFound(new { message = $"User with ID {id} not found" });
+            }
 
-        return Ok(user);
+            return Ok(user);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
+        }
     }
 
     [HttpPost]
@@ -67,6 +74,10 @@ public class UsersController : ControllerBase
 
             return NoContent();
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
@@ -74,7 +85,6 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = nameof(UserRoles.Admin))]
     public async Task<IActionResult> Delete(Guid id)
     {
         try
@@ -86,6 +96,10 @@ public class UsersController : ControllerBase
             }
 
             return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {

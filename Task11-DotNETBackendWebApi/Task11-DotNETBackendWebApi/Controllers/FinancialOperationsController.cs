@@ -28,13 +28,20 @@ public class FinancialOperationsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<FinancialOperationDto>> GetById(Guid id)
     {
-        var operation = await _operationService.GetByIdAsync(id);
-        if (operation is null)
+        try
         {
-            return NotFound(new { message = $"Operation with ID {id} not found" });
-        }
+            var operation = await _operationService.GetByIdAsync(id);
+            if (operation is null)
+            {
+                return NotFound(new { message = $"Operation with ID {id} not found" });
+            }
 
-        return Ok(operation);
+            return Ok(operation);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
+        }
     }
 
     [HttpPost]
@@ -44,6 +51,10 @@ public class FinancialOperationsController : ControllerBase
         {
             var createdOperation = await _operationService.CreateAsync(request);
             return CreatedAtAction(nameof(GetById), new { id = createdOperation.Id }, createdOperation);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
@@ -64,6 +75,10 @@ public class FinancialOperationsController : ControllerBase
 
             return NoContent();
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
@@ -82,6 +97,10 @@ public class FinancialOperationsController : ControllerBase
             }
 
             return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {

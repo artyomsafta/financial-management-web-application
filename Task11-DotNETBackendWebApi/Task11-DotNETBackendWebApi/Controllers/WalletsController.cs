@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Task11_DotNETBackendWebApi.Helpers.Enums;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -20,7 +19,6 @@ public class WalletsController : ControllerBase
     }
 
     [HttpGet("all-wallets")]
-    [Authorize(Roles = nameof(UserRoles.Admin))]
     public async Task<ActionResult<IEnumerable<WalletDto>>> GetAll()
     {
         var wallets = await _walletService.GetAllAsync();
@@ -30,13 +28,20 @@ public class WalletsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<WalletDto>> GetById(Guid id)
     {
-        var wallet = await _walletService.GetByIdAsync(id);
-        if (wallet is null)
+        try
         {
-            return NotFound(new { message = $"Wallet with ID {id} not found" });
-        }
+            var wallet = await _walletService.GetByIdAsync(id);
+            if (wallet is null)
+            {
+                return NotFound(new { message = $"Wallet with ID {id} not found" });
+            }
 
-        return Ok(wallet);
+            return Ok(wallet);
+        }
+        catch (UnauthorizedAccessException ex) 
+        {
+            return StatusCode(403, new { message = ex.Message });
+        }
     }
 
     [HttpPost]
@@ -46,6 +51,10 @@ public class WalletsController : ControllerBase
         {
             var createdWallet = await _walletService.CreateAsync(request);
             return CreatedAtAction(nameof(GetById), new { id = createdWallet.Id }, createdWallet);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
@@ -66,6 +75,10 @@ public class WalletsController : ControllerBase
 
             return NoContent();
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
@@ -84,6 +97,10 @@ public class WalletsController : ControllerBase
             }
 
             return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {

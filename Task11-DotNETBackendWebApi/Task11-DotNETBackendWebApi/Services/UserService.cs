@@ -12,12 +12,14 @@ namespace Task11_DotNETBackendWebApi.Services;
 public class UserService : IUserService
 {
     private readonly AppDbContext _context;
+    private readonly IUserContext _userContext;
     private readonly ILogger<UserService> _logger;
     private readonly PasswordHasher<User> _passwordHasher;
 
-    public UserService(AppDbContext context, ILogger<UserService> logger)
+    public UserService(AppDbContext context, IUserContext userContext, ILogger<UserService> logger)
     {
         _context = context;
+        _userContext = userContext;
         _logger = logger;
         _passwordHasher = new PasswordHasher<User>();
     }
@@ -37,9 +39,15 @@ public class UserService : IUserService
     public async Task<UserDto?> GetByIdAsync(Guid id)
     {
         var user = await _context.Users.FindAsync(id);
+
         if (user is null)
         {
             return null;
+        }
+
+        if (!_userContext.IsAdmin && user.Id != _userContext.UserId)
+        {
+            throw new UnauthorizedAccessException("Access denied");
         }
 
         return MapToDto(user);
@@ -72,13 +80,19 @@ public class UserService : IUserService
 
     public async Task<bool> UpdateAsync(Guid id, UserRegisterRequest request)
     {
-        await _context.Users.EnsureUsernameNotTakenAync(request.Username);
-
         var user = await _context.Users.FindAsync(id);
+
         if (user is null) 
         { 
             return false;
         }
+
+        if (!_userContext.IsAdmin && user.Id != _userContext.UserId)
+        {
+            throw new UnauthorizedAccessException("Access denied");
+        }
+
+        await _context.Users.EnsureUsernameNotTakenAync(request.Username);
 
         user.Username = request.Username.Trim();
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
@@ -103,9 +117,15 @@ public class UserService : IUserService
         var user = await _context.Users
             .Include(u => u.Wallets)
             .FirstOrDefaultAsync(u => u.Id == id);
+
         if (user is null)
         {
             return false;
+        }
+
+        if (!_userContext.IsAdmin && user.Id != _userContext.UserId)
+        {
+            throw new UnauthorizedAccessException("Access denied");
         }
 
         if (user.Wallets.Any(w => !w.IsDeleted))

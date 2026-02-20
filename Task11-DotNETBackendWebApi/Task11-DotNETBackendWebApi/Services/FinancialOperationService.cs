@@ -11,19 +11,28 @@ namespace Task11_DotNETBackendWebApi.Services;
 public class FinancialOperationService : IFinancialOperationService
 {
     private readonly AppDbContext _context;
+    private readonly IUserContext _userContext;
     private readonly ICurrencyRatesService _currencyRatesService;
     private readonly ILogger<FinancialOperationService> _logger;
 
-    public FinancialOperationService(AppDbContext context, ICurrencyRatesService currencyRatesService, ILogger<FinancialOperationService> logger)
+    public FinancialOperationService(AppDbContext context, IUserContext userContext, ICurrencyRatesService currencyRatesService, ILogger<FinancialOperationService> logger)
     {
         _context = context;
+        _userContext = userContext;
         _currencyRatesService = currencyRatesService;
         _logger = logger;
     }
 
     public async Task<IEnumerable<FinancialOperationDto>> GetAllAsync()
     {
-        return await _context.FinancialOperations
+        var query = _context.FinancialOperations.AsQueryable();
+
+        if (!_userContext.IsAdmin)
+        {
+            query = query.Where(w => w.Wallet.UserId == _userContext.UserId);
+        }
+
+        return await query
             .Include(o => o.Type)
             .Include(o => o.Wallet)
             .Select(o => new FinancialOperationDto
@@ -48,9 +57,15 @@ public class FinancialOperationService : IFinancialOperationService
             .Include(o => o.Type)
             .Include(o => o.Wallet)
             .FirstOrDefaultAsync(o => o.Id == id);
+
         if (operation is null)
         {
             return null;
+        }
+
+        if (!_userContext.IsAdmin && operation.Wallet.UserId != _userContext.UserId)
+        {
+            throw new UnauthorizedAccessException("Access denied");
         }
 
         return MapToDto(operation);
@@ -64,6 +79,12 @@ public class FinancialOperationService : IFinancialOperationService
         await _context.Wallets.EnsureWalletExistsAsync(request.WalletId);
 
         var wallet = await _context.Wallets.FindAsync(request.WalletId);
+
+        if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
+        {
+            throw new UnauthorizedAccessException("Access denied");
+        }
+
         var currentCurrency = request.CurrentCurrency.Trim().ToUpper();
 
         var finalAmount = await CalculateAmount(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date);
@@ -127,18 +148,25 @@ public class FinancialOperationService : IFinancialOperationService
             return false;
         }
 
+        await _context.Wallets.EnsureWalletExistsAsync(request.WalletId);
+        var wallet = await _context.Wallets.FindAsync(operation.WalletId);
+
+        if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
+        {
+            throw new UnauthorizedAccessException("Access denied");
+        }
+
+        if (operation.WalletId != request.WalletId)
+        {
+            throw new InvalidOperationException("You have selected the wrong wallet.");
+        }
+
         if (operation.FinancialTypeId != request.TypeId)
         {
             await _context.FinancialTypes.EnsureTypeExistsAsync(request.TypeId);
             operation.FinancialTypeId = request.TypeId;
         }
-        if (operation.WalletId != request.WalletId)
-        {
-            await _context.Wallets.EnsureWalletExistsAsync(request.WalletId);
-            operation.WalletId = request.WalletId;
-        }
 
-        var wallet = await _context.Wallets.FindAsync(operation.WalletId);
         var currentCurrency = request.CurrentCurrency.Trim().ToUpper();
 
         var finalAmount = await CalculateAmount(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date);
@@ -194,6 +222,11 @@ public class FinancialOperationService : IFinancialOperationService
 
         var wallet = await _context.Wallets.FindAsync(operation.WalletId);
 
+        if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
+        {
+            throw new UnauthorizedAccessException("Access denied");
+        }
+
         var isIncomeOperation = await _context.FinancialTypes
             .Where(t => t.Id == operation.FinancialTypeId)
             .Select(t => t.IsIncome)
@@ -240,7 +273,14 @@ public class FinancialOperationService : IFinancialOperationService
         var startDate = start.Date;
         var endDate = end.Date.AddDays(1).AddTicks(-1);
 
-        var operations = await _context.FinancialOperations
+        var query = _context.FinancialOperations.AsQueryable();
+
+        if (!_userContext.IsAdmin)
+        {
+            query = query.Where(w => w.Wallet.UserId == _userContext.UserId);
+        }
+
+        var operations = await query
                 .Include(o => o.Type)
                 .Include(o => o.Wallet)
                 .Where(o => o.Date >= startDate && o.Date <= endDate)
