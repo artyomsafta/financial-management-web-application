@@ -1,0 +1,114 @@
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Task11_DotNETBackendWebApi.Data;
+using Task11_DotNETBackendWebApi.Data.Entities;
+using Task11_DotNETBackendWebApi.Helpers.Enums;
+using Task11_DotNETBackendWebApi.Models.DTOs;
+using Task11_DotNETBackendWebApi.Services;
+using Task11_DotNETBackendWebApi.Services.Contracts;
+
+namespace Task11_DotNETBackendWebApiUnitTests;
+
+[TestClass]
+public class GroupGetMethodsUnitTests
+{
+    private DbContextOptions<AppDbContext> _options;
+    private AppDbContext _context;
+    private Mock<IUserContext> _userContextMock;
+    private Mock<ILogger<UserService>> _loggerMock;
+    private UserService _userService;
+
+    private static readonly Guid AdminUserId = Guid.NewGuid();
+    private static readonly Guid User1Id = Guid.NewGuid();
+    private static readonly Guid User2Id = Guid.NewGuid();
+
+    private static readonly Guid UserNotFoundId = Guid.NewGuid();
+
+    [TestInitialize]
+    public void Setup()
+    {
+        _options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        _context = new AppDbContext(_options);
+        _userContextMock = new Mock<IUserContext>();
+        _loggerMock = new Mock<ILogger<UserService>>();
+        _userService = new UserService(_context, _userContextMock.Object, _loggerMock.Object);
+
+        this.SeedMockDb();
+    }
+
+    private void SeedMockDb()
+    {
+        using (var context = new AppDbContext(_options))
+        {
+            var adminUser = new User { Id = AdminUserId, Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__", Role = nameof(UserRoles.Admin), IsDeleted = false };
+            var user1 = new User { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User), IsDeleted = false };
+            var user2 = new User { Id = User2Id, Username = "user2", Role = nameof(UserRoles.User), IsDeleted = false };
+
+            context.Users.AddRange(adminUser, user1, user2);
+            context.SaveChanges();
+        }
+    }
+
+    [TestMethod]
+    public async Task Test_GetAllAsync_PositiveCases()
+    {
+        var users = await _userService.GetAllAsync();
+        Assert.HasCount(3, users.ToList());
+        Assert.IsTrue(users.Any(u => u.Username == "admin"));
+        Assert.IsTrue(users.Any(u => u.Username == "user1"));
+        Assert.IsTrue(users.Any(u => u.Username == "user2"));
+    }
+
+    [TestMethod]
+    public async Task Test_GetByIdAsync_PositiveAdminCase()
+    {
+        _userContextMock.Setup(с => с.IsAdmin).Returns(true);
+        var expectedUser = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) };
+        var actualUser = await _userService.GetByIdAsync(User1Id);
+
+        actualUser.Should().BeEquivalentTo(expectedUser);
+    }
+
+    [TestMethod]
+    public async Task Test_GetByIdAsync_PositiveUserCase()
+    {
+        _userContextMock.Setup(с => с.IsAdmin).Returns(false);
+        _userContextMock.Setup(c => c.UserId).Returns(User1Id);
+        var expectedUser = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) };
+        var actualUser = await _userService.GetByIdAsync(User1Id);
+
+        actualUser.Should().BeEquivalentTo(expectedUser);
+    }
+
+    [TestMethod]
+    public async Task Test_GetByIdAsync_UserNotFoundCase()
+    {
+        _userContextMock.Setup(c => c.UserId).Returns(UserNotFoundId);
+        var nullUser = await _userService.GetByIdAsync(UserNotFoundId);
+
+        nullUser.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Test_GetByIdAsync_UnauthorizedCase()
+    {
+        _userContextMock.Setup(с => с.IsAdmin).Returns(false);
+        _userContextMock.Setup(c => c.UserId).Returns(User1Id);
+
+        var expectedErrorMessage = "Access denied";
+
+        try
+        {
+            var wrongUser = await _userService.GetByIdAsync(User2Id);
+            Assert.Fail("Expected Exception was not thrown.");
+        }
+        catch (UnauthorizedAccessException actualError)
+        {
+            Assert.AreEqual(expectedErrorMessage, actualError.Message);
+        }
+    }
+}
