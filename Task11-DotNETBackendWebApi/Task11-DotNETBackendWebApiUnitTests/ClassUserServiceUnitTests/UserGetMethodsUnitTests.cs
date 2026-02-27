@@ -9,10 +9,10 @@ using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
-namespace Task11_DotNETBackendWebApiUnitTests;
+namespace Task11_DotNETBackendWebApiUnitTests.ClassUserServiceUnitTests;
 
 [TestClass]
-public class GroupGetMethodsUnitTests
+public class UserGetMethodsUnitTests
 {
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
@@ -23,6 +23,7 @@ public class GroupGetMethodsUnitTests
     private static readonly Guid AdminUserId = Guid.NewGuid();
     private static readonly Guid User1Id = Guid.NewGuid();
     private static readonly Guid User2Id = Guid.NewGuid();
+    private static readonly Guid User3Id = Guid.NewGuid();
 
     private static readonly Guid UserNotFoundId = Guid.NewGuid();
 
@@ -47,8 +48,9 @@ public class GroupGetMethodsUnitTests
             var adminUser = new User { Id = AdminUserId, Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__", Role = nameof(UserRoles.Admin), IsDeleted = false };
             var user1 = new User { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User), IsDeleted = false };
             var user2 = new User { Id = User2Id, Username = "user2", Role = nameof(UserRoles.User), IsDeleted = false };
+            var user3 = new User { Id = User3Id, Username = "DELETED", Role = nameof(UserRoles.User), IsDeleted = true };
 
-            context.Users.AddRange(adminUser, user1, user2);
+            context.Users.AddRange(adminUser, user1, user2, user3);
             context.SaveChanges();
         }
     }
@@ -61,12 +63,14 @@ public class GroupGetMethodsUnitTests
         Assert.IsTrue(users.Any(u => u.Username == "admin"));
         Assert.IsTrue(users.Any(u => u.Username == "user1"));
         Assert.IsTrue(users.Any(u => u.Username == "user2"));
+        Assert.IsFalse(users.Any(u => u.Username == "DELETED"));
     }
 
     [TestMethod]
     public async Task Test_GetByIdAsync_PositiveAdminCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
+
         var expectedUser = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) };
         var actualUser = await _userService.GetByIdAsync(User1Id);
 
@@ -78,6 +82,7 @@ public class GroupGetMethodsUnitTests
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
+
         var expectedUser = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) };
         var actualUser = await _userService.GetByIdAsync(User1Id);
 

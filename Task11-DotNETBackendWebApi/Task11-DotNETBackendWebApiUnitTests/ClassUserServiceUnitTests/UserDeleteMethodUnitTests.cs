@@ -8,10 +8,10 @@ using Task11_DotNETBackendWebApi.Helpers.Enums;
 using Task11_DotNETBackendWebApi.Services;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
-namespace Task11_DotNETBackendWebApiUnitTests;
+namespace Task11_DotNETBackendWebApiUnitTests.ClassUserServiceUnitTests;
 
 [TestClass]
-public class GroupDeleteMethodUnitTests
+public class UserDeleteMethodUnitTests
 {
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
@@ -67,8 +67,8 @@ public class GroupDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var userId = User1Id;
 
-        var isDeletSuccess = await _userService.SoftDeleteAsync(userId);
-        isDeletSuccess.Should().BeTrue();
+        var isDeleteSuccess = await _userService.SoftDeleteAsync(userId);
+        isDeleteSuccess.Should().BeTrue();
 
         var deletedUser = await _context.Users.FindAsync(userId);
         deletedUser.IsDeleted.Should().BeTrue();
@@ -81,8 +81,8 @@ public class GroupDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var userId = User1Id;
 
-        var isDeletSuccess = await _userService.SoftDeleteAsync(userId);
-        isDeletSuccess.Should().BeTrue();
+        var isDeleteSuccess = await _userService.SoftDeleteAsync(userId);
+        isDeleteSuccess.Should().BeTrue();
 
         var deletedUser = await _context.Users.FindAsync(userId);
         deletedUser.IsDeleted.Should().BeTrue();
@@ -94,8 +94,8 @@ public class GroupDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var userId = User3Id;
 
-        var isDeletSuccess = await _userService.SoftDeleteAsync(userId);
-        isDeletSuccess.Should().BeTrue();
+        var isDeleteSuccess = await _userService.SoftDeleteAsync(userId);
+        isDeleteSuccess.Should().BeTrue();
 
         var deletedUser = await _context.Users.FindAsync(userId);
         deletedUser.IsDeleted.Should().BeTrue();
@@ -107,8 +107,8 @@ public class GroupDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var userId = UserNotFoundId;
 
-        var isDeletSuccess = await _userService.SoftDeleteAsync(userId);
-        isDeletSuccess.Should().BeFalse();
+        var isDeleteSuccess = await _userService.SoftDeleteAsync(userId);
+        isDeleteSuccess.Should().BeFalse();
     }
 
     [TestMethod]
@@ -122,7 +122,7 @@ public class GroupDeleteMethodUnitTests
 
         try
         {
-            var isDeletSuccess = await _userService.SoftDeleteAsync(userId);
+            var isDeleteSuccess = await _userService.SoftDeleteAsync(userId);
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (UnauthorizedAccessException actualError)
@@ -142,7 +142,7 @@ public class GroupDeleteMethodUnitTests
 
         try
         {
-            var isDeletSuccess = await _userService.SoftDeleteAsync(userId);
+            var isDeleteSuccess = await _userService.SoftDeleteAsync(userId);
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (InvalidOperationException actualError)

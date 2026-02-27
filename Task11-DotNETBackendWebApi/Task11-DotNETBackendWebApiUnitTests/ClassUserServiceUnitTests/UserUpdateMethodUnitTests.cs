@@ -10,10 +10,10 @@ using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
-namespace Task11_DotNETBackendWebApiUnitTests;
+namespace Task11_DotNETBackendWebApiUnitTests.ClassUserServiceUnitTests;
 
 [TestClass]
-public class GroupUpdateMethodUnitTests
+public class UserUpdateMethodUnitTests
 {
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;

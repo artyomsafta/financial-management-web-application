@@ -13,8 +13,8 @@ public class WalletService : IWalletService
 {
     private readonly AppDbContext _context;
     private readonly IUserContext _userContext;
-    private readonly ILogger<UserService> _logger;
-    public WalletService(AppDbContext context, IUserContext userContext, ILogger<UserService> logger)
+    private readonly ILogger<WalletService> _logger;
+    public WalletService(AppDbContext context, IUserContext userContext, ILogger<WalletService> logger)
     {
         _context = context;
         _userContext = userContext;
@@ -72,7 +72,7 @@ public class WalletService : IWalletService
 
         request.BaseCurrency.EnsureCurrencyIsValid();
 
-        if (request.BaseCurrency != (nameof(Currencies.UAH)))
+        if (request.BaseCurrency.Trim().ToUpper() != (nameof(Currencies.UAH)))
         {
             throw new InvalidOperationException("Currently, the base currency of the wallet can only be UAH");
         }
@@ -116,7 +116,7 @@ public class WalletService : IWalletService
 
         request.BaseCurrency.EnsureCurrencyIsValid();
 
-        if (request.BaseCurrency != (nameof(Currencies.UAH)))
+        if (request.BaseCurrency.Trim().ToUpper() != (nameof(Currencies.UAH)))
         {
             throw new InvalidOperationException("Currently, the base currency of the wallet can only be UAH");
         }
