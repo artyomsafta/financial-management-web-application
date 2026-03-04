@@ -15,7 +15,7 @@ public class CurrencyRatesService : ICurrencyRatesService
         _configuration = configuration;
     }
 
-    public async Task<decimal> GetRateAsync(string currencyCode, DateTime date)
+    public async Task<CurrencyRateResult> GetRateAsync(string currencyCode, DateTime date)
     {
         try
         {
@@ -23,9 +23,13 @@ public class CurrencyRatesService : ICurrencyRatesService
             var exchangeRates = ratesList
                 .FirstOrDefault(r => string.Equals(r.Currency, currencyCode, StringComparison.OrdinalIgnoreCase));
 
-            if (exchangeRates is not null && exchangeRates.PurchaseRate > 0)
+            if (exchangeRates is not null && exchangeRates.SaleRate > 0 && exchangeRates.PurchaseRate > 0)
             {
-                return Math.Round(exchangeRates.PurchaseRate, 2, MidpointRounding.AwayFromZero);
+                return new CurrencyRateResult
+                {
+                    SaleRate = Math.Round(exchangeRates.SaleRate, 2, MidpointRounding.AwayFromZero),
+                    PurchaseRate = Math.Round(exchangeRates.PurchaseRate, 2, MidpointRounding.AwayFromZero)
+                };
             }
 
             throw new InvalidOperationException($"No exchange rates available for this currency: {currencyCode}");

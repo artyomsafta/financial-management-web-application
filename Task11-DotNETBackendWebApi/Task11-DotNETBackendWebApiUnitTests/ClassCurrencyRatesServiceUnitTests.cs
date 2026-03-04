@@ -38,16 +38,16 @@ public class ClassCurrencyRatesServiceUnitTests
     }
 
     [DataTestMethod]
-    [DataRow("USD", 42.70)]
-    [DataRow("EUR", 50.31)]
-    [DataRow("CHF", 55.75)]
-    [DataRow("usd", 42.70)]
-    [DataRow("eur", 50.31)]
-    [DataRow("chf", 55.75)]
-    [DataRow("Usd", 42.70)]
-    [DataRow("Eur", 50.31)]
-    [DataRow("Chf", 55.75)]
-    public async Task Test_GetRateAsync_PositiveCases(string currency, double purchaseRate)
+    [DataRow("USD", 43.30, 42.70)]
+    [DataRow("EUR", 51.30, 50.31)]
+    [DataRow("CHF", 58.30, 55.75)]
+    [DataRow("usd", 43.30, 42.70)]
+    [DataRow("eur", 51.30, 50.31)]
+    [DataRow("chf", 58.30, 55.75)]
+    [DataRow("Usd", 43.30, 42.70)]
+    [DataRow("Eur", 51.30, 50.31)]
+    [DataRow("Chf", 58.30, 55.75)]
+    public async Task Test_GetRateAsync_PositiveCases(string currency, double saleRate, double purchaseRate)
     {
         var mockJson = """
         {
@@ -74,7 +74,8 @@ public class ClassCurrencyRatesServiceUnitTests
 
         var result = await service.GetRateAsync(currency, new DateTime(2026, 3, 1));
 
-        result.Should().Be((decimal)purchaseRate);
+        result.SaleRate.Should().Be((decimal)saleRate);
+        result.PurchaseRate.Should().Be((decimal)purchaseRate);
     }
 
     [DataTestMethod]

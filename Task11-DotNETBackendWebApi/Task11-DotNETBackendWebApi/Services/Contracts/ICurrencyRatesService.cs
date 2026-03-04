@@ -1,6 +1,8 @@
-﻿namespace Task11_DotNETBackendWebApi.Services.Contracts;
+﻿using Task11_DotNETBackendWebApi.Models.DTOs;
+
+namespace Task11_DotNETBackendWebApi.Services.Contracts;
 
 public interface ICurrencyRatesService
 {
-    Task<decimal> GetRateAsync(string currencyCode, DateTime date);
+    Task<CurrencyRateResult> GetRateAsync(string currencyCode, DateTime date);
 }

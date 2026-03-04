@@ -87,12 +87,12 @@ public class FinancialOperationService : IFinancialOperationService
 
         var currentCurrency = request.CurrentCurrency.Trim().ToUpper();
 
-        var finalAmount = await CalculateAmount(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date);
-
         var isIncomeOperation = await _context.FinancialTypes
             .Where(t => t.Id == request.TypeId)
             .Select(t => t.IsIncome)
             .FirstOrDefaultAsync();
+
+        var finalAmount = await CalculateAmount(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date, isIncomeOperation);
 
         if (!isIncomeOperation)
         {
@@ -169,12 +169,12 @@ public class FinancialOperationService : IFinancialOperationService
 
         var currentCurrency = request.CurrentCurrency.Trim().ToUpper();
 
-        var finalAmount = await CalculateAmount(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date);
-
         var isIncomeOperation = await _context.FinancialTypes
             .Where(t => t.Id == operation.FinancialTypeId)
             .Select(t => t.IsIncome)
             .FirstOrDefaultAsync();
+
+        var finalAmount = await CalculateAmount(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date, isIncomeOperation);
 
         if (isIncomeOperation)
         {
@@ -318,11 +318,12 @@ public class FinancialOperationService : IFinancialOperationService
         };
     }
 
-    private async Task<decimal> CalculateAmount(decimal requestAmount, string baseCurrency, string currentCurrency, DateTime requestDate)
+    private async Task<decimal> CalculateAmount(decimal requestAmount, string baseCurrency, string currentCurrency, DateTime requestDate, bool IsIncome)
     {
         if (baseCurrency != currentCurrency)
         {
-            var rate = await _currencyRatesService.GetRateAsync(currentCurrency, requestDate);
+            var currencyRates = await _currencyRatesService.GetRateAsync(currentCurrency, requestDate);
+            var rate = IsIncome ? currencyRates.PurchaseRate : currencyRates.SaleRate;
             requestAmount *= rate;
         }
 
