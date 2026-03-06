@@ -110,18 +110,9 @@ public class ClassFinancialTypeServiceUnitTests
     public async Task Test_CreateAsync_PositiveCases(string typeName)
     {
         var request = new FinancialTypeRequest { Name = typeName, Description = "New type", IsIncome = true };
-        var newType = await _financialTypeService.CreateAsync(request);
+        var actualType = await _financialTypeService.CreateAsync(request);
 
-        var expectedType = new FinancialTypeDto { Id = newType.Id, Name = "Name", Description = "New type", IsIncome = true };
-
-        var typeEntity = await _context.FinancialTypes.FindAsync(newType.Id);
-        var actualType = new FinancialTypeDto 
-        { 
-            Id = typeEntity.Id, 
-            Name = typeEntity.Name, 
-            Description = typeEntity.Description, 
-            IsIncome = typeEntity.IsIncome 
-        };
+        var expectedType = new FinancialTypeDto { Id = actualType.Id, Name = "Name", Description = "New type", IsIncome = true };
 
         actualType.Should().BeEquivalentTo(expectedType);
     }

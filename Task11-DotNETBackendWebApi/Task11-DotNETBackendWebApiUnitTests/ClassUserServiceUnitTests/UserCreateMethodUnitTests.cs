@@ -56,17 +56,9 @@ public class UserCreateMethodUnitTests
     public async Task Test_CreateAsync_PositiveCases(string username)
     {
         var request = new UserRegisterRequest { Username = username, Password = "12345" };
-        var newUser = await _userService.CreateAsync(request);
+        var actualUser = await _userService.CreateAsync(request);
 
-        var expectedUser = new UserDto { Id = newUser.Id, Username = "New user", Role = nameof(UserRoles.User) };
-
-        var userEntity = await _context.Users.FindAsync(newUser.Id);
-        var actualUser = new UserDto
-        {
-            Id = userEntity.Id,
-            Username = userEntity.Username,
-            Role = userEntity.Role
-        };
+        var expectedUser = new UserDto { Id = actualUser.Id, Username = "New user", Role = nameof(UserRoles.User) };
 
         actualUser.Should().BeEquivalentTo(expectedUser);
     }

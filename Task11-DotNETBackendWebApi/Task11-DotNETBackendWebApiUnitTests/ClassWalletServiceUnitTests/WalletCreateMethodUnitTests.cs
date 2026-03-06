@@ -64,26 +64,16 @@ public class WalletCreateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var request = new WalletRequest { UserId = User1Id, Name = walletName, BaseCurrency = baseCurrency };
-        var newWallet = await _walletService.CreateAsync(request);
+        var actualWallet = await _walletService.CreateAsync(request);
 
         var expectedWallet = new WalletDto 
         { 
-            Id = newWallet.Id, 
+            Id = actualWallet.Id, 
             Name = "user1 wallet", 
             Balance = 0m, 
             BaseCurrency = nameof(Currencies.UAH), 
             UserId = User1Id,
             Username = "user1"
-        };
-
-        var actualWallet = new WalletDto
-        {
-            Id = newWallet.Id,
-            Name = newWallet.Name,
-            Balance = newWallet.Balance,
-            BaseCurrency = newWallet.BaseCurrency,
-            UserId = newWallet.UserId,
-            Username = newWallet.Username
         };
 
         actualWallet.Should().BeEquivalentTo(expectedWallet);
@@ -96,26 +86,16 @@ public class WalletCreateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
         var request = new WalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = nameof(Currencies.UAH) };
-        var newWallet = await _walletService.CreateAsync(request);
+        var actualWallet = await _walletService.CreateAsync(request);
 
         var expectedWallet = new WalletDto
         {
-            Id = newWallet.Id,
+            Id = actualWallet.Id,
             Name = "user1 wallet",
             Balance = 0m,
             BaseCurrency = nameof(Currencies.UAH),
             UserId = User1Id,
             Username = "user1"
-        };
-
-        var actualWallet = new WalletDto
-        {
-            Id = newWallet.Id,
-            Name = newWallet.Name,
-            Balance = newWallet.Balance,
-            BaseCurrency = newWallet.BaseCurrency,
-            UserId = newWallet.UserId,
-            Username = newWallet.Username
         };
 
         actualWallet.Should().BeEquivalentTo(expectedWallet);
