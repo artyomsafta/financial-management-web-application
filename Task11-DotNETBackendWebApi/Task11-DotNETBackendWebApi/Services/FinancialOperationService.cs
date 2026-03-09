@@ -179,14 +179,20 @@ public class FinancialOperationService : IFinancialOperationService
         if (isIncomeOperation)
         {
             wallet.Balance -= operation.Amount;
+
+            if ((wallet.Balance + finalAmount) < 0)
+            {
+                throw new InvalidOperationException("Operation aborted due to insufficient balance in the wallet");
+            }
         }
         else
         {
             wallet.Balance += operation.Amount;
-        }
-        if (wallet.Balance < finalAmount)
-        {
-            throw new InvalidOperationException("Operation aborted due to insufficient balance in the wallet");
+            
+            if (wallet.Balance < finalAmount)
+            {
+                throw new InvalidOperationException("Operation aborted due to insufficient balance in the wallet");
+            }
         }
 
         operation.Amount = finalAmount;

@@ -362,7 +362,7 @@ public class OperationCreateMethodUnitTests
     }
 
     [TestMethod]
-    public async Task Test_CreateAsync_WalletDeletedCase()
+    public async Task Test_CreateAsync_WalletIsDeletedCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
