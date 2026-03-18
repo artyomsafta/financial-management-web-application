@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Task11_DotNETBackendWebApi.Helpers.Enums;
 using Task11_DotNETBackendWebApi.Models;
@@ -8,7 +9,8 @@ using Task11_DotNETBackendWebApi.Services.Contracts;
 namespace Task11_DotNETBackendWebApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Authorize]
 public class UsersController : ControllerBase
 {
@@ -19,16 +21,16 @@ public class UsersController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet("all-users")]
+    [HttpGet("list")]
     [Authorize(Roles = nameof(UserRoles.Admin))]
-    public async Task<ActionResult<IEnumerable<UserDto>>> GetAll()
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetList()
     {
-        var users = await _userService.GetAllAsync();
+        var users = await _userService.GetListAsync();
         return Ok(users);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<UserDto>> GetById(Guid id)
+    public async Task<ActionResult<UserDto>> GetById([FromRoute] Guid id)
     {
         try
         {
@@ -62,7 +64,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UserRegisterRequest request)
+    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UserRegisterRequest request)
     {
         try
         {
@@ -85,11 +87,11 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
         try
         {
-            var isDeleted = await _userService.SoftDeleteAsync(id);
+            var isDeleted = await _userService.DeleteAsync(id);
             if (!isDeleted)
             {
                 return NotFound();

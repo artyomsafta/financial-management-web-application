@@ -23,7 +23,7 @@ public class FinancialOperationService : IFinancialOperationService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<FinancialOperationDto>> GetAllAsync()
+    public async Task<IEnumerable<FinancialOperationDto>> GetListAsync()
     {
         var query = _context.FinancialOperations.AsQueryable();
 
@@ -40,8 +40,8 @@ public class FinancialOperationService : IFinancialOperationService
                 Id = o.Id,
                 Amount = o.Amount,
                 Date = o.Date,
-                CurrentCurrency = o.CurrentCurrency,
-                TransactionComment = o.TransactionComment,
+                Currency = o.Currency,
+                Comment = o.Comment,
                 Note = o.Note,
                 TypeId = o.FinancialTypeId,
                 TypeName = o.Type.Name,
@@ -92,7 +92,7 @@ public class FinancialOperationService : IFinancialOperationService
             .Select(t => t.IsIncome)
             .FirstOrDefaultAsync();
 
-        var finalAmount = await CalculateAmount(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date, isIncomeOperation);
+        var finalAmount = await CalculateAmountAsync(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date, isIncomeOperation);
 
         if (!isIncomeOperation)
         {
@@ -107,8 +107,8 @@ public class FinancialOperationService : IFinancialOperationService
             Id = Guid.NewGuid(),
             Amount = finalAmount,
             Date = request.Date,
-            CurrentCurrency = currentCurrency,
-            TransactionComment = $"The amount in the transaction currency is {request.Amount:F2} {currentCurrency}",
+            Currency = currentCurrency,
+            Comment = $"The amount in the transaction currency is {request.Amount:F2} {currentCurrency}",
             Note = request.Note.Trim(),
             IsDeleted = false,
             FinancialTypeId = request.TypeId,
@@ -174,7 +174,7 @@ public class FinancialOperationService : IFinancialOperationService
             .Select(t => t.IsIncome)
             .FirstOrDefaultAsync();
 
-        var finalAmount = await CalculateAmount(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date, isIncomeOperation);
+        var finalAmount = await CalculateAmountAsync(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date, isIncomeOperation);
 
         if (isIncomeOperation)
         {
@@ -197,8 +197,8 @@ public class FinancialOperationService : IFinancialOperationService
 
         operation.Amount = finalAmount;
         operation.Date = request.Date;
-        operation.CurrentCurrency = currentCurrency;
-        operation.TransactionComment = $"The amount in the transaction currency is {request.Amount:F2} {currentCurrency}";
+        operation.Currency = currentCurrency;
+        operation.Comment = $"The amount in the transaction currency is {request.Amount:F2} {currentCurrency}";
         operation.Note = request.Note.Trim();
 
         wallet.Balance += (isIncomeOperation ? finalAmount : -finalAmount);
@@ -218,7 +218,7 @@ public class FinancialOperationService : IFinancialOperationService
         }
     }
 
-    public async Task<bool> SoftDeleteAsync(Guid id)
+    public async Task<bool> DleteAsync(Guid id)
     {
         var operation = await _context.FinancialOperations.FindAsync(id);
         if (operation is null)
@@ -311,8 +311,8 @@ public class FinancialOperationService : IFinancialOperationService
                     Id = o.Id,
                     Amount = o.Amount,
                     Date = o.Date,
-                    CurrentCurrency = o.CurrentCurrency,
-                    TransactionComment = o.TransactionComment,
+                    Currency = o.Currency,
+                    Comment = o.Comment,
                     Note = o.Note,
                     TypeId = o.FinancialTypeId,
                     TypeName = o.Type.Name,
@@ -324,7 +324,7 @@ public class FinancialOperationService : IFinancialOperationService
         };
     }
 
-    private async Task<decimal> CalculateAmount(decimal requestAmount, string baseCurrency, string currentCurrency, DateTime requestDate, bool IsIncome)
+    private async Task<decimal> CalculateAmountAsync(decimal requestAmount, string baseCurrency, string currentCurrency, DateTime requestDate, bool IsIncome)
     {
         if (baseCurrency != currentCurrency)
         {
@@ -343,8 +343,8 @@ public class FinancialOperationService : IFinancialOperationService
             Id = operation.Id,
             Amount = operation.Amount,
             Date = operation.Date,
-            CurrentCurrency = operation.CurrentCurrency,
-            TransactionComment = operation.TransactionComment,
+            Currency = operation.Currency,
+            Comment = operation.Comment,
             Note = operation.Note,
             TypeId = operation.FinancialTypeId,
             TypeName = operation.Type.Name,

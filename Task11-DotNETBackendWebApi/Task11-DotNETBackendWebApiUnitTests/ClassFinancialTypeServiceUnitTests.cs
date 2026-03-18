@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
+using Task11_DotNETBackendWebApi.Helpers.Enums;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services;
@@ -52,6 +53,7 @@ public class ClassFinancialTypeServiceUnitTests
                 Id = Guid.NewGuid(),
                 Amount = 10_000,
                 Date = DateTime.UtcNow,
+                Currency = nameof(Currencies.UAH),
                 Note = "existing operation. You can't delete my type!",
                 IsDeleted = false,
                 FinancialTypeId = Type1Id,
@@ -63,6 +65,7 @@ public class ClassFinancialTypeServiceUnitTests
                 Id = Guid.NewGuid(),
                 Amount = 250,
                 Date = DateTime.UtcNow,
+                Currency = nameof(Currencies.UAH),
                 Note = "deleted operation for positive tests",
                 IsDeleted = true,
                 FinancialTypeId = Type2Id,
@@ -76,9 +79,9 @@ public class ClassFinancialTypeServiceUnitTests
     }
 
     [TestMethod]
-    public async Task Test_GetAllAsync_PositiveCases()
+    public async Task Test_GetListAsync_PositiveCases()
     {
-        var types = await _financialTypeService.GetAllAsync();
+        var types = await _financialTypeService.GetListAsync();
         Assert.HasCount(3, types.ToList());
         Assert.IsTrue(types.Any(t => t.Name == "Salary"));
         Assert.IsTrue(types.Any(t => t.Name == "Groceries"));
@@ -212,11 +215,11 @@ public class ClassFinancialTypeServiceUnitTests
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_PositiveCase()
+    public async Task Test_DeleteAsync_PositiveCase()
     {
         var typeId = Type2Id;
 
-        var isDeleteSuccess = await _financialTypeService.SoftDeleteAsync(typeId);
+        var isDeleteSuccess = await _financialTypeService.DeleteAsync(typeId);
         isDeleteSuccess.Should().BeTrue();
 
         var deletedType = await _context.FinancialTypes.FindAsync(typeId);
@@ -224,11 +227,11 @@ public class ClassFinancialTypeServiceUnitTests
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_PositiveCaseHasNoOperations()
+    public async Task Test_DeleteAsync_PositiveCaseHasNoOperations()
     {
         var typeId = Type3Id;
 
-        var isDeleteSuccess = await _financialTypeService.SoftDeleteAsync(typeId);
+        var isDeleteSuccess = await _financialTypeService.DeleteAsync(typeId);
         isDeleteSuccess.Should().BeTrue();
 
         var deletedType = await _context.FinancialTypes.FindAsync(typeId);
@@ -236,16 +239,16 @@ public class ClassFinancialTypeServiceUnitTests
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_TypeNotFoundCase()
+    public async Task Test_DeleteAsync_TypeNotFoundCase()
     {
         var typeId = TypeNotFoundId;
 
-        var isDeleteSuccess = await _financialTypeService.SoftDeleteAsync(typeId);
+        var isDeleteSuccess = await _financialTypeService.DeleteAsync(typeId);
         isDeleteSuccess.Should().BeFalse();
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_TypeHasOperationsCase()
+    public async Task Test_DeleteAsync_TypeHasOperationsCase()
     {
         var typeId = Type1Id;
 
@@ -253,7 +256,7 @@ public class ClassFinancialTypeServiceUnitTests
 
         try
         {
-            var isDeleteSuccess = await _financialTypeService.SoftDeleteAsync(typeId);
+            var isDeleteSuccess = await _financialTypeService.DeleteAsync(typeId);
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (InvalidOperationException actualError)

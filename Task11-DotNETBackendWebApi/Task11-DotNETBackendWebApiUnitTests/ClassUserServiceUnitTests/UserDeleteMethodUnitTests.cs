@@ -62,12 +62,12 @@ public class UserDeleteMethodUnitTests
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_PositiveAdminCase()
+    public async Task Test_DeleteAsync_PositiveAdminCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var userId = User1Id;
 
-        var isDeleteSuccess = await _userService.SoftDeleteAsync(userId);
+        var isDeleteSuccess = await _userService.DeleteAsync(userId);
         isDeleteSuccess.Should().BeTrue();
 
         var deletedUser = await _context.Users.FindAsync(userId);
@@ -75,13 +75,13 @@ public class UserDeleteMethodUnitTests
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_PositiveUserCase()
+    public async Task Test_DeleteAsync_PositiveUserCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var userId = User1Id;
 
-        var isDeleteSuccess = await _userService.SoftDeleteAsync(userId);
+        var isDeleteSuccess = await _userService.DeleteAsync(userId);
         isDeleteSuccess.Should().BeTrue();
 
         var deletedUser = await _context.Users.FindAsync(userId);
@@ -89,12 +89,12 @@ public class UserDeleteMethodUnitTests
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_PositiveCaseHasNoWallets()
+    public async Task Test_DeleteAsync_PositiveCaseHasNoWallets()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var userId = User3Id;
 
-        var isDeleteSuccess = await _userService.SoftDeleteAsync(userId);
+        var isDeleteSuccess = await _userService.DeleteAsync(userId);
         isDeleteSuccess.Should().BeTrue();
 
         var deletedUser = await _context.Users.FindAsync(userId);
@@ -102,17 +102,17 @@ public class UserDeleteMethodUnitTests
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_UserNotFoundCase()
+    public async Task Test_DeleteAsync_UserNotFoundCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var userId = UserNotFoundId;
 
-        var isDeleteSuccess = await _userService.SoftDeleteAsync(userId);
+        var isDeleteSuccess = await _userService.DeleteAsync(userId);
         isDeleteSuccess.Should().BeFalse();
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_UnauthorizedCase()
+    public async Task Test_DeleteAsync_UnauthorizedCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
@@ -122,7 +122,7 @@ public class UserDeleteMethodUnitTests
 
         try
         {
-            var isDeleteSuccess = await _userService.SoftDeleteAsync(userId);
+            var isDeleteSuccess = await _userService.DeleteAsync(userId);
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (UnauthorizedAccessException actualError)
@@ -132,7 +132,7 @@ public class UserDeleteMethodUnitTests
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_UserHasWalletsCase()
+    public async Task Test_DeleteAsync_UserHasWalletsCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
@@ -142,7 +142,7 @@ public class UserDeleteMethodUnitTests
 
         try
         {
-            var isDeleteSuccess = await _userService.SoftDeleteAsync(userId);
+            var isDeleteSuccess = await _userService.DeleteAsync(userId);
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (InvalidOperationException actualError)

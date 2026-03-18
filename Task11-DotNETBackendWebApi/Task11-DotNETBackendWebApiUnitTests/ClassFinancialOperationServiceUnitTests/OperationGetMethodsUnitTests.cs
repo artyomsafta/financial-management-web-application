@@ -67,13 +67,13 @@ public class OperationGetMethodsUnitTests
             var type1 = new FinancialType { Id = Type1Id, Name = "Salary", Description = "Monthly salary", IsIncome = true, IsDeleted = false };
 
             var walletAdminOperation = new FinancialOperation
-            { Id = AdminOperationId, Amount = 250, Date = new DateTime(2026, 3, 1), Note = "walletAdmin operation", IsDeleted = false, FinancialTypeId = Type1Id, WalletId = AdminWalletId };
+            { Id = AdminOperationId, Amount = 250, Date = new DateTime(2026, 3, 1), Currency = nameof(Currencies.UAH), Note = "walletAdmin operation", IsDeleted = false, FinancialTypeId = Type1Id, WalletId = AdminWalletId };
             var wallet1Operation = new FinancialOperation
-            { Id = Wallet1OperationId, Amount = 150, Date = new DateTime(2026, 3, 1), Note = "wallet1 operation", IsDeleted = false, FinancialTypeId = Type1Id, WalletId = Wallet1Id };
+            { Id = Wallet1OperationId, Amount = 150, Date = new DateTime(2026, 3, 1), Currency = nameof(Currencies.UAH), Note = "wallet1 operation", IsDeleted = false, FinancialTypeId = Type1Id, WalletId = Wallet1Id };
             var wallet2Operation = new FinancialOperation
-            { Id = Wallet2OperationId, Amount = 120, Date = new DateTime(2026, 3, 1), Note = "wallet2 operation", IsDeleted = false, FinancialTypeId = Type1Id, WalletId = Wallet2Id };
+            { Id = Wallet2OperationId, Amount = 120, Date = new DateTime(2026, 3, 1), Currency = nameof(Currencies.UAH), Note = "wallet2 operation", IsDeleted = false, FinancialTypeId = Type1Id, WalletId = Wallet2Id };
             var deletedOperation = new FinancialOperation
-            { Id = DeletedOperationId, Amount = 300, Date = new DateTime(2026, 3, 1), Note = "deleted operation", IsDeleted = true, FinancialTypeId = Type1Id, WalletId = Wallet2Id };
+            { Id = DeletedOperationId, Amount = 300, Date = new DateTime(2026, 3, 1), Currency = nameof(Currencies.UAH), Note = "deleted operation", IsDeleted = true, FinancialTypeId = Type1Id, WalletId = Wallet2Id };
 
             context.Users.AddRange(adminUser, user1, user2);
             context.Wallets.AddRange(adminWallet, wallet1, wallet2);
@@ -84,11 +84,11 @@ public class OperationGetMethodsUnitTests
     }
 
     [TestMethod]
-    public async Task Test_GetAllAsync_PositiveAdminCases()
+    public async Task Test_GetListAsync_PositiveAdminCases()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
-        var operations = await _operationService.GetAllAsync();
+        var operations = await _operationService.GetListAsync();
         Assert.HasCount(3, operations.ToList());
         Assert.IsTrue(operations.Any(o => o.Note == "walletAdmin operation"));
         Assert.IsTrue(operations.Any(o => o.Note == "wallet1 operation"));
@@ -97,12 +97,12 @@ public class OperationGetMethodsUnitTests
     }
 
     [TestMethod]
-    public async Task Test_GetAllAsync_PositiveUserCases()
+    public async Task Test_GetListAsync_PositiveUserCases()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
-        var operations = await _operationService.GetAllAsync();
+        var operations = await _operationService.GetListAsync();
         Assert.HasCount(1, operations.ToList());
         Assert.IsTrue(operations.Any(o => o.Note == "wallet1 operation"));
     }
@@ -117,7 +117,7 @@ public class OperationGetMethodsUnitTests
             Id = Wallet1OperationId,
             Amount = 150,
             Date = new DateTime(2026, 3, 1),
-            CurrentCurrency = nameof(Currencies.UAH),
+            Currency = nameof(Currencies.UAH),
             Note = "wallet1 operation",
             TypeId = Type1Id,
             TypeName = "Salary",
@@ -140,7 +140,7 @@ public class OperationGetMethodsUnitTests
             Id = Wallet1OperationId,
             Amount = 150,
             Date = new DateTime(2026, 3, 1),
-            CurrentCurrency = nameof(Currencies.UAH),
+            Currency = nameof(Currencies.UAH),
             Note = "wallet1 operation",
             TypeId = Type1Id,
             TypeName = "Salary",

@@ -69,7 +69,7 @@ public class OperationDeleteMethodUnitTests
                 Id = Wallet1OperationId,
                 Amount = 50_000m,
                 Date = new DateTime(2026, 3, 8),
-                CurrentCurrency = nameof(Currencies.USD),
+                Currency = nameof(Currencies.USD),
                 Note = "wallet1 income operation",
                 IsDeleted = false,
                 FinancialTypeId = Type1Id,
@@ -81,7 +81,7 @@ public class OperationDeleteMethodUnitTests
                 Id = Wallet2Operation1Id,
                 Amount = 30_000m,
                 Date = new DateTime(2026, 3, 7),
-                CurrentCurrency = nameof(Currencies.USD),
+                Currency = nameof(Currencies.USD),
                 Note = "wallet2 income operation",
                 IsDeleted = false,
                 FinancialTypeId = Type1Id,
@@ -93,7 +93,7 @@ public class OperationDeleteMethodUnitTests
                 Id = Wallet2Operation2Id,
                 Amount = 10_000m,
                 Date = new DateTime(2026, 3, 8),
-                CurrentCurrency = nameof(Currencies.USD),
+                Currency = nameof(Currencies.USD),
                 Note = "wallet2 expence operation",
                 IsDeleted = false,
                 FinancialTypeId = Type2Id,
@@ -105,7 +105,7 @@ public class OperationDeleteMethodUnitTests
                 Id = Wallet2Operation3Id,
                 Amount = 15_000m,
                 Date = new DateTime(2026, 3, 7),
-                CurrentCurrency = nameof(Currencies.USD),
+                Currency = nameof(Currencies.USD),
                 Note = "wallet2 deleted operation",
                 IsDeleted = true,
                 FinancialTypeId = Type2Id,
@@ -121,12 +121,12 @@ public class OperationDeleteMethodUnitTests
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_PositiveAdminCase()
+    public async Task Test_DeleteAsync_PositiveAdminCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var operationId = Wallet1OperationId;
 
-        var isDeleteSuccess = await _operationService.SoftDeleteAsync(operationId);
+        var isDeleteSuccess = await _operationService.DleteAsync(operationId);
         isDeleteSuccess.Should().BeTrue();
 
         var deletedOperation = await _context.FinancialOperations.FindAsync(operationId);
@@ -141,13 +141,13 @@ public class OperationDeleteMethodUnitTests
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_PositiveUserCase()
+    public async Task Test_DeleteAsync_PositiveUserCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var operationId = Wallet1OperationId;
 
-        var isDeleteSuccess = await _operationService.SoftDeleteAsync(operationId);
+        var isDeleteSuccess = await _operationService.DleteAsync(operationId);
         isDeleteSuccess.Should().BeTrue();
 
         var deletedOperation = await _context.FinancialOperations.FindAsync(operationId);
@@ -162,28 +162,28 @@ public class OperationDeleteMethodUnitTests
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_OperationNotFoundCase()
+    public async Task Test_DeleteAsync_OperationNotFoundCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var operationId = OperationNotFoundId;
 
-        var isDeleteSuccess = await _operationService.SoftDeleteAsync(operationId);
+        var isDeleteSuccess = await _operationService.DleteAsync(operationId);
         isDeleteSuccess.Should().BeFalse();
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_OperationAlreadyDeletedCase()
+    public async Task Test_DeleteAsync_OperationAlreadyDeletedCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
         var operationId = Wallet2Operation3Id;
 
-        var isDeleteSuccess = await _operationService.SoftDeleteAsync(operationId);
+        var isDeleteSuccess = await _operationService.DleteAsync(operationId);
         isDeleteSuccess.Should().BeFalse();
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_UnauthorizedCase()
+    public async Task Test_DeleteAsync_UnauthorizedCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
@@ -193,7 +193,7 @@ public class OperationDeleteMethodUnitTests
 
         try
         {
-            var isDeleteSuccess = await _operationService.SoftDeleteAsync(operationId);
+            var isDeleteSuccess = await _operationService.DleteAsync(operationId);
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (UnauthorizedAccessException actualError)
@@ -203,7 +203,7 @@ public class OperationDeleteMethodUnitTests
     }
 
     [TestMethod]
-    public async Task Test_SoftDeleteAsync_NegativeWalletBalanceCase()
+    public async Task Test_DeleteAsync_NegativeWalletBalanceCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
@@ -213,7 +213,7 @@ public class OperationDeleteMethodUnitTests
 
         try
         {
-            var isDeleteSuccess = await _operationService.SoftDeleteAsync(operationId);
+            var isDeleteSuccess = await _operationService.DleteAsync(operationId);
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (InvalidOperationException actualError)

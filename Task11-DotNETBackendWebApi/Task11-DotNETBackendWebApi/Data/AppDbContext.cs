@@ -72,11 +72,11 @@ public class AppDbContext : DbContext
                 .HasColumnType("datetime2")
                 .HasColumnName("DATE");
 
-            entity.Property(e => e.CurrentCurrency)
+            entity.Property(e => e.Currency)
                 .IsRequired()
                 .HasColumnName("CURRENT_CURRENCY");
 
-            entity.Property(e => e.TransactionComment)
+            entity.Property(e => e.Comment)
                 .HasMaxLength(255)
                 .HasColumnName("TRANSACTION_COMMENT");
 

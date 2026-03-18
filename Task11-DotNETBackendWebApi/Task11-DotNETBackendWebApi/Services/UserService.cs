@@ -24,7 +24,7 @@ public class UserService : IUserService
         _passwordHasher = new PasswordHasher<User>();
     }
 
-    public async Task<IEnumerable<UserDto>> GetAllAsync()
+    public async Task<IEnumerable<UserDto>> GetListAsync()
     {
         return await _context.Users
             .Select(u => new UserDto
@@ -112,7 +112,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<bool> SoftDeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var user = await _context.Users
             .Include(u => u.Wallets)

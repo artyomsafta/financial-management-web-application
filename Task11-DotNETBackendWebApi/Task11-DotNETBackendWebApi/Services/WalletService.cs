@@ -21,7 +21,7 @@ public class WalletService : IWalletService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<WalletDto>> GetAllAsync()
+    public async Task<IEnumerable<WalletDto>> GetListAsync()
     {
         var query = _context.Wallets.AsQueryable();
 
@@ -150,7 +150,7 @@ public class WalletService : IWalletService
         }
     }
 
-    public async Task<bool> SoftDeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var wallet = await _context.Wallets
             .Include(w => w.FinancialOperations)

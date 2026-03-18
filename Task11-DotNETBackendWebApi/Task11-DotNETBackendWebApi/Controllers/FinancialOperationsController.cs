@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
@@ -7,7 +8,8 @@ using Task11_DotNETBackendWebApi.Services.Contracts;
 namespace Task11_DotNETBackendWebApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Authorize]
 public class FinancialOperationsController : ControllerBase
 {
@@ -18,15 +20,15 @@ public class FinancialOperationsController : ControllerBase
         _operationService = operationService;
     }
 
-    [HttpGet("all-operations")]
-    public async Task<ActionResult<IEnumerable<FinancialOperationDto>>> GetAll()
+    [HttpGet("list")]
+    public async Task<ActionResult<IEnumerable<FinancialOperationDto>>> GetList()
     {
-        var operations = await _operationService.GetAllAsync();
+        var operations = await _operationService.GetListAsync();
         return Ok(operations);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<FinancialOperationDto>> GetById(Guid id)
+    public async Task<ActionResult<FinancialOperationDto>> GetById([FromRoute] Guid id)
     {
         try
         {
@@ -63,7 +65,7 @@ public class FinancialOperationsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] FinancialOperationRequest request)
+    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] FinancialOperationRequest request)
     {
         try
         {
@@ -86,11 +88,11 @@ public class FinancialOperationsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
         try
         {
-            var isDeleted = await _operationService.SoftDeleteAsync(id);
+            var isDeleted = await _operationService.DleteAsync(id);
             if (!isDeleted)
             {
                 return NotFound();

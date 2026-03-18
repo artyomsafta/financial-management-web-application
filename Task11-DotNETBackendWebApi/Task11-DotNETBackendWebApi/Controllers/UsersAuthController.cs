@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -6,7 +7,8 @@ using Task11_DotNETBackendWebApi.Services.Contracts;
 namespace Task11_DotNETBackendWebApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Authorize]
 public class UsersAuthController : ControllerBase
 {

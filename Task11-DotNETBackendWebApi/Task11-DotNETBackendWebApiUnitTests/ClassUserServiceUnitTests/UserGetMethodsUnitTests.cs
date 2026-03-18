@@ -56,9 +56,9 @@ public class UserGetMethodsUnitTests
     }
 
     [TestMethod]
-    public async Task Test_GetAllAsync_PositiveCases()
+    public async Task Test_GetListAsync_PositiveCases()
     {
-        var users = await _userService.GetAllAsync();
+        var users = await _userService.GetListAsync();
         Assert.HasCount(3, users.ToList());
         Assert.IsTrue(users.Any(u => u.Username == "admin"));
         Assert.IsTrue(users.Any(u => u.Username == "user1"));

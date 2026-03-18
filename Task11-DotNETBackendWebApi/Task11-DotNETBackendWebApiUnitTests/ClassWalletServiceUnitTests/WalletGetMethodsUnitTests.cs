@@ -71,11 +71,11 @@ public class WalletGetMethodsUnitTests
     }
 
     [TestMethod]
-    public async Task Test_GetAllAsync_PositiveAdminCases()
+    public async Task Test_GetListAsync_PositiveAdminCases()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
-        var wallets = await _walletService.GetAllAsync();
+        var wallets = await _walletService.GetListAsync();
         Assert.HasCount(4, wallets.ToList());
         Assert.IsTrue(wallets.Any(w => w.Name == "admin wallet"));
         Assert.IsTrue(wallets.Any(w => w.Name == "user1 wallet"));
@@ -85,12 +85,12 @@ public class WalletGetMethodsUnitTests
     }
 
     [TestMethod]
-    public async Task Test_GetAllAsync_PositiveUserCases()
+    public async Task Test_GetListAsync_PositiveUserCases()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
-        var wallets = await _walletService.GetAllAsync();
+        var wallets = await _walletService.GetListAsync();
         Assert.HasCount(1, wallets.ToList());
         Assert.IsTrue(wallets.Any(w => w.Name == "user1 wallet"));
     }

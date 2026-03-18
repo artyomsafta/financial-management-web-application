@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Task11_DotNETBackendWebApi.Helpers.Enums;
 using Task11_DotNETBackendWebApi.Models;
@@ -8,7 +9,8 @@ using Task11_DotNETBackendWebApi.Services.Contracts;
 namespace Task11_DotNETBackendWebApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Authorize]
 public class FinancialTypesController : ControllerBase
 {
@@ -19,15 +21,15 @@ public class FinancialTypesController : ControllerBase
         _typeService = typeService;
     }
 
-    [HttpGet("all-types")]
-    public async Task<ActionResult<IEnumerable<FinancialTypeDto>>> GetAll()
+    [HttpGet("list")]
+    public async Task<ActionResult<IEnumerable<FinancialTypeDto>>> GetList()
     {
-        var types = await _typeService.GetAllAsync();
+        var types = await _typeService.GetListAsync();
         return Ok(types);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<FinancialTypeDto>> GetById(Guid id)
+    public async Task<ActionResult<FinancialTypeDto>> GetById([FromRoute] Guid id)
     {
         var type = await _typeService.GetByIdAsync(id);
         if (type is null)
@@ -55,7 +57,7 @@ public class FinancialTypesController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize(Roles = nameof(UserRoles.Admin))]
-    public async Task<IActionResult> Update(Guid id, [FromBody] FinancialTypeRequest request)
+    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] FinancialTypeRequest request)
     {
         try
         {
@@ -75,11 +77,11 @@ public class FinancialTypesController : ControllerBase
 
     [HttpDelete("{id}")]
     [Authorize(Roles = nameof(UserRoles.Admin))]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
         try
         {
-            var isDeleted = await _typeService.SoftDeleteAsync(id);
+            var isDeleted = await _typeService.DeleteAsync(id);
             if (!isDeleted)
             {
                 return NotFound();

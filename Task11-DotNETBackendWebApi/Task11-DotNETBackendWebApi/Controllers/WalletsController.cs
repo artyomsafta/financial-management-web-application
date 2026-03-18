@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
@@ -7,7 +8,8 @@ using Task11_DotNETBackendWebApi.Services.Contracts;
 namespace Task11_DotNETBackendWebApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Authorize]
 public class WalletsController : ControllerBase
 {
@@ -18,15 +20,15 @@ public class WalletsController : ControllerBase
         _walletService = walletService;
     }
 
-    [HttpGet("all-wallets")]
-    public async Task<ActionResult<IEnumerable<WalletDto>>> GetAll()
+    [HttpGet("list")]
+    public async Task<ActionResult<IEnumerable<WalletDto>>> GetList()
     {
-        var wallets = await _walletService.GetAllAsync();
+        var wallets = await _walletService.GetListAsync();
         return Ok(wallets);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<WalletDto>> GetById(Guid id)
+    public async Task<ActionResult<WalletDto>> GetById([FromRoute] Guid id)
     {
         try
         {
@@ -63,7 +65,7 @@ public class WalletsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] WalletRequest request)
+    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] WalletRequest request)
     {
         try
         {
@@ -86,11 +88,11 @@ public class WalletsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
         try
         {
-            var isDeleted = await _walletService.SoftDeleteAsync(id);
+            var isDeleted = await _walletService.DeleteAsync(id);
             if (!isDeleted)
             {
                 return NotFound();

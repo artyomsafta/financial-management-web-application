@@ -19,7 +19,7 @@ public class FinancialTypeService : IFinancialTypeService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<FinancialTypeDto>> GetAllAsync()
+    public async Task<IEnumerable<FinancialTypeDto>> GetListAsync()
     {
         return await _context.FinancialTypes
             .Select(t => new FinancialTypeDto
@@ -97,7 +97,7 @@ public class FinancialTypeService : IFinancialTypeService
         }
     }
 
-    public async Task<bool> SoftDeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var type = await _context.FinancialTypes
             .Include(t => t.FinancialOperations)

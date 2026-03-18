@@ -5,9 +5,9 @@ namespace Task11_DotNETBackendWebApi.Services.Contracts;
 
 public interface IFinancialTypeService
 {
-    Task<IEnumerable<FinancialTypeDto>> GetAllAsync();
+    Task<IEnumerable<FinancialTypeDto>> GetListAsync();
     Task<FinancialTypeDto?> GetByIdAsync(Guid id);
     Task<FinancialTypeDto> CreateAsync(FinancialTypeRequest request);
     Task<bool> UpdateAsync(Guid id, FinancialTypeRequest request);
-    Task<bool> SoftDeleteAsync(Guid id);
+    Task<bool> DeleteAsync(Guid id);
 }
