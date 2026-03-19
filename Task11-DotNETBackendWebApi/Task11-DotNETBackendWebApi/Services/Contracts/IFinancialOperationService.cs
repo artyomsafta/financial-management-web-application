@@ -10,7 +10,4 @@ public interface IFinancialOperationService
     Task<FinancialOperationDto> CreateAsync(FinancialOperationRequest request);
     Task<bool> UpdateAsync(Guid id, FinancialOperationRequest request);
     Task<bool> DleteAsync(Guid id);
-
-    Task<ReportDto> GetDailyReportAsync(DateTime date);
-    Task<ReportDto> GetPeriodReportAsync(DateTime start, DateTime end);
 }

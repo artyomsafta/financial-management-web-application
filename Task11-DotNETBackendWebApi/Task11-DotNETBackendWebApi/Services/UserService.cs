@@ -27,6 +27,7 @@ public class UserService : IUserService
     public async Task<IEnumerable<UserDto>> GetListAsync()
     {
         return await _context.Users
+            .AsNoTracking()
             .Select(u => new UserDto
             {
                 Id = u.Id,
@@ -38,7 +39,9 @@ public class UserService : IUserService
 
     public async Task<UserDto?> GetByIdAsync(Guid id)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user is null)
         {

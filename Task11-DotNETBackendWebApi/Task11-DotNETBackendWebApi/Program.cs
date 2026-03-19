@@ -32,6 +32,7 @@ public class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IUserAuthService, UserAuthService>();
         builder.Services.AddScoped<IWalletService, WalletService>();
+        builder.Services.AddScoped<IReportService, ReportService>();
         builder.Services.AddHttpClient<ICurrencyRatesService, CurrencyRatesService>();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IUserContext, UserContext>();

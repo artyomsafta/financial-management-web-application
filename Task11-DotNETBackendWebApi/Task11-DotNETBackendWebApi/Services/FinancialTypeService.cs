@@ -11,17 +11,20 @@ namespace Task11_DotNETBackendWebApi.Services;
 public class FinancialTypeService : IFinancialTypeService
 {
     private readonly AppDbContext _context;
+    private readonly IUserContext _userContext;
     private readonly ILogger<FinancialTypeService> _logger;
 
-    public FinancialTypeService(AppDbContext context, ILogger<FinancialTypeService> logger)
+    public FinancialTypeService(AppDbContext context, IUserContext userContext, ILogger<FinancialTypeService> logger)
     {
         _context = context;
+        _userContext = userContext;
         _logger = logger;
     }
 
     public async Task<IEnumerable<FinancialTypeDto>> GetListAsync()
     {
         return await _context.FinancialTypes
+            .AsNoTracking()
             .Select(t => new FinancialTypeDto
             {
                 Id = t.Id,
@@ -34,7 +37,10 @@ public class FinancialTypeService : IFinancialTypeService
 
     public async Task<FinancialTypeDto?> GetByIdAsync(Guid id)
     {
-        var type = await _context.FinancialTypes.FindAsync(id);
+        var type = await _context.FinancialTypes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == id);
+
         if (type is null)
         {
             return null;
@@ -45,6 +51,11 @@ public class FinancialTypeService : IFinancialTypeService
 
     public async Task<FinancialTypeDto> CreateAsync(FinancialTypeRequest request)
     {
+        if (!_userContext.IsAdmin)
+        {
+            throw new UnauthorizedAccessException("Access denied");
+        }
+
         await _context.FinancialTypes.EnsureTypeNameNotTakenAync(request.Name);
 
         var newType = new FinancialType
@@ -71,6 +82,11 @@ public class FinancialTypeService : IFinancialTypeService
 
     public async Task<bool> UpdateAsync(Guid id, FinancialTypeRequest request)
     {
+        if (!_userContext.IsAdmin)
+        {
+            throw new UnauthorizedAccessException("Access denied");
+        }
+
         await _context.FinancialTypes.EnsureTypeNameNotTakenAync(request.Name);
 
         var type = await _context.FinancialTypes.FindAsync(id);
@@ -99,6 +115,11 @@ public class FinancialTypeService : IFinancialTypeService
 
     public async Task<bool> DeleteAsync(Guid id)
     {
+        if (!_userContext.IsAdmin)
+        {
+            throw new UnauthorizedAccessException("Access denied");
+        }
+
         var type = await _context.FinancialTypes
             .Include(t => t.FinancialOperations)
             .FirstOrDefaultAsync(t => t.Id == id);

@@ -33,6 +33,7 @@ public class FinancialOperationService : IFinancialOperationService
         }
 
         return await query
+            .AsNoTracking()
             .Include(o => o.Type)
             .Include(o => o.Wallet)
             .Select(o => new FinancialOperationDto
@@ -54,6 +55,7 @@ public class FinancialOperationService : IFinancialOperationService
     public async Task<FinancialOperationDto?> GetByIdAsync(Guid id)
     {
         var operation = await _context.FinancialOperations
+            .AsNoTracking()
             .Include(o => o.Type)
             .Include(o => o.Wallet)
             .FirstOrDefaultAsync(o => o.Id == id);
@@ -124,6 +126,7 @@ public class FinancialOperationService : IFinancialOperationService
             await _context.SaveChangesAsync();
 
             var operation = await _context.FinancialOperations
+                .AsNoTracking()
                 .Include(o => o.Type)
                 .Include(o => o.Wallet)
                 .FirstOrDefaultAsync(o => o.Id == newOperation.Id);
@@ -262,66 +265,6 @@ public class FinancialOperationService : IFinancialOperationService
             _logger.LogError(ex, "An error occurred while soft deleting the financial operation {Id}", operation.Id);
             throw new InvalidOperationException("Operation aborted due to database connection error");
         }
-    }
-
-    public async Task<ReportDto> GetDailyReportAsync(DateTime date)
-    {
-        return await GetPeriodReportAsync(date, date);
-    }
-
-    public async Task<ReportDto> GetPeriodReportAsync(DateTime start, DateTime end)
-    {
-        if (start > end)
-        {
-            throw new ArgumentException("The start date must be earlier or equal to the end date.");
-        }
-
-        var startDate = start.Date;
-        var endDate = end.Date.AddDays(1).AddTicks(-1);
-
-        var query = _context.FinancialOperations.AsQueryable();
-
-        if (!_userContext.IsAdmin)
-        {
-            query = query.Where(w => w.Wallet.UserId == _userContext.UserId);
-        }
-
-        var operations = await query
-                .Include(o => o.Type)
-                .Include(o => o.Wallet)
-                .Where(o => o.Date >= startDate && o.Date <= endDate)
-                .ToListAsync();
-
-        var totalIncome = operations
-                .Where(o => o.Type.IsIncome is true)
-                .Sum(o => o.Amount);
-
-        var totalExpenses = operations
-                .Where(o => o.Type.IsIncome is false)
-                .Sum(o => o.Amount);
-
-        return new ReportDto
-        {
-            TotalIncome = totalIncome,
-            TotalExpenses = totalExpenses,
-            NetResult = totalIncome - totalExpenses,
-            Operations = operations
-                .Select(o => new FinancialOperationDto
-                {
-                    Id = o.Id,
-                    Amount = o.Amount,
-                    Date = o.Date,
-                    Currency = o.Currency,
-                    Comment = o.Comment,
-                    Note = o.Note,
-                    TypeId = o.FinancialTypeId,
-                    TypeName = o.Type.Name,
-                    WalletId = o.WalletId,
-                    WalletName = o.Wallet.Name
-                })
-                .OrderByDescending(o => o.Date)
-                .ToList()
-        };
     }
 
     private async Task<decimal> CalculateAmountAsync(decimal requestAmount, string baseCurrency, string currentCurrency, DateTime requestDate, bool IsIncome)

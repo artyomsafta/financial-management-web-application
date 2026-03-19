@@ -31,6 +31,7 @@ public class WalletService : IWalletService
         }
 
         return await query
+            .AsNoTracking()
             .Include(w => w.User)
             .Select(w => new WalletDto
             {
@@ -47,6 +48,7 @@ public class WalletService : IWalletService
     public async Task<WalletDto?> GetByIdAsync(Guid id)
     {
         var wallet = await _context.Wallets
+            .AsNoTracking()
             .Include(w => w.User)
             .FirstOrDefaultAsync(w => w.Id == id);
 

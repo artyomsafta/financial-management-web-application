@@ -49,6 +49,10 @@ public class FinancialTypesController : ControllerBase
             var createdType = await _typeService.CreateAsync(request);
             return CreatedAtAction(nameof(GetById), new { id = createdType.Id }, createdType);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
@@ -69,6 +73,10 @@ public class FinancialTypesController : ControllerBase
 
             return NoContent();
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
@@ -88,6 +96,10 @@ public class FinancialTypesController : ControllerBase
             }
 
             return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {

@@ -14,7 +14,7 @@ public static class SerilogExtensions
             .MinimumLevel.Override(source: "Microsoft.Hosting.Lifetime", LogEventLevel.Information)
             .Enrich.FromLogContext()
             .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
-            .WriteTo.File(path: @"Logs/Task11WebApi-.txt", 
+            .WriteTo.File(path: @"Logs/Api-.txt", 
                 rollingInterval: RollingInterval.Day, 
                 outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} | CorrelationId: {CorrelationId} | User: {UserId}{NewLine}{Exception}")
             .CreateLogger();
