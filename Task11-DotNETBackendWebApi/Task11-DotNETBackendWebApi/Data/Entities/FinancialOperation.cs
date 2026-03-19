@@ -11,7 +11,7 @@ public class FinancialOperation
     public Guid Id { get; set; }
 
     [Required]
-    [Precision(18, 2)]
+    [Precision(20, 4)]
     public decimal Amount { get; set; }
 
     [Required]

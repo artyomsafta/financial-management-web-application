@@ -14,10 +14,6 @@ public class Wallet
     public string Name { get; set; } = string.Empty;
 
     [Required]
-    [Precision(18, 2)]
-    public decimal Balance { get; set; } = 0m;
-
-    [Required]
     public string BaseCurrency { get; set; } = nameof(Currencies.UAH);
 
     [Required]

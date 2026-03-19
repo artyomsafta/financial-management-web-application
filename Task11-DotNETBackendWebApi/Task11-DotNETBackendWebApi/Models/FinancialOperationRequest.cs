@@ -18,7 +18,7 @@ public class FinancialOperationRequest
     public DateTime Date { get; set; }
 
     [Required]
-    public string CurrentCurrency { get; set; }
+    public string Currency { get; set; }
 
     public string Note { get; set; } = string.Empty;
 }

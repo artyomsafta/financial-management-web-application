@@ -58,8 +58,8 @@ public class OperationDeleteMethodUnitTests
             var user1 = new User { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User), IsDeleted = false };
             var user2 = new User { Id = User2Id, Username = "user2", Role = nameof(UserRoles.User), IsDeleted = false };
 
-            var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", Balance = 50_000m, BaseCurrency = nameof(Currencies.UAH), IsDeleted = false, UserId = User1Id };
-            var wallet2 = new Wallet { Id = Wallet2Id, Name = "user2 wallet", Balance = 20_000m, BaseCurrency = nameof(Currencies.UAH), IsDeleted = false, UserId = User2Id };
+            var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", BaseCurrency = nameof(Currencies.UAH), IsDeleted = false, UserId = User1Id };
+            var wallet2 = new Wallet { Id = Wallet2Id, Name = "user2 wallet", BaseCurrency = nameof(Currencies.UAH), IsDeleted = false, UserId = User2Id };
 
             var type1 = new FinancialType { Id = Type1Id, Name = "Salary", Description = "Monthly salary", IsIncome = true, IsDeleted = false };
             var type2 = new FinancialType { Id = Type2Id, Name = "Rent", Description = "Monthly rent payment", IsIncome = false, IsDeleted = false };
@@ -131,13 +131,6 @@ public class OperationDeleteMethodUnitTests
 
         var deletedOperation = await _context.FinancialOperations.FindAsync(operationId);
         deletedOperation.IsDeleted.Should().BeTrue();
-
-        var walletBalance = await _context.Wallets
-            .Where(w => w.Id == Wallet1Id)
-            .Select(w => w.Balance)
-            .FirstOrDefaultAsync();
-
-        Assert.AreEqual(0m, walletBalance);
     }
 
     [TestMethod]
@@ -152,13 +145,6 @@ public class OperationDeleteMethodUnitTests
 
         var deletedOperation = await _context.FinancialOperations.FindAsync(operationId);
         deletedOperation.IsDeleted.Should().BeTrue();
-
-        var walletBalance = await _context.Wallets
-            .Where(w => w.Id == Wallet1Id)
-            .Select(w => w.Balance)
-            .FirstOrDefaultAsync();
-
-        Assert.AreEqual(0m, walletBalance);
     }
 
     [TestMethod]
@@ -197,26 +183,6 @@ public class OperationDeleteMethodUnitTests
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (UnauthorizedAccessException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
-    }
-
-    [TestMethod]
-    public async Task Test_DeleteAsync_NegativeWalletBalanceCase()
-    {
-        _userContextMock.Setup(с => с.IsAdmin).Returns(false);
-        _userContextMock.Setup(c => c.UserId).Returns(User2Id);
-        var operationId = Wallet2Operation1Id;
-
-        var expectedErrorMessage = "Operation aborted due to insufficient balance in the wallet";
-
-        try
-        {
-            var isDeleteSuccess = await _operationService.DleteAsync(operationId);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
         {
             Assert.AreEqual(expectedErrorMessage, actualError.Message);
         }

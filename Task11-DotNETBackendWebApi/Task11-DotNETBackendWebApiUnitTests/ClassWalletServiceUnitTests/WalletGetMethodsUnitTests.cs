@@ -104,7 +104,6 @@ public class WalletGetMethodsUnitTests
         { 
             Id = Wallet1Id, 
             Name = "user1 wallet", 
-            Balance = 0m, 
             BaseCurrency = nameof(Currencies.UAH), 
             UserId = User1Id, 
             Username = "user1" 
@@ -124,7 +123,6 @@ public class WalletGetMethodsUnitTests
         {
             Id = Wallet1Id,
             Name = "user1 wallet",
-            Balance = 0m,
             BaseCurrency = nameof(Currencies.UAH),
             UserId = User1Id,
             Username = "user1"

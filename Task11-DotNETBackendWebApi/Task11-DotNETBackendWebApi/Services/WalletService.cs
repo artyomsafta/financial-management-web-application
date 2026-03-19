@@ -37,7 +37,6 @@ public class WalletService : IWalletService
             {
                 Id = w.Id,
                 Name = w.Name,
-                Balance = w.Balance,
                 BaseCurrency = w.BaseCurrency,
                 UserId = w.UserId,
                 Username = w.User.Username
@@ -85,7 +84,6 @@ public class WalletService : IWalletService
         {
             Id = Guid.NewGuid(),
             Name = request.Name.Trim(),
-            Balance = 0m,
             BaseCurrency = request.BaseCurrency.Trim().ToUpper(),
             IsDeleted = false,
             UserId = request.UserId
@@ -193,7 +191,6 @@ public class WalletService : IWalletService
         {
             Id = wallet.Id,
             Name = wallet.Name,
-            Balance = wallet.Balance,
             BaseCurrency = wallet.BaseCurrency,
             UserId = wallet.UserId,
             Username = wallet.User.Username

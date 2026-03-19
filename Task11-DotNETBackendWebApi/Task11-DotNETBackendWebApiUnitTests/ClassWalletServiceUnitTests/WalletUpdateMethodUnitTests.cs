@@ -79,7 +79,6 @@ public class WalletUpdateMethodUnitTests
         {
             Id = walletId,
             Name = "user1 wallet",
-            Balance = 0m,
             BaseCurrency = nameof(Currencies.UAH),
             UserId = User1Id,
             Username = "user1"
@@ -93,7 +92,6 @@ public class WalletUpdateMethodUnitTests
         {
             Id = walletEntity.Id,
             Name = walletEntity.Name,
-            Balance = walletEntity.Balance,
             BaseCurrency = walletEntity.BaseCurrency,
             UserId = walletEntity.UserId,
             Username = walletEntity.User.Username
@@ -118,7 +116,6 @@ public class WalletUpdateMethodUnitTests
         {
             Id = walletId,
             Name = "user1 wallet",
-            Balance = 0m,
             BaseCurrency = nameof(Currencies.UAH),
             UserId = User1Id,
             Username = "user1"
@@ -132,7 +129,6 @@ public class WalletUpdateMethodUnitTests
         {
             Id = walletEntity.Id,
             Name = walletEntity.Name,
-            Balance = walletEntity.Balance,
             BaseCurrency = walletEntity.BaseCurrency,
             UserId = walletEntity.UserId,
             Username = walletEntity.User.Username

@@ -75,9 +75,9 @@ public class OperationUpdateMethodUnitTests
             var user1 = new User { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User), IsDeleted = false };
             var user2 = new User { Id = User2Id, Username = "user2", Role = nameof(UserRoles.User), IsDeleted = false };
 
-            var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", Balance = 50_000m, BaseCurrency = nameof(Currencies.UAH), IsDeleted = false, UserId = User1Id };
-            var wallet2 = new Wallet { Id = Wallet2Id, Name = "user2 wallet", Balance = 20_000m, BaseCurrency = nameof(Currencies.UAH), IsDeleted = false, UserId = User2Id };
-            var wallet3 = new Wallet { Id = Wallet3Id, Name = "DELETED wallet", Balance = 0m, BaseCurrency = nameof(Currencies.UAH), IsDeleted = true, UserId = User2Id };
+            var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", BaseCurrency = nameof(Currencies.UAH), IsDeleted = false, UserId = User1Id };
+            var wallet2 = new Wallet { Id = Wallet2Id, Name = "user2 wallet", BaseCurrency = nameof(Currencies.UAH), IsDeleted = false, UserId = User2Id };
+            var wallet3 = new Wallet { Id = Wallet3Id, Name = "DELETED wallet", BaseCurrency = nameof(Currencies.UAH), IsDeleted = true, UserId = User2Id };
 
             var type1 = new FinancialType { Id = Type1Id, Name = "Salary", Description = "Monthly salary", IsIncome = true, IsDeleted = false };
             var type2 = new FinancialType { Id = Type2Id, Name = "Rent", Description = "Monthly rent payment", IsIncome = false, IsDeleted = false };
@@ -152,7 +152,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Success test operation update"
         };
 
@@ -162,10 +162,10 @@ public class OperationUpdateMethodUnitTests
         var expectedOperation = new FinancialOperationDto
         {
             Id = operationId,
-            Amount = Math.Round(request.Amount * _defaultRates.PurchaseRate, 2, MidpointRounding.AwayFromZero),
+            Amount = Math.Round(request.Amount * _defaultRates.PurchaseRate, 4, MidpointRounding.AwayFromZero),
             Date = new DateTime(2026, 3, 9),
             Currency = nameof(Currencies.USD),
-            Comment = "The amount in the transaction currency is 3000,00 USD",
+            Comment = "The amount in the transaction currency is 3000,0000 USD",
             Note = "Success test operation update",
             TypeId = Type1Id,
             TypeName = "Salary",
@@ -209,7 +209,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 2_000m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Success test operation update"
         };
 
@@ -219,10 +219,10 @@ public class OperationUpdateMethodUnitTests
         var expectedOperation = new FinancialOperationDto
         {
             Id = operationId,
-            Amount = Math.Round(request.Amount * _defaultRates.PurchaseRate, 2, MidpointRounding.AwayFromZero),
+            Amount = Math.Round(request.Amount * _defaultRates.PurchaseRate, 4, MidpointRounding.AwayFromZero),
             Date = new DateTime(2026, 3, 9),
             Currency = nameof(Currencies.USD),
-            Comment = "The amount in the transaction currency is 2000,00 USD",
+            Comment = "The amount in the transaction currency is 2000,0000 USD",
             Note = "Success test operation update",
             TypeId = Type1Id,
             TypeName = "Salary",
@@ -266,7 +266,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet2Id,
             Amount = 100m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Successful attempt to update the operation type"
         };
 
@@ -297,7 +297,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet2Id,
             Amount = 200m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Success test expence operation update"
         };
 
@@ -307,10 +307,10 @@ public class OperationUpdateMethodUnitTests
         var expectedOperation = new FinancialOperationDto
         {
             Id = operationId,
-            Amount = Math.Round(request.Amount * _defaultRates.SaleRate, 2, MidpointRounding.AwayFromZero),
+            Amount = Math.Round(request.Amount * _defaultRates.SaleRate, 4, MidpointRounding.AwayFromZero),
             Date = new DateTime(2026, 3, 9),
             Currency = nameof(Currencies.USD),
-            Comment = "The amount in the transaction currency is 200,00 USD",
+            Comment = "The amount in the transaction currency is 200,0000 USD",
             Note = "Success test expence operation update",
             TypeId = Type2Id,
             TypeName = "Rent",
@@ -353,11 +353,11 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = "AAA",
+            Currency = "AAA",
             Note = "Test operation with wrong currency code."
         };
 
-        var expectedErrorMessage = $"The specified currency code: {request.CurrentCurrency} was not found.";
+        var expectedErrorMessage = $"The specified currency code: {request.Currency} was not found.";
 
         try
         {
@@ -382,7 +382,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 3_000m,
             Date = new DateTime(2036, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Test operation with wrong date."
         };
 
@@ -411,7 +411,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Test operation with wrong Id."
         };
 
@@ -432,7 +432,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet2Id,
             Amount = 300m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Attempt to update a deleted operation"
         };
 
@@ -452,7 +452,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 2_000m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Test operation with wrong type."
         };
 
@@ -481,7 +481,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 2_000m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Test operation with wrong type."
         };
 
@@ -510,7 +510,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = WalletNotFoundId,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Test operation with non-found wallet."
         };
 
@@ -539,7 +539,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet3Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Test operation with deleted wallet."
         };
 
@@ -568,7 +568,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet2Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Test operation with wrong wallet."
         };
 
@@ -598,7 +598,7 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Test operation with wrong user."
         };
 
@@ -627,11 +627,11 @@ public class OperationUpdateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
+            Currency = nameof(Currencies.USD),
             Note = "Test operation with missing exchange rates."
         };
 
-        var expectedErrorMessage = $"No exchange rates available for this currency: {request.CurrentCurrency}";
+        var expectedErrorMessage = $"No exchange rates available for this currency: {request.Currency}";
 
         _ratesServiceMock
             .Setup(s => s.GetRateAsync(It.Is<string>(c => c == "USD"), It.IsAny<DateTime>()))
@@ -646,65 +646,5 @@ public class OperationUpdateMethodUnitTests
         {
             Assert.AreEqual(expectedErrorMessage, actualError.Message);
         }
-    }
-
-    [TestMethod]
-    public async Task Test_UpdateAsync_ExpenseOperationNegativeWalletBalanceCase()
-    {
-        _userContextMock.Setup(с => с.IsAdmin).Returns(false);
-        _userContextMock.Setup(c => c.UserId).Returns(User2Id);
-
-        var operationId = Wallet2Operation2Id;
-        var request = new FinancialOperationRequest
-        {
-            TypeId = Type2Id,
-            WalletId = Wallet2Id,
-            Amount = 1_000m,
-            Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
-            Note = "Attempt to update an expence operation that causes a negative wallet balance."
-        };
-
-        var expectedErrorMessage = "Operation aborted due to insufficient balance in the wallet";
-
-        try
-        {
-            var isUpdateSuccess = await _operationService.UpdateAsync(operationId, request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
-    }
-
-    [TestMethod]
-    public async Task Test_UpdateAsync_IncomeOperationNegativeWalletBalanceCase()
-    {
-        _userContextMock.Setup(с => с.IsAdmin).Returns(false);
-        _userContextMock.Setup(c => c.UserId).Returns(User2Id);
-
-        var operationId = Wallet2Operation1Id;
-        var request = new FinancialOperationRequest
-        {
-            TypeId = Type1Id,
-            WalletId = Wallet2Id,
-            Amount = 100m,
-            Date = new DateTime(2026, 3, 9),
-            CurrentCurrency = nameof(Currencies.USD),
-            Note = "Attempt to update an income operation that causes a negative wallet balance."
-        };
-
-        var expectedErrorMessage = "Operation aborted due to insufficient balance in the wallet";
-
-        try
-        {
-            var isUpdateSuccess = await _operationService.UpdateAsync(operationId, request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
-    }
+    }   
 }

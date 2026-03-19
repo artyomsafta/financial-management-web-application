@@ -75,7 +75,7 @@ public class FinancialOperationService : IFinancialOperationService
 
     public async Task<FinancialOperationDto> CreateAsync(FinancialOperationRequest request)
     {
-        request.CurrentCurrency.EnsureCurrencyIsValid();
+        request.Currency.EnsureCurrencyIsValid();
         request.Date.EnsureDateIsAcceptable();
         await _context.FinancialTypes.EnsureTypeExistsAsync(request.TypeId);
         await _context.Wallets.EnsureWalletExistsAsync(request.WalletId);
@@ -87,7 +87,7 @@ public class FinancialOperationService : IFinancialOperationService
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        var currentCurrency = request.CurrentCurrency.Trim().ToUpper();
+        var currentCurrency = request.Currency.Trim().ToUpper();
 
         var isIncomeOperation = await _context.FinancialTypes
             .Where(t => t.Id == request.TypeId)
@@ -95,14 +95,6 @@ public class FinancialOperationService : IFinancialOperationService
             .FirstOrDefaultAsync();
 
         var finalAmount = await CalculateAmountAsync(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date, isIncomeOperation);
-
-        if (!isIncomeOperation)
-        {
-            if (wallet.Balance < finalAmount)
-            {
-                throw new InvalidOperationException("Operation aborted due to insufficient balance in the wallet");
-            }
-        }
 
         var newOperation = new FinancialOperation
         {
@@ -117,12 +109,9 @@ public class FinancialOperationService : IFinancialOperationService
             WalletId = request.WalletId
         };
 
-        wallet.Balance += (isIncomeOperation ? finalAmount : -finalAmount);
-
         try
         {
             _context.FinancialOperations.Add(newOperation);
-            _context.Wallets.Update(wallet);
             await _context.SaveChangesAsync();
 
             var operation = await _context.FinancialOperations
@@ -142,7 +131,7 @@ public class FinancialOperationService : IFinancialOperationService
 
     public async Task<bool> UpdateAsync(Guid id, FinancialOperationRequest request)
     {        
-        request.CurrentCurrency.EnsureCurrencyIsValid();
+        request.Currency.EnsureCurrencyIsValid();
         request.Date.EnsureDateIsAcceptable();
 
         var operation = await _context.FinancialOperations.FindAsync(id);
@@ -170,7 +159,7 @@ public class FinancialOperationService : IFinancialOperationService
             operation.FinancialTypeId = request.TypeId;
         }
 
-        var currentCurrency = request.CurrentCurrency.Trim().ToUpper();
+        var currentCurrency = request.Currency.Trim().ToUpper();
 
         var isIncomeOperation = await _context.FinancialTypes
             .Where(t => t.Id == operation.FinancialTypeId)
@@ -179,37 +168,15 @@ public class FinancialOperationService : IFinancialOperationService
 
         var finalAmount = await CalculateAmountAsync(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date, isIncomeOperation);
 
-        if (isIncomeOperation)
-        {
-            wallet.Balance -= operation.Amount;
-
-            if ((wallet.Balance + finalAmount) < 0)
-            {
-                throw new InvalidOperationException("Operation aborted due to insufficient balance in the wallet");
-            }
-        }
-        else
-        {
-            wallet.Balance += operation.Amount;
-            
-            if (wallet.Balance < finalAmount)
-            {
-                throw new InvalidOperationException("Operation aborted due to insufficient balance in the wallet");
-            }
-        }
-
         operation.Amount = finalAmount;
         operation.Date = request.Date;
         operation.Currency = currentCurrency;
         operation.Comment = $"The amount in the transaction currency is {request.Amount:F2} {currentCurrency}";
         operation.Note = request.Note.Trim();
 
-        wallet.Balance += (isIncomeOperation ? finalAmount : -finalAmount);
-
         try
         {            
             _context.FinancialOperations.Update(operation);
-            _context.Wallets.Update(wallet);
             await _context.SaveChangesAsync();
 
             return true;
@@ -236,26 +203,11 @@ public class FinancialOperationService : IFinancialOperationService
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        var isIncomeOperation = await _context.FinancialTypes
-            .Where(t => t.Id == operation.FinancialTypeId)
-            .Select(t => t.IsIncome)
-            .FirstOrDefaultAsync();
-
-        if (isIncomeOperation)
-        {
-            if (wallet.Balance < operation.Amount)
-            {
-                throw new InvalidOperationException("Operation aborted due to insufficient balance in the wallet");
-            }
-        }
-
-        wallet.Balance += (isIncomeOperation ? -operation.Amount : operation.Amount);
         operation.IsDeleted = true;
 
         try
         {
             _context.FinancialOperations.Update(operation);
-            _context.Wallets.Update(wallet);
             await _context.SaveChangesAsync();
 
             return true;
@@ -276,7 +228,7 @@ public class FinancialOperationService : IFinancialOperationService
             requestAmount *= rate;
         }
 
-        return Math.Round(requestAmount, 2, MidpointRounding.AwayFromZero);
+        return Math.Round(requestAmount, 4, MidpointRounding.AwayFromZero);
     }
 
     private FinancialOperationDto MapToDto(FinancialOperation operation)

@@ -70,7 +70,6 @@ public class WalletCreateMethodUnitTests
         { 
             Id = actualWallet.Id, 
             Name = "user1 wallet", 
-            Balance = 0m, 
             BaseCurrency = nameof(Currencies.UAH), 
             UserId = User1Id,
             Username = "user1"
@@ -92,7 +91,6 @@ public class WalletCreateMethodUnitTests
         {
             Id = actualWallet.Id,
             Name = "user1 wallet",
-            Balance = 0m,
             BaseCurrency = nameof(Currencies.UAH),
             UserId = User1Id,
             Username = "user1"
