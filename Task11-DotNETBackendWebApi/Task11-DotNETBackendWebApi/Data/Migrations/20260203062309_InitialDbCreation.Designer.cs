@@ -9,7 +9,7 @@ using Task11_DotNETBackendWebApi.Data;
 
 #nullable disable
 
-namespace Task11_DotNETBackendWebApi.Migrations
+namespace Task11_DotNETBackendWebApi.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20260203062309_InitialDbCreation")]

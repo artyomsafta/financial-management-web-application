@@ -52,6 +52,11 @@ public class FinancialOperationsController : ControllerBase
         try
         {
             var createdOperation = await _operationService.CreateAsync(request);
+            if (createdOperation is null)
+            {
+                return NotFound(new { message = "The transaction was not created. Please verify that the input data is correct." });
+            }
+
             return CreatedAtAction(nameof(GetById), new { id = createdOperation.Id }, createdOperation);
         }
         catch (UnauthorizedAccessException ex)

@@ -27,26 +27,6 @@ public static class Extensions
         return host;
     }
 
-    public static async Task EnsureTypeExistsAsync(this IQueryable<FinancialType> query, Guid id)
-    {
-        var typeExists = await query.AnyAsync(t => t.Id == id);
-
-        if (!typeExists)
-        {
-            throw new InvalidOperationException("The specified type of operation does not exist.");
-        }
-    }
-
-    public static async Task EnsureWalletExistsAsync(this IQueryable<Wallet> query, Guid Id)
-    {
-        var walletExists = await query.AnyAsync(w => w.Id == Id);
-
-        if (!walletExists)
-        {
-            throw new InvalidOperationException("The specified wallet does not exist.");
-        }
-    }
-
     public static async Task EnsureUserExistsAsync(this IQueryable<User> query, Guid Id)
     {
         var userExists = await query.AnyAsync(u => u.Id == Id);
@@ -78,14 +58,6 @@ public static class Extensions
         if (!Enum.TryParse<Currencies>(currencyCode.Trim().ToUpper(), out _))
         {
             throw new InvalidOperationException($"The specified currency code: {currencyCode} was not found.");
-        }
-    }
-
-    public static void EnsureDateIsAcceptable(this DateTime date)
-    {
-        if (date > DateTime.Now)
-        {
-            throw new InvalidOperationException("The specified date cannot be in the future.");
         }
     }
 }

@@ -9,18 +9,18 @@ using Task11_DotNETBackendWebApi.Data;
 
 #nullable disable
 
-namespace Task11_DotNETBackendWebApi.Migrations
+namespace Task11_DotNETBackendWebApi.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260205115057_AddIsIncomeToFinancialType")]
-    partial class AddIsIncomeToFinancialType
+    [Migration("20260211150719_AddUserEntity")]
+    partial class AddUserEntity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -75,6 +75,10 @@ namespace Task11_DotNETBackendWebApi.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("DESCRIPTION");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit")
+                        .HasColumnName("IS_DELETED");
+
                     b.Property<bool>("IsIncome")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -90,6 +94,41 @@ namespace Task11_DotNETBackendWebApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("FINANCIAL_TYPES", (string)null);
+                });
+
+            modelBuilder.Entity("Task11_DotNETBackendWebApi.Data.Entities.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("ID");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit")
+                        .HasColumnName("IS_DELETED");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("PASSWORD_HASH");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ROLE");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("USERNAME");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Username")
+                        .IsUnique()
+                        .HasDatabaseName("IX_USERS_USERNAME");
+
+                    b.ToTable("USERS", (string)null);
                 });
 
             modelBuilder.Entity("Task11_DotNETBackendWebApi.Data.Entities.FinancialOperation", b =>

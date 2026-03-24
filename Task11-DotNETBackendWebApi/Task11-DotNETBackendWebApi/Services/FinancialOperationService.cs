@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Helpers;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -36,18 +35,29 @@ public class FinancialOperationService : IFinancialOperationService
             .AsNoTracking()
             .Include(o => o.Type)
             .Include(o => o.Wallet)
+            .Include(o => o.Currency)
             .Select(o => new FinancialOperationDto
             {
                 Id = o.Id,
                 Amount = o.Amount,
                 Date = o.Date,
-                Currency = o.Currency,
+                Currency = new CurrencyListDto
+                {
+                    Id = o.CurrencyId,
+                    Code = o.Currency.Code
+                },
                 Comment = o.Comment,
                 Note = o.Note,
-                TypeId = o.FinancialTypeId,
-                TypeName = o.Type.Name,
-                WalletId = o.WalletId,
-                WalletName = o.Wallet.Name
+                Type = new FinancialTypeListDto
+                {
+                    Id = o.FinancialTypeId,
+                    Name = o.Type.Name
+                },
+                Wallet = new WalletListDto
+                {
+                    Id = o.WalletId,
+                    Name = o.Wallet.Name
+                }
             })
             .ToListAsync();
     }
@@ -58,6 +68,7 @@ public class FinancialOperationService : IFinancialOperationService
             .AsNoTracking()
             .Include(o => o.Type)
             .Include(o => o.Wallet)
+            .Include(o => o.Currency)
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (operation is null)
@@ -73,40 +84,68 @@ public class FinancialOperationService : IFinancialOperationService
         return MapToDto(operation);
     }
 
-    public async Task<FinancialOperationDto> CreateAsync(FinancialOperationRequest request)
+    public async Task<FinancialOperationDto?> CreateAsync(FinancialOperationRequest request)
     {
-        request.Currency.EnsureCurrencyIsValid();
-        request.Date.EnsureDateIsAcceptable();
-        await _context.FinancialTypes.EnsureTypeExistsAsync(request.TypeId);
-        await _context.Wallets.EnsureWalletExistsAsync(request.WalletId);
+        if (request.Date > DateTime.Now)
+            return null;
 
-        var wallet = await _context.Wallets.FindAsync(request.WalletId);
+        var currency = request.Currency.Trim().ToUpper();
+        if (string.IsNullOrEmpty(currency) || currency.Length != 3)
+            return null;
+
+        var type = await _context.FinancialTypes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == request.TypeId);
+        if (type is null)
+            return null;
+
+        var wallet = await _context.Wallets
+            .AsNoTracking()
+            .Include(w => w.Currency)
+            .FirstOrDefaultAsync(w => w.Id == request.WalletId);
+        if (wallet is null)
+            return null;
 
         if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
         {
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        var currentCurrency = request.Currency.Trim().ToUpper();
+        var finalAmount = await CalculateAmountAsync(request.Amount, wallet.Currency.Code, currency, request.Date, type.IsIncome);
 
-        var isIncomeOperation = await _context.FinancialTypes
-            .Where(t => t.Id == request.TypeId)
-            .Select(t => t.IsIncome)
-            .FirstOrDefaultAsync();
+        if (await _context.Currencies.AsNoTracking().AnyAsync(c => c.Code == currency) is false)
+        {
+            try
+            {
+                var newCurrency = new Currency
+                {
+                    Code = currency
+                };
 
-        var finalAmount = await CalculateAmountAsync(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date, isIncomeOperation);
+                _context.Currencies.Add(newCurrency);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "An error occurred while creating a new currency.");
+                throw new InvalidOperationException("Operation aborted due to database connection error");
+            }
+        }
 
         var newOperation = new FinancialOperation
         {
             Id = Guid.NewGuid(),
             Amount = finalAmount,
             Date = request.Date,
-            Currency = currentCurrency,
-            Comment = $"The amount in the transaction currency is {request.Amount:F2} {currentCurrency}",
+            Comment = $"The amount in the transaction currency is {request.Amount:F2} {currency}",
             Note = request.Note.Trim(),
             IsDeleted = false,
-            FinancialTypeId = request.TypeId,
-            WalletId = request.WalletId
+            FinancialTypeId = type.Id,
+            WalletId = wallet.Id,
+            CurrencyId = await _context.Currencies
+                .Where(c => c.Code == currency)
+                .Select(c => c.Id)
+                .FirstOrDefaultAsync()
         };
 
         try
@@ -130,9 +169,13 @@ public class FinancialOperationService : IFinancialOperationService
     }
 
     public async Task<bool> UpdateAsync(Guid id, FinancialOperationRequest request)
-    {        
-        request.Currency.EnsureCurrencyIsValid();
-        request.Date.EnsureDateIsAcceptable();
+    {
+        if (request.Date > DateTime.Now)
+            return false;
+
+        var currency = request.Currency.Trim().ToUpper();
+        if (string.IsNullOrEmpty(currency) || currency.Length != 3)
+            return false;
 
         var operation = await _context.FinancialOperations.FindAsync(id);
         if (operation is null)
@@ -140,8 +183,12 @@ public class FinancialOperationService : IFinancialOperationService
             return false;
         }
 
-        await _context.Wallets.EnsureWalletExistsAsync(request.WalletId);
-        var wallet = await _context.Wallets.FindAsync(operation.WalletId);
+        var wallet = await _context.Wallets
+            .AsNoTracking()
+            .Include(w => w.Currency)
+            .FirstOrDefaultAsync(w => w.Id == request.WalletId);
+        if (wallet is null)
+            return false;
 
         if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
         {
@@ -155,24 +202,49 @@ public class FinancialOperationService : IFinancialOperationService
 
         if (operation.FinancialTypeId != request.TypeId)
         {
-            await _context.FinancialTypes.EnsureTypeExistsAsync(request.TypeId);
-            operation.FinancialTypeId = request.TypeId;
+            var type = await _context.FinancialTypes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == request.TypeId);
+            if (type is null)
+                return false;
+
+            operation.FinancialTypeId = type.Id;
         }
 
-        var currentCurrency = request.Currency.Trim().ToUpper();
-
-        var isIncomeOperation = await _context.FinancialTypes
+        var isIncome = await _context.FinancialTypes
             .Where(t => t.Id == operation.FinancialTypeId)
             .Select(t => t.IsIncome)
             .FirstOrDefaultAsync();
 
-        var finalAmount = await CalculateAmountAsync(request.Amount, wallet.BaseCurrency, currentCurrency, request.Date, isIncomeOperation);
+        var finalAmount = await CalculateAmountAsync(request.Amount, wallet.Currency.Code, currency, request.Date, isIncome);
+
+        if (await _context.Currencies.AsNoTracking().AnyAsync(c => c.Code == currency) is false)
+        {
+            try
+            {
+                var newCurrency = new Currency
+                {
+                    Code = currency
+                };
+
+                _context.Currencies.Add(newCurrency);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "An error occurred while creating a new currency.");
+                throw new InvalidOperationException("Operation aborted due to database connection error");
+            }
+        }
 
         operation.Amount = finalAmount;
         operation.Date = request.Date;
-        operation.Currency = currentCurrency;
-        operation.Comment = $"The amount in the transaction currency is {request.Amount:F2} {currentCurrency}";
+        operation.Comment = $"The amount in the transaction currency is {request.Amount:F2} {currency}";
         operation.Note = request.Note.Trim();
+        operation.CurrencyId = await _context.Currencies
+            .Where(c => c.Code == currency)
+            .Select(c => c.Id)
+            .FirstOrDefaultAsync();
 
         try
         {            
@@ -238,13 +310,23 @@ public class FinancialOperationService : IFinancialOperationService
             Id = operation.Id,
             Amount = operation.Amount,
             Date = operation.Date,
-            Currency = operation.Currency,
+            Currency = new CurrencyListDto
+            {
+                Id = operation.CurrencyId,
+                Code = operation.Currency.Code
+            },
             Comment = operation.Comment,
             Note = operation.Note,
-            TypeId = operation.FinancialTypeId,
-            TypeName = operation.Type.Name,
-            WalletId = operation.WalletId,
-            WalletName = operation.Wallet.Name
+            Type = new FinancialTypeListDto
+            {
+                Id = operation.FinancialTypeId,
+                Name = operation.Type.Name
+            },
+            Wallet = new WalletListDto
+            {
+                Id = operation.WalletId,
+                Name = operation.Wallet.Name
+            }
         };
     }
 }

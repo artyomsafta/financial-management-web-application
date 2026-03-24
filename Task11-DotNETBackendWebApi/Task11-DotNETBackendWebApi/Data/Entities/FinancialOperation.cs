@@ -18,9 +18,6 @@ public class FinancialOperation
     [Column(TypeName = "datetime2")]
     public DateTime Date { get; set; }
 
-    [Required]
-    public string Currency { get; set; } = null!;
-
     [MaxLength(255)]
     public string Comment { get; set; } = string.Empty;
 
@@ -36,6 +33,10 @@ public class FinancialOperation
     [Required]
     public Guid WalletId { get; set; }
 
+    [Required]
+    public int CurrencyId { get; set; }
+
     public FinancialType Type { get; set; }
     public Wallet Wallet { get; set; }
+    public Currency Currency { get; set; }
 }

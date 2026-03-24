@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<FinancialOperation> FinancialOperations { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Wallet> Wallets { get; set; } = null!;
+    public DbSet<Currency> Currencies { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,9 +46,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.Username)
-                .IsUnique()
-                .HasDatabaseName("IX_USERS_USERNAME");
 
             entity.Property(e => e.Id)
                 .ValueGeneratedOnAdd();
@@ -73,6 +71,24 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasQueryFilter(w => !w.IsDeleted);
+        });
+
+        modelBuilder.Entity<Currency>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedOnAdd();
+
+            entity.HasMany(c => c.Wallets)
+                .WithOne(w => w.Currency)
+                .HasForeignKey(w => w.CurrencyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(c => c.FinancialOperations)
+                .WithOne(fo => fo.Currency)
+                .HasForeignKey(fo => fo.CurrencyId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

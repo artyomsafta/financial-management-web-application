@@ -29,6 +29,20 @@ public class DbSeeder
             _context.SaveChanges();
         }
 
+        if (!_context.Currencies.Any())
+        {
+            var currencies = new List<Currency>
+            {
+                new Currency { Code = "UAH" },
+                new Currency { Code = "USD" },
+                new Currency { Code = "EUR" },
+                new Currency { Code = "GBP" },
+                new Currency { Code = "CHF" }
+            };
+            _context.Currencies.AddRange(currencies);
+            _context.SaveChanges();
+        }
+
         if (!_context.Users.Any())
         {
             var hasher = new PasswordHasher<User>();
