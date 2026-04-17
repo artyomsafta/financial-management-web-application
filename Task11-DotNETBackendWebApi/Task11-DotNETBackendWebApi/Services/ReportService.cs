@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
+using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
@@ -18,16 +19,16 @@ public class ReportService : IReportService
         _logger = logger;
     }
 
-    public async Task<ReportDto> GetDailyReportAsync(DateTime date)
+    public async Task<Result<ReportDto>> GetDailyReportAsync(DateTime date)
     {
         return await GetPeriodReportAsync(date, date);
     }
 
-    public async Task<ReportDto> GetPeriodReportAsync(DateTime start, DateTime end)
+    public async Task<Result<ReportDto>> GetPeriodReportAsync(DateTime start, DateTime end)
     {
         if (start > end)
         {
-            throw new ArgumentException("The start date must be earlier or equal to the end date.");
+            return Result<ReportDto>.Failure("The start date must be earlier or equal to the end date.");
         }
 
         var startDate = start.Date;
@@ -55,7 +56,7 @@ public class ReportService : IReportService
                 .Where(o => o.Type.IsIncome is false)
                 .Sum(o => o.Amount);
 
-        return new ReportDto
+        var data = new ReportDto
         {
             TotalIncome = totalIncome,
             TotalExpenses = totalExpenses,
@@ -66,16 +67,28 @@ public class ReportService : IReportService
                     Id = o.Id,
                     Amount = o.Amount,
                     Date = o.Date,
-                    Currency = o.Currency,
+                    Currency = new CurrencyListDto
+                    {
+                        Id = o.CurrencyId,
+                        Code = o.Currency.Code
+                    },
                     Comment = o.Comment,
                     Note = o.Note,
-                    TypeId = o.FinancialTypeId,
-                    TypeName = o.Type.Name,
-                    WalletId = o.WalletId,
-                    WalletName = o.Wallet.Name
+                    Type = new FinancialTypeListDto
+                    {
+                        Id = o.FinancialTypeId,
+                        Name = o.Type.Name
+                    },
+                    Wallet = new WalletListDto
+                    {
+                        Id = o.WalletId,
+                        Name = o.Wallet.Name
+                    }
                 })
                 .OrderByDescending(o => o.Date)
                 .ToList()
         };
+
+        return Result<ReportDto>.Success(data);
     }
 }

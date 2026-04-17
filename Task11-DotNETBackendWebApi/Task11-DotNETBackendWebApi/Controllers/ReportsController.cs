@@ -22,28 +22,24 @@ public class ReportsController : ControllerBase
     [HttpGet("daily")]
     public async Task<ActionResult<ReportDto>> GetDailyReport([FromQuery] DateTime date)
     {
-        try
+        var result = await _reportService.GetDailyReportAsync(date);
+        if (!result.IsSuccess)
         {
-            var report = await _reportService.GetDailyReportAsync(date);
-            return Ok(report);
+            return BadRequest(new { errors = result.Errors });
         }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+
+        return Ok(result.Data);      
     }
 
     [HttpGet("period")]
     public async Task<ActionResult<ReportDto>> GetPeriodReport([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
     {
-        try
+        var result = await _reportService.GetPeriodReportAsync(startDate, endDate);
+        if (!result.IsSuccess)
         {
-            var report = await _reportService.GetPeriodReportAsync(startDate, endDate);
-            return Ok(report);
+            return BadRequest(new { errors = result.Errors });
         }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+
+        return Ok(result.Data);
     }
 }

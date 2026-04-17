@@ -31,13 +31,13 @@ public class FinancialTypesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<FinancialTypeDto>> GetById([FromRoute] Guid id)
     {
-        var type = await _typeService.GetByIdAsync(id);
-        if (type is null)
+        var result = await _typeService.GetByIdAsync(id);
+        if (!result.IsSuccess)
         {
-            return NotFound(new { message = $"Type with ID {id} not found" });
+            return NotFound(new { errors = result.Errors });
         }
 
-        return Ok(type);
+        return Ok(result.Data);
     }
 
     [HttpPost]
@@ -46,8 +46,13 @@ public class FinancialTypesController : ControllerBase
     {
         try
         {
-            var createdType = await _typeService.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = createdType.Id }, createdType);
+            var result = await _typeService.CreateAsync(request);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new { errors = result.Errors });
+            }
+
+            return CreatedAtAction(nameof(GetById), new { id = result.Data.Id }, result.Data);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -65,10 +70,10 @@ public class FinancialTypesController : ControllerBase
     {
         try
         {
-            var isUpdated = await _typeService.UpdateAsync(id, request);
-            if (!isUpdated)
+            var result = await _typeService.UpdateAsync(id, request);
+            if (!result.IsSuccess)
             {
-                return NotFound();
+                return BadRequest(new { errors = result.Errors });
             }
 
             return NoContent();
@@ -89,10 +94,10 @@ public class FinancialTypesController : ControllerBase
     {
         try
         {
-            var isDeleted = await _typeService.DeleteAsync(id);
-            if (!isDeleted)
+            var result = await _typeService.DeleteAsync(id);
+            if (!result.IsSuccess)
             {
-                return NotFound();
+                return BadRequest(new { errors = result.Errors });
             }
 
             return NoContent();

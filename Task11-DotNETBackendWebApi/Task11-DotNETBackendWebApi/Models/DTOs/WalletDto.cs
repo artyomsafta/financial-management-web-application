@@ -4,7 +4,6 @@ public class WalletDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string BaseCurrency { get; set; } = string.Empty;
-    public Guid UserId { get; set; }
-    public string Username { get; set; } = string.Empty;
+    public CurrencyListDto BaseCurrency { get; set; }
+    public UserDto User { get; set; }
 }

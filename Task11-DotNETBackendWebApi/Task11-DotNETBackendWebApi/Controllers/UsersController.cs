@@ -34,13 +34,13 @@ public class UsersController : ControllerBase
     {
         try
         {
-            var user = await _userService.GetByIdAsync(id);
-            if (user is null)
+            var result = await _userService.GetByIdAsync(id);
+            if (!result.IsSuccess)
             {
-                return NotFound(new { message = $"User with ID {id} not found" });
+                return NotFound(new { errors = result.Errors });
             }
 
-            return Ok(user);
+            return Ok(result.Data);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -54,8 +54,13 @@ public class UsersController : ControllerBase
     {
         try
         {
-            var createdUser = await _userService.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = createdUser.Id }, createdUser);
+            var result = await _userService.CreateAsync(request);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new { errors = result.Errors });
+            }
+
+            return CreatedAtAction(nameof(GetById), new { id = result.Data.Id }, result.Data);
         }
         catch (InvalidOperationException ex)
         {
@@ -68,10 +73,10 @@ public class UsersController : ControllerBase
     {
         try
         {
-            var isUpdated = await _userService.UpdateAsync(id, request);
-            if (!isUpdated)
+            var result = await _userService.UpdateAsync(id, request);
+            if (!result.IsSuccess)
             {
-                return NotFound();
+                return BadRequest(new { errors = result.Errors });
             }
 
             return NoContent();
@@ -91,10 +96,10 @@ public class UsersController : ControllerBase
     {
         try
         {
-            var isDeleted = await _userService.DeleteAsync(id);
-            if (!isDeleted)
+            var result = await _userService.DeleteAsync(id);
+            if (!result.IsSuccess)
             {
-                return NotFound();
+                return BadRequest(new { errors = result.Errors });
             }
 
             return NoContent();

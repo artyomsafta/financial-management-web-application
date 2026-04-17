@@ -1,7 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace Task11_DotNETBackendWebApi.Data.Entities;
 
+[Index(nameof(Name), IsUnique = true)]
 public class FinancialType
 {
     [Key]

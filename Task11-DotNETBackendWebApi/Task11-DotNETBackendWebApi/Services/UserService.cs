@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Helpers;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -37,7 +36,7 @@ public class UserService : IUserService
             .ToListAsync();
     }
 
-    public async Task<UserDto?> GetByIdAsync(Guid id)
+    public async Task<Result<UserDto>> GetByIdAsync(Guid id)
     {
         var user = await _context.Users
             .AsNoTracking()
@@ -45,7 +44,7 @@ public class UserService : IUserService
 
         if (user is null)
         {
-            return null;
+            return Result<UserDto>.Failure($"User with ID {id} not found");
         }
 
         if (!_userContext.IsAdmin && user.Id != _userContext.UserId)
@@ -53,12 +52,15 @@ public class UserService : IUserService
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        return MapToDto(user);
+        return Result<UserDto>.Success(MapToDto(user));
     }
 
-    public async Task<UserDto> CreateAsync(UserRegisterRequest request)
+    public async Task<Result<UserDto>> CreateAsync(UserRegisterRequest request)
     {
-        await _context.Users.EnsureUsernameNotTakenAync(request.Username);
+        if (await _context.Users.AnyAsync(t => t.Username.ToLower() == request.Username.Trim().ToLower()))
+        {
+            return Result<UserDto>.Failure("A user with the same username already exists.");
+        }
 
         var newUser = new User
         {
@@ -72,7 +74,7 @@ public class UserService : IUserService
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            return MapToDto(newUser);
+            return Result<UserDto>.Success(MapToDto(newUser));
         }
         catch (DbUpdateException ex)
         {
@@ -81,13 +83,13 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<bool> UpdateAsync(Guid id, UserRegisterRequest request)
+    public async Task<Result> UpdateAsync(Guid id, UserRegisterRequest request)
     {
         var user = await _context.Users.FindAsync(id);
 
         if (user is null) 
         { 
-            return false;
+            return Result.Failure($"User with ID {id} not found");
         }
 
         if (!_userContext.IsAdmin && user.Id != _userContext.UserId)
@@ -95,7 +97,10 @@ public class UserService : IUserService
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        await _context.Users.EnsureUsernameNotTakenAync(request.Username);
+        if (await _context.Users.AnyAsync(t => t.Username.ToLower() == request.Username.Trim().ToLower()))
+        {
+            return Result.Failure("A user with the same username already exists.");
+        }
 
         user.Username = request.Username.Trim();
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
@@ -105,7 +110,7 @@ public class UserService : IUserService
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
-            return true;
+            return Result.Success();
 
         }
         catch (DbUpdateException ex)
@@ -115,7 +120,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<Result> DeleteAsync(Guid id)
     {
         var user = await _context.Users
             .Include(u => u.Wallets)
@@ -123,7 +128,7 @@ public class UserService : IUserService
 
         if (user is null)
         {
-            return false;
+            return Result.Failure($"User with ID {id} not found");
         }
 
         if (!_userContext.IsAdmin && user.Id != _userContext.UserId)
@@ -133,7 +138,7 @@ public class UserService : IUserService
 
         if (user.Wallets.Any(w => !w.IsDeleted))
         {
-            throw new InvalidOperationException("You cannot delete a user that has active wallets.");
+            return Result.Failure("You cannot delete a user that has active wallets.");
         }
 
         try
@@ -141,7 +146,7 @@ public class UserService : IUserService
             user.IsDeleted = true;
             await _context.SaveChangesAsync();
 
-            return true;
+            return Result.Success();
         }
         catch (DbUpdateException ex)
         {

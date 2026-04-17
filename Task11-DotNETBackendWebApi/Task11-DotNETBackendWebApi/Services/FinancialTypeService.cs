@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Helpers;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -35,7 +34,7 @@ public class FinancialTypeService : IFinancialTypeService
             .ToListAsync();
     }
 
-    public async Task<FinancialTypeDto?> GetByIdAsync(Guid id)
+    public async Task<Result<FinancialTypeDto>> GetByIdAsync(Guid id)
     {
         var type = await _context.FinancialTypes
             .AsNoTracking()
@@ -43,20 +42,23 @@ public class FinancialTypeService : IFinancialTypeService
 
         if (type is null)
         {
-            return null;
+            return Result<FinancialTypeDto>.Failure($"Type with ID {id} not found");
         }
 
-        return MapToDto(type);
+        return Result<FinancialTypeDto>.Success(MapToDto(type));
     }
 
-    public async Task<FinancialTypeDto> CreateAsync(FinancialTypeRequest request)
+    public async Task<Result<FinancialTypeDto>> CreateAsync(FinancialTypeRequest request)
     {
         if (!_userContext.IsAdmin)
         {
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        await _context.FinancialTypes.EnsureTypeNameNotTakenAync(request.Name);
+        if (await _context.FinancialTypes.AnyAsync(t => t.Name.ToLower() == request.Name.Trim().ToLower()))
+        {
+            return Result<FinancialTypeDto>.Failure("A financial type with the same name already exists.");
+        }
 
         var newType = new FinancialType
         {
@@ -71,7 +73,7 @@ public class FinancialTypeService : IFinancialTypeService
             _context.FinancialTypes.Add(newType);
             await _context.SaveChangesAsync();
 
-            return MapToDto(newType);
+            return Result<FinancialTypeDto>.Success(MapToDto(newType));
         }
         catch (DbUpdateException ex)
         {
@@ -80,19 +82,22 @@ public class FinancialTypeService : IFinancialTypeService
         }
     }
 
-    public async Task<bool> UpdateAsync(Guid id, FinancialTypeRequest request)
+    public async Task<Result> UpdateAsync(Guid id, FinancialTypeRequest request)
     {
         if (!_userContext.IsAdmin)
         {
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        await _context.FinancialTypes.EnsureTypeNameNotTakenAync(request.Name);
-
         var type = await _context.FinancialTypes.FindAsync(id);
         if (type is null)
         {
-            return false;
+            return Result.Failure("The financial type does not exist.");
+        }
+
+        if (await _context.FinancialTypes.AnyAsync(t => t.Name.ToLower() == request.Name.Trim().ToLower()))
+        {
+            return Result.Failure("The financial type with the same name already exists.");
         }
 
         type.Name = request.Name.Trim();
@@ -104,7 +109,7 @@ public class FinancialTypeService : IFinancialTypeService
             _context.FinancialTypes.Update(type);
             await _context.SaveChangesAsync();
 
-            return true;
+            return Result.Success();
         }
         catch (DbUpdateException ex)
         {
@@ -113,7 +118,7 @@ public class FinancialTypeService : IFinancialTypeService
         }
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<Result> DeleteAsync(Guid id)
     {
         if (!_userContext.IsAdmin)
         {
@@ -125,12 +130,12 @@ public class FinancialTypeService : IFinancialTypeService
             .FirstOrDefaultAsync(t => t.Id == id);
         if (type is null)
         {
-            return false;
+            return Result.Failure("The financial type does not exist.");
         }
 
         if (type.FinancialOperations.Any(o => !o.IsDeleted))
         {
-            throw new InvalidOperationException("You cannot delete a type that has financial operations.");
+            return Result.Failure("You cannot delete a type that has financial operations.");
         }
 
         try
@@ -138,7 +143,7 @@ public class FinancialTypeService : IFinancialTypeService
             type.IsDeleted = true;
             await _context.SaveChangesAsync();
 
-            return true;
+            return Result.Success();
         }
         catch (DbUpdateException ex)
         {

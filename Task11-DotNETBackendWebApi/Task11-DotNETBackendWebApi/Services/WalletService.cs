@@ -1,8 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Helpers;
-using Task11_DotNETBackendWebApi.Helpers.Enums;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -33,27 +31,37 @@ public class WalletService : IWalletService
         return await query
             .AsNoTracking()
             .Include(w => w.User)
+            .Include(w => w.Currency)
             .Select(w => new WalletDto
             {
                 Id = w.Id,
                 Name = w.Name,
-                BaseCurrency = w.BaseCurrency,
-                UserId = w.UserId,
-                Username = w.User.Username
+                BaseCurrency = new CurrencyListDto
+                {
+                    Id = w.CurrencyId,
+                    Code = w.Currency.Code
+                },
+                User = new UserDto
+                {
+                    Id = w.UserId,
+                    Username = w.User.Username,
+                    Role = w.User.Role
+                }
             })
             .ToListAsync();
     }
 
-    public async Task<WalletDto?> GetByIdAsync(Guid id)
+    public async Task<Result<WalletDto>> GetByIdAsync(Guid id)
     {
         var wallet = await _context.Wallets
             .AsNoTracking()
             .Include(w => w.User)
+            .Include(w => w.Currency)
             .FirstOrDefaultAsync(w => w.Id == id);
 
         if (wallet is null)
         {
-            return null;
+            return Result<WalletDto>.Failure($"Wallet with ID {id} not found");
         }
 
         if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
@@ -61,32 +69,43 @@ public class WalletService : IWalletService
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        return MapToDto(wallet);
+        return Result<WalletDto>.Success(MapToDto(wallet));
     }
 
-    public async Task<WalletDto> CreateAsync(WalletRequest request)
+    public async Task<Result<WalletDto>> CreateAsync(WalletRequest request)
     {
         if (!_userContext.IsAdmin && request.UserId != _userContext.UserId)
         {
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        request.BaseCurrency.EnsureCurrencyIsValid();
+        var currencyCode = request.BaseCurrency.Trim().ToUpper();
+        if (string.IsNullOrEmpty(currencyCode) || currencyCode.Length != 3)
+            return Result<WalletDto>.Failure("The currency code is incorrect.");
 
-        if (request.BaseCurrency.Trim().ToUpper() != (nameof(Currencies.UAH)))
+        if (currencyCode != "UAH")
         {
-            throw new InvalidOperationException("Currently, the base currency of the wallet can only be UAH");
+            return Result<WalletDto>.Failure("Currently, the base currency of the wallet can only be UAH");
         }
 
-        await _context.Users.EnsureUserExistsAsync(request.UserId);
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == request.UserId);
+        if (user is null)
+        {
+            return Result<WalletDto>.Failure($"User with ID {request.UserId} not found");
+        }
 
         var newWallet = new Wallet
         {
             Id = Guid.NewGuid(),
             Name = request.Name.Trim(),
-            BaseCurrency = request.BaseCurrency.Trim().ToUpper(),
             IsDeleted = false,
-            UserId = request.UserId
+            UserId = user.Id,
+            CurrencyId = await _context.Currencies
+                .Where(c => c.Code == currencyCode)
+                .Select(c => c.Id)
+                .FirstOrDefaultAsync()
         };
 
         try
@@ -96,9 +115,10 @@ public class WalletService : IWalletService
 
             var wallet = await _context.Wallets
                 .Include(w => w.User)
+                .Include(w => w.Currency)
                 .FirstOrDefaultAsync(w => w.Id == newWallet.Id);
 
-            return MapToDto(wallet);
+            return Result<WalletDto>.Success(MapToDto(wallet));
         }
         catch (DbUpdateException ex)
         {
@@ -107,41 +127,52 @@ public class WalletService : IWalletService
         }
     }
 
-    public async Task<bool> UpdateAsync(Guid id, WalletRequest request)
+    public async Task<Result> UpdateAsync(Guid id, WalletRequest request)
     {
         if (!_userContext.IsAdmin && request.UserId != _userContext.UserId)
         {
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        request.BaseCurrency.EnsureCurrencyIsValid();
+        var currencyCode = request.BaseCurrency.Trim().ToUpper();
+        if (string.IsNullOrEmpty(currencyCode) || currencyCode.Length != 3)
+            return Result.Failure("The currency code is incorrect.");
 
-        if (request.BaseCurrency.Trim().ToUpper() != (nameof(Currencies.UAH)))
+        if (currencyCode != "UAH")
         {
-            throw new InvalidOperationException("Currently, the base currency of the wallet can only be UAH");
+            return Result.Failure("Currently, the base currency of the wallet can only be UAH");
         }
 
         var wallet = await _context.Wallets.FindAsync(id);
         if (wallet is null)
         {
-            return false;
+            return Result.Failure("Wallet not found");
         }
 
         if (wallet.UserId != request.UserId)
         {
-            await _context.Users.EnsureUserExistsAsync(request.UserId);
-            wallet.UserId = request.UserId;
+            var user = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == request.UserId);
+            if (user is null)
+            {
+                return Result.Failure($"User with ID {request.UserId} not found");
+            }
+            wallet.UserId = user.Id;
         }
 
         wallet.Name = request.Name.Trim();
-        wallet.BaseCurrency = request.BaseCurrency.Trim().ToUpper();
+        wallet.CurrencyId = await _context.Currencies
+            .Where(c => c.Code == currencyCode)
+            .Select(c => c.Id)
+            .FirstOrDefaultAsync();
 
         try 
         {
             _context.Wallets.Update(wallet);
             await _context.SaveChangesAsync();
 
-            return true;
+            return Result.Success();
         }
         catch (DbUpdateException ex)
         {
@@ -150,7 +181,7 @@ public class WalletService : IWalletService
         }
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<Result> DeleteAsync(Guid id)
     {
         var wallet = await _context.Wallets
             .Include(w => w.FinancialOperations)
@@ -158,7 +189,7 @@ public class WalletService : IWalletService
 
         if (wallet is null)
         {
-            return false;
+            return Result.Failure("Wallet not found");
         }
 
         if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
@@ -168,7 +199,7 @@ public class WalletService : IWalletService
 
         if (wallet.FinancialOperations.Any(o => !o.IsDeleted))
         {
-            throw new InvalidOperationException("Cannot delete a wallet that has associated financial operations.");
+            return Result.Failure("Cannot delete a wallet that has associated financial operations.");
         }
 
         try 
@@ -176,7 +207,7 @@ public class WalletService : IWalletService
             wallet.IsDeleted = true;
             await _context.SaveChangesAsync();
 
-            return true;
+            return Result.Success();
         }
         catch (DbUpdateException ex)
         {
@@ -191,9 +222,17 @@ public class WalletService : IWalletService
         {
             Id = wallet.Id,
             Name = wallet.Name,
-            BaseCurrency = wallet.BaseCurrency,
-            UserId = wallet.UserId,
-            Username = wallet.User.Username
+            BaseCurrency = new CurrencyListDto
+            {
+                Id = wallet.CurrencyId,
+                Code = wallet.Currency.Code
+            },
+            User = new UserDto
+            {
+                Id = wallet.UserId,
+                Username = wallet.User.Username,
+                Role = wallet.User.Role
+            }
         };
     }
 }
