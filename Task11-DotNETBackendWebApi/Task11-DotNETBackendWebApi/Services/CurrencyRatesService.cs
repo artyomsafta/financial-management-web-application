@@ -8,11 +8,13 @@ public class CurrencyRatesService : ICurrencyRatesService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<CurrencyRatesService> _logger;
 
-    public CurrencyRatesService(HttpClient httpClient, IConfiguration configuration)
+    public CurrencyRatesService(HttpClient httpClient, IConfiguration configuration, ILogger<CurrencyRatesService> logger)
     {
         _httpClient = httpClient;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<CurrencyRateResult> GetRateAsync(string currencyCode, DateTime date)
@@ -34,9 +36,20 @@ public class CurrencyRatesService : ICurrencyRatesService
 
             throw new InvalidOperationException($"No exchange rates available for this currency: {currencyCode}");
         }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation while retrieving exchange rates for currency: {CurrencyCode} on date: {Date}", currencyCode, date);
+            throw;
+        }
         catch (HttpRequestException ex)
         {
+            _logger.LogError(ex, "HTTP request error while retrieving exchange rates for currency: {CurrencyCode} on date: {Date}", currencyCode, date);
             throw new InvalidOperationException("Failed to retrieve exchange rates. Please try again later.", ex);
+        }
+        catch (Exception ex)
+        { 
+            _logger.LogError(ex, "An unexpected error.");
+            throw new InvalidOperationException("An unexpected error occurred while retrieving exchange rates.", ex);
         }
     }
 

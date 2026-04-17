@@ -126,7 +126,7 @@ public class OperationDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var operationId = Wallet1OperationId;
 
-        var isDeleteSuccess = await _operationService.DleteAsync(operationId);
+        var isDeleteSuccess = await _operationService.DeleteAsync(operationId);
         isDeleteSuccess.Should().BeTrue();
 
         var deletedOperation = await _context.FinancialOperations.FindAsync(operationId);
@@ -140,7 +140,7 @@ public class OperationDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var operationId = Wallet1OperationId;
 
-        var isDeleteSuccess = await _operationService.DleteAsync(operationId);
+        var isDeleteSuccess = await _operationService.DeleteAsync(operationId);
         isDeleteSuccess.Should().BeTrue();
 
         var deletedOperation = await _context.FinancialOperations.FindAsync(operationId);
@@ -153,7 +153,7 @@ public class OperationDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var operationId = OperationNotFoundId;
 
-        var isDeleteSuccess = await _operationService.DleteAsync(operationId);
+        var isDeleteSuccess = await _operationService.DeleteAsync(operationId);
         isDeleteSuccess.Should().BeFalse();
     }
 
@@ -164,7 +164,7 @@ public class OperationDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
         var operationId = Wallet2Operation3Id;
 
-        var isDeleteSuccess = await _operationService.DleteAsync(operationId);
+        var isDeleteSuccess = await _operationService.DeleteAsync(operationId);
         isDeleteSuccess.Should().BeFalse();
     }
 
@@ -179,7 +179,7 @@ public class OperationDeleteMethodUnitTests
 
         try
         {
-            var isDeleteSuccess = await _operationService.DleteAsync(operationId);
+            var isDeleteSuccess = await _operationService.DeleteAsync(operationId);
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (UnauthorizedAccessException actualError)

@@ -32,13 +32,13 @@ public class FinancialOperationsController : ControllerBase
     {
         try
         {
-            var operation = await _operationService.GetByIdAsync(id);
-            if (operation is null)
+            var result = await _operationService.GetByIdAsync(id);
+            if (!result.IsSuccess)
             {
-                return NotFound(new { message = $"Operation with ID {id} not found" });
+                return NotFound(new { errors = result.Errors });
             }
 
-            return Ok(operation);
+            return Ok(result.Data);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -51,13 +51,13 @@ public class FinancialOperationsController : ControllerBase
     {
         try
         {
-            var createdOperation = await _operationService.CreateAsync(request);
-            if (createdOperation is null)
+            var result = await _operationService.CreateAsync(request);
+            if (!result.IsSuccess)
             {
-                return NotFound(new { message = "The transaction was not created. Please verify that the input data is correct." });
+                return BadRequest(new { errors = result.Errors });
             }
 
-            return CreatedAtAction(nameof(GetById), new { id = createdOperation.Id }, createdOperation);
+            return CreatedAtAction(nameof(GetById), new { id = result.Data.Id }, result.Data);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -74,10 +74,10 @@ public class FinancialOperationsController : ControllerBase
     {
         try
         {
-            var isUpdated = await _operationService.UpdateAsync(id, request);
-            if (!isUpdated)
+            var result = await _operationService.UpdateAsync(id, request);
+            if (!result.IsSuccess)
             {
-                return NotFound();
+                return BadRequest(new { errors = result.Errors });
             }
 
             return NoContent();
@@ -97,10 +97,10 @@ public class FinancialOperationsController : ControllerBase
     {
         try
         {
-            var isDeleted = await _operationService.DleteAsync(id);
-            if (!isDeleted)
+            var result = await _operationService.DeleteAsync(id);
+            if (!result.IsSuccess)
             {
-                return NotFound();
+                return BadRequest(new { errors = result.Errors });
             }
 
             return NoContent();
