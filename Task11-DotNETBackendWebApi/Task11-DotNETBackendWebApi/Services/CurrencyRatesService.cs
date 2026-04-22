@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
@@ -16,62 +17,70 @@ public class CurrencyRatesService : ICurrencyRatesService
         _configuration = configuration;
         _logger = logger;
     }
-
-    public async Task<CurrencyRateResult> GetRateAsync(string currencyCode, DateTime date)
+   
+    public async Task<Result<CurrencyRateResult>> GetRatesAsync(string currencyCode, DateTime date)
     {
         try
         {
-            var ratesList = await GetRatesListAsync(date);
-            var exchangeRates = ratesList
+            var ratesListResult = await GetRatesListAsync(date);
+
+            if (!ratesListResult.IsSuccess)
+            {
+                return Result<CurrencyRateResult>.Failure(ratesListResult.Errors);
+            }
+
+            var exchangeRates = ratesListResult.Data
                 .FirstOrDefault(r => string.Equals(r.Currency, currencyCode, StringComparison.OrdinalIgnoreCase));
 
             if (exchangeRates is not null && exchangeRates.SaleRate > 0 && exchangeRates.PurchaseRate > 0)
             {
-                return new CurrencyRateResult
+                return Result<CurrencyRateResult>.Success(new CurrencyRateResult
                 {
                     SaleRate = Math.Round(exchangeRates.SaleRate, 2, MidpointRounding.AwayFromZero),
                     PurchaseRate = Math.Round(exchangeRates.PurchaseRate, 2, MidpointRounding.AwayFromZero)
-                };
+                });
             }
 
-            throw new InvalidOperationException($"No exchange rates available for this currency: {currencyCode}");
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(ex, "Invalid operation while retrieving exchange rates for currency: {CurrencyCode} on date: {Date}", currencyCode, date);
-            throw;
+            return Result<CurrencyRateResult>.Failure($"Exchange rates for '{currencyCode}' are currently unavailable.");
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "HTTP request error while retrieving exchange rates for currency: {CurrencyCode} on date: {Date}", currencyCode, date);
-            throw new InvalidOperationException("Failed to retrieve exchange rates. Please try again later.", ex);
+            _logger.LogError(ex, "Bank API is unavailable.");
+            return Result<CurrencyRateResult>.Failure("External bank service is unavailable. Please try again later.");
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse bank response.");
+            return Result<CurrencyRateResult>.Failure("Received invalid data from the bank. Please try again later.");
         }
         catch (Exception ex)
-        { 
-            _logger.LogError(ex, "An unexpected error.");
-            throw new InvalidOperationException("An unexpected error occurred while retrieving exchange rates.", ex);
+        {
+            _logger.LogError(ex, "An unexpected error occurred while retrieving exchange rates.");
+            return Result<CurrencyRateResult>.Failure("An unexpected error occurred. Please try again later.");
         }
     }
 
-    private async Task<List<ExchangeRate>> GetRatesListAsync(DateTime date)
+    private async Task<Result<List<ExchangeRate>>> GetRatesListAsync(DateTime date)
     {
         var baseUrl = _configuration["ExchangeRatesApi:BaseUrl"];
         var dateString = date.ToString("dd.MM.yyyy");
-        var exchangeRatesApiUrl = $"{baseUrl}{dateString}";
+        var url = $"{baseUrl}{dateString}";
 
-        var request = new HttpRequestMessage(HttpMethod.Get, exchangeRatesApiUrl);
-        var response = await _httpClient.SendAsync(request);
-        _ = response.EnsureSuccessStatusCode();
+        var response = await _httpClient.GetAsync(url);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Result<List<ExchangeRate>>.Failure($"Failed to retrieve exchange rates. Bank API returned status: {response.StatusCode}");
+        }
 
         var jsonString = await response.Content.ReadAsStringAsync();
         var jsonObj = JsonSerializer.Deserialize<ExchangeRatesDto>(jsonString);
-        var exchangeRates = jsonObj.ExchangeRates;
 
-        if (exchangeRates.Count is 0)
+        if (jsonObj?.ExchangeRates == null || jsonObj.ExchangeRates.Count == 0)
         {
-            throw new InvalidOperationException($"No exchange rates available for this date: {dateString}");
+            return Result<List<ExchangeRate>>.Failure($"No exchange rates available for this date: {dateString}");
         }
 
-        return exchangeRates;
+        return Result<List<ExchangeRate>>.Success(jsonObj.ExchangeRates);
     }
 }

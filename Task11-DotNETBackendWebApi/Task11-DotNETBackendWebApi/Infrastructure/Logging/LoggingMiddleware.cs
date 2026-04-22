@@ -30,9 +30,16 @@ public class LoggingMiddleware
 
             await _next(context);
 
-            var responseBody = await ReadResponseBody(context.Response);
-            _logger.LogInformation("HTTP Response: {StatusCode} | Body: {Body}",
-                context.Response.StatusCode, responseBody);
+            if (context.Response.StatusCode >= 400)
+            {
+                var responseBody = await ReadResponseBody(context.Response);
+                _logger.LogWarning("HTTP Error Response: {StatusCode} | Body: {Body}",
+                    context.Response.StatusCode, responseBody);
+            }
+            else
+            {
+                _logger.LogInformation("HTTP Response: {StatusCode}", context.Response.StatusCode);
+            }
 
             await responseBodyMemoryStream.CopyToAsync(originalBodyStream);
         }

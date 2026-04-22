@@ -122,8 +122,13 @@ public class WalletService : IWalletService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while creating a new wallet.");
-            throw new InvalidOperationException("Operation aborted due to database connection error");
+            _logger.LogError(ex, "Database error occurred while creating a new wallet with id {Id}.", newWallet.Id);
+            return Result<WalletDto>.Failure("Operation aborted due to database connection error.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(CreateAsync));
+            return Result<WalletDto>.Failure("An unexpected system error occurred.");
         }
     }
 
@@ -176,8 +181,13 @@ public class WalletService : IWalletService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while updating the wallet with id {Id}.", wallet.Id);
-            throw new InvalidOperationException("Operation aborted due to database connection error");
+            _logger.LogError(ex, "Database error occurred while updating the wallet with id {Id}.", wallet.Id);
+            return Result.Failure("Operation aborted due to database connection error.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(UpdateAsync));
+            return Result.Failure("An unexpected system error occurred.");
         }
     }
 
@@ -211,8 +221,13 @@ public class WalletService : IWalletService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while soft deleting the wallet with id {Id}.", wallet.Id);
-            throw new InvalidOperationException("Operation aborted due to database connection error");
+            _logger.LogError(ex, "Database error occurred while deleting the wallet with id {Id}.", wallet.Id);
+            return Result.Failure("Operation aborted due to database connection error.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(DeleteAsync));
+            return Result.Failure("An unexpected system error occurred.");
         }
     }
 

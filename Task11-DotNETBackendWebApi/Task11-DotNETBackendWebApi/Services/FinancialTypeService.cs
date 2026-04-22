@@ -77,8 +77,13 @@ public class FinancialTypeService : IFinancialTypeService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while creating the financial type {Name}", request.Name);
-            throw new InvalidOperationException("Operation aborted due to database connection error");
+            _logger.LogError(ex, "Database error occurred while creating the financial type {Name}", request.Name);
+            return Result<FinancialTypeDto>.Failure("Operation aborted due to database connection error.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(CreateAsync));
+            return Result<FinancialTypeDto>.Failure("An unexpected system error occurred.");
         }
     }
 
@@ -113,8 +118,13 @@ public class FinancialTypeService : IFinancialTypeService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while updating the financial type {Name}", request.Name);
-            throw new InvalidOperationException("Operation aborted due to database connection error");
+            _logger.LogError(ex, "Database error occurred while updating the financial type {Name}", request.Name);
+            return Result.Failure("Operation aborted due to database connection error.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(UpdateAsync));
+            return Result.Failure("An unexpected system error occurred.");
         }
     }
 
@@ -147,8 +157,13 @@ public class FinancialTypeService : IFinancialTypeService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while soft deleting the financial type {Name}", type.Name);
-            throw new InvalidOperationException("Operation aborted due to database connection error");
+            _logger.LogError(ex, "Database error occurred while deleting the financial type {Name}", type.Name);
+            return Result.Failure("Operation aborted due to database connection error.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(DeleteAsync));
+            return Result.Failure("An unexpected system error occurred.");
         }
     }
 

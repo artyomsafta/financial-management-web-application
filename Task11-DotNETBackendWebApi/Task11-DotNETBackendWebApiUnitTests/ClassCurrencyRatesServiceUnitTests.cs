@@ -72,7 +72,7 @@ public class ClassCurrencyRatesServiceUnitTests
         var httpClient = new HttpClient(mockHandler);
         var service = new CurrencyRatesService(httpClient, _configuration);
 
-        var result = await service.GetRateAsync(currency, new DateTime(2026, 3, 1));
+        var result = await service.GetRatesAsync(currency, new DateTime(2026, 3, 1));
 
         result.SaleRate.Should().Be((decimal)saleRate);
         result.PurchaseRate.Should().Be((decimal)purchaseRate);
@@ -111,7 +111,7 @@ public class ClassCurrencyRatesServiceUnitTests
 
         try
         {
-            var result = await service.GetRateAsync(currency, new DateTime(2026, 3, 1));
+            var result = await service.GetRatesAsync(currency, new DateTime(2026, 3, 1));
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (InvalidOperationException actualError)
@@ -155,7 +155,7 @@ public class ClassCurrencyRatesServiceUnitTests
 
         try
         {
-            var result = await service.GetRateAsync(currency, new DateTime(2026, 3, 1));
+            var result = await service.GetRatesAsync(currency, new DateTime(2026, 3, 1));
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (InvalidOperationException actualError)
@@ -191,7 +191,7 @@ public class ClassCurrencyRatesServiceUnitTests
 
         try
         {
-            var result = await service.GetRateAsync(currency, new DateTime(2027, 3, 1));
+            var result = await service.GetRatesAsync(currency, new DateTime(2027, 3, 1));
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (InvalidOperationException actualError)
@@ -213,7 +213,7 @@ public class ClassCurrencyRatesServiceUnitTests
 
         try
         {
-            var result = await service.GetRateAsync(currency, new DateTime(2026, 3, 1));
+            var result = await service.GetRatesAsync(currency, new DateTime(2026, 3, 1));
             Assert.Fail("Expected Exception was not thrown.");
         }
         catch (InvalidOperationException actualError)

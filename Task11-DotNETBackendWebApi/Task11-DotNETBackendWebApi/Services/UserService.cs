@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
 using Task11_DotNETBackendWebApi.Models;
@@ -25,7 +26,14 @@ public class UserService : IUserService
 
     public async Task<IEnumerable<UserDto>> GetListAsync()
     {
-        return await _context.Users
+        var query = _context.Users.AsQueryable();
+
+        if (!_userContext.IsAdmin)
+        {
+            query = query.Where(u => u.Id == _userContext.UserId);
+        }
+
+        return await query
             .AsNoTracking()
             .Select(u => new UserDto
             {
@@ -62,6 +70,12 @@ public class UserService : IUserService
             return Result<UserDto>.Failure("A user with the same username already exists.");
         }
 
+        var passwordErrors = ValidatePassword(request.Password);
+        if (passwordErrors.Any())
+        {
+            return Result<UserDto>.Failure(passwordErrors);
+        }
+
         var newUser = new User
         {
             Id = Guid.NewGuid(),
@@ -78,8 +92,13 @@ public class UserService : IUserService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while creating a new user {Username}", request.Username);
-            throw new InvalidOperationException("Operation aborted due to database connection error");
+            _logger.LogError(ex, "Database error occurred while creating a new user {Username}", request.Username);
+            return Result<UserDto>.Failure("Operation aborted due to database connection error.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(CreateAsync));
+            return Result<UserDto>.Failure("An unexpected system error occurred.");
         }
     }
 
@@ -102,6 +121,12 @@ public class UserService : IUserService
             return Result.Failure("A user with the same username already exists.");
         }
 
+        var passwordErrors = ValidatePassword(request.Password);
+        if (passwordErrors.Any())
+        {
+            return Result<UserDto>.Failure(passwordErrors);
+        }
+
         user.Username = request.Username.Trim();
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
 
@@ -115,8 +140,13 @@ public class UserService : IUserService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while updating user {Username}", request.Username);
-            throw new InvalidOperationException("Operation aborted due to database connection error");
+            _logger.LogError(ex, "Database error occurred while updating user {Username}", request.Username);
+            return Result.Failure("Operation aborted due to database connection error.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(UpdateAsync));
+            return Result.Failure("An unexpected system error occurred.");
         }
     }
 
@@ -150,8 +180,13 @@ public class UserService : IUserService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while soft deleting user {Username}", user.Username);
-            throw new InvalidOperationException("Operation aborted due to database connection error");
+            _logger.LogError(ex, "Database error occurred while deleting user {Username}", user.Username);
+            return Result.Failure("Operation aborted due to database connection error.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(DeleteAsync));
+            return Result.Failure("An unexpected system error occurred.");
         }
     }
 
@@ -163,5 +198,32 @@ public class UserService : IUserService
             Username = user.Username,
             Role = user.Role
         };
+    }
+
+    private List<string> ValidatePassword(string password)
+    {
+        var errors = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            errors.Add("Password cannot be empty or consist only of spaces.");
+            return errors;
+        }
+
+        if (password.Length < 8 || password.Length > 64)
+        {
+            errors.Add("Password must be between 8 and 64 characters long.");
+        }
+
+        if (!Regex.IsMatch(password, @"[A-Z]"))
+            errors.Add("Password must contain at least one uppercase letter.");
+
+        if (!Regex.IsMatch(password, @"[0-9]"))
+            errors.Add("Password must contain at least one digit.");
+
+        if (!Regex.IsMatch(password, @"[!@#$%^&*()_+=\[{\]};:<>|./?,-]"))
+            errors.Add("Password must contain at least one special character.");
+
+        return errors;
     }
 }

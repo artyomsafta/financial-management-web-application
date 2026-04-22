@@ -51,7 +51,7 @@ public class OperationCreateMethodUnitTests
 
         _ratesServiceMock = new Mock<ICurrencyRatesService>();
         _ratesServiceMock
-            .Setup(s => s.GetRateAsync(It.Is<string>(c => c == "USD"), It.IsAny<DateTime>()))
+            .Setup(s => s.GetRatesAsync(It.Is<string>(c => c == "USD"), It.IsAny<DateTime>()))
             .ReturnsAsync(_defaultRates);
 
         _loggerMock = new Mock<ILogger<FinancialOperationService>>();
@@ -436,7 +436,7 @@ public class OperationCreateMethodUnitTests
         var expectedErrorMessage = $"No exchange rates available for this currency: {request.Currency}";
 
         _ratesServiceMock
-            .Setup(s => s.GetRateAsync(It.Is<string>(c => c == "USD"), It.IsAny<DateTime>()))
+            .Setup(s => s.GetRatesAsync(It.Is<string>(c => c == "USD"), It.IsAny<DateTime>()))
             .ThrowsAsync(new InvalidOperationException(expectedErrorMessage));
 
         try

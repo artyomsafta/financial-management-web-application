@@ -63,10 +63,6 @@ public class FinancialOperationsController : ControllerBase
         {
             return StatusCode(403, new { message = ex.Message });
         }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
     }
 
     [HttpPut("{id}")]
@@ -86,10 +82,6 @@ public class FinancialOperationsController : ControllerBase
         {
             return StatusCode(403, new { message = ex.Message });
         }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
     }
 
     [HttpDelete("{id}")]
@@ -108,10 +100,6 @@ public class FinancialOperationsController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
         }
     }
 }

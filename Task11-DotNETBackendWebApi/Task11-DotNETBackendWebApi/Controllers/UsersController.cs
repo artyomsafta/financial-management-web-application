@@ -52,20 +52,13 @@ public class UsersController : ControllerBase
     [AllowAnonymous]
     public async Task<ActionResult<UserDto>> Create([FromBody] UserRegisterRequest request)
     {
-        try
+        var result = await _userService.CreateAsync(request);
+        if (!result.IsSuccess)
         {
-            var result = await _userService.CreateAsync(request);
-            if (!result.IsSuccess)
-            {
-                return BadRequest(new { errors = result.Errors });
-            }
+            return BadRequest(new { errors = result.Errors });
+        }
 
-            return CreatedAtAction(nameof(GetById), new { id = result.Data.Id }, result.Data);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        return CreatedAtAction(nameof(GetById), new { id = result.Data.Id }, result.Data);        
     }
 
     [HttpPut("{id}")]
@@ -85,10 +78,6 @@ public class UsersController : ControllerBase
         {
             return StatusCode(403, new { message = ex.Message });
         }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
     }
 
     [HttpDelete("{id}")]
@@ -107,10 +96,6 @@ public class UsersController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
         }
     }
 }

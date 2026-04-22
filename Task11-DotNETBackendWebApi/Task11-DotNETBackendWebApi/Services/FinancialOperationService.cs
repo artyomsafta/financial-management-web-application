@@ -111,7 +111,12 @@ public class FinancialOperationService : IFinancialOperationService
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        var finalAmount = await CalculateAmountAsync(request.Amount, wallet.Currency.Code, currencyCode, request.Date, type.IsIncome);
+        var calculationResult = await CalculateAmountAsync(request.Amount, wallet.Currency.Code, currencyCode, request.Date, type.IsIncome);
+        if (!calculationResult.IsSuccess)
+        {
+            return Result<FinancialOperationDto>.Failure(calculationResult.Errors);
+        }
+        var finalAmount = calculationResult.Data;
 
         await AddCurrencyIfNotExistsAsync(currencyCode);
 
@@ -146,8 +151,13 @@ public class FinancialOperationService : IFinancialOperationService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while creating a new financial operation.");
-            throw new InvalidOperationException("Operation aborted due to database connection error");
+            _logger.LogError(ex, "Database error occurred while creating the financial operation with id {Id}.", newOperation.Id);
+            return Result<FinancialOperationDto>.Failure("Operation aborted due to database connection error.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(CreateAsync));
+            return Result<FinancialOperationDto>.Failure("An unexpected system error occurred.");
         }
     }
 
@@ -199,7 +209,12 @@ public class FinancialOperationService : IFinancialOperationService
             .Select(t => t.IsIncome)
             .FirstOrDefaultAsync();
 
-        var finalAmount = await CalculateAmountAsync(request.Amount, wallet.Currency.Code, currencyCode, request.Date, isIncome);
+        var calculationResult = await CalculateAmountAsync(request.Amount, wallet.Currency.Code, currencyCode, request.Date, isIncome);
+        if (!calculationResult.IsSuccess)
+        {
+            return Result.Failure(calculationResult.Errors);
+        }
+        var finalAmount = calculationResult.Data;
 
         await AddCurrencyIfNotExistsAsync(currencyCode);
 
@@ -221,8 +236,13 @@ public class FinancialOperationService : IFinancialOperationService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while updating the financial operation with id {Id}.", operation.Id);
-            throw new InvalidOperationException("Operation aborted due to database connection error");
+            _logger.LogError(ex, "Database error occurred while updating the financial operation with id {Id}.", operation.Id);
+            return Result.Failure("Operation aborted due to database connection error.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(UpdateAsync));
+            return Result.Failure("An unexpected system error occurred.");
         }
     }
 
@@ -252,21 +272,34 @@ public class FinancialOperationService : IFinancialOperationService
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "An error occurred while soft deleting the financial operation {Id}", operation.Id);
-            throw new InvalidOperationException("Operation aborted due to database connection error");
+            _logger.LogError(ex, "Database error occurred while deleting the financial operation with id {Id}.", operation.Id);
+            return Result.Failure("Operation aborted due to database connection error.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(DeleteAsync));
+            return Result.Failure("An unexpected system error occurred.");
         }
     }
 
-    private async Task<decimal> CalculateAmountAsync(decimal requestAmount, string baseCurrency, string currentCurrency, DateTime requestDate, bool IsIncome)
+    private async Task<Result<decimal>> CalculateAmountAsync(decimal requestAmount, string baseCurrency, string currentCurrency, DateTime requestDate, bool isIncome)
     {
-        if (baseCurrency != currentCurrency)
+        if (baseCurrency == currentCurrency)
         {
-            var currencyRates = await _currencyRatesService.GetRateAsync(currentCurrency, requestDate);
-            var rate = IsIncome ? currencyRates.PurchaseRate : currencyRates.SaleRate;
-            requestAmount *= rate;
+            return Result<decimal>.Success(Math.Round(requestAmount, 4, MidpointRounding.AwayFromZero));
         }
 
-        return Math.Round(requestAmount, 4, MidpointRounding.AwayFromZero);
+        var ratesResult = await _currencyRatesService.GetRatesAsync(currentCurrency, requestDate);
+
+        if (!ratesResult.IsSuccess)
+        {
+            return Result<decimal>.Failure(ratesResult.Errors);
+        }
+
+        var rate = isIncome ? ratesResult.Data.PurchaseRate : ratesResult.Data.SaleRate;
+        var finalAmount = requestAmount * rate;
+
+        return Result<decimal>.Success(Math.Round(finalAmount, 4, MidpointRounding.AwayFromZero));
     }
 
     private async Task AddCurrencyIfNotExistsAsync(string currencyCode)
