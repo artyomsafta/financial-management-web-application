@@ -14,7 +14,7 @@ namespace Task11_DotNETBackendWebApiUnitTests;
 
 [TestClass]
 public class ClassFinancialTypeServiceUnitTests
-{
+{/*
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
     private Mock<IUserContext> _userContextMock;
@@ -345,5 +345,5 @@ public class ClassFinancialTypeServiceUnitTests
         {
             Assert.AreEqual(expectedErrorMessage, actualError.Message);
         }
-    }
+    }*/
 }

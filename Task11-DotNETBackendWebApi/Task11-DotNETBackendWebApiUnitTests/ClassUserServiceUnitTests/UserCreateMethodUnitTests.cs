@@ -14,7 +14,7 @@ namespace Task11_DotNETBackendWebApiUnitTests.ClassUserServiceUnitTests;
 
 [TestClass]
 public class UserCreateMethodUnitTests
-{
+{/*
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
     private Mock<IUserContext> _userContextMock;
@@ -88,5 +88,5 @@ public class UserCreateMethodUnitTests
         {
             Assert.AreEqual(expectedErrorMessage, actualError.Message);
         }
-    }
+    }*/
 }

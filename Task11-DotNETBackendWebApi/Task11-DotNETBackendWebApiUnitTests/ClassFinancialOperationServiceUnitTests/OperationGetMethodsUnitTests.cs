@@ -29,13 +29,17 @@ public class OperationGetMethodsUnitTests
     private static readonly Guid Wallet1Id = Guid.NewGuid();
     private static readonly Guid Wallet2Id = Guid.NewGuid();
 
+    private static readonly Guid Type1Id = Guid.NewGuid();
+
+    private static readonly int CurrencyUahId = 1;
+    private static readonly int CurrencyUsdId = 2;
 
     private static readonly Guid AdminOperationId = Guid.NewGuid();
     private static readonly Guid Wallet1OperationId = Guid.NewGuid();
     private static readonly Guid Wallet2OperationId = Guid.NewGuid();
     private static readonly Guid DeletedOperationId = Guid.NewGuid();
 
-    private static readonly Guid Type1Id = Guid.NewGuid();
+
 
     [TestInitialize]
     public void Setup()
@@ -66,18 +70,61 @@ public class OperationGetMethodsUnitTests
 
             var type1 = new FinancialType { Id = Type1Id, Name = "Salary", Description = "Monthly salary", IsIncome = true, IsDeleted = false };
 
+            var currencyUah = new Currency { Id = CurrencyUahId, Code = "UAH" };
+            var currencyUsd = new Currency { Id = CurrencyUsdId, Code = "USD" };
+
             var walletAdminOperation = new FinancialOperation
-            { Id = AdminOperationId, Amount = 250, Date = new DateTime(2026, 3, 1), Currency = nameof(Currencies.UAH), Note = "walletAdmin operation", IsDeleted = false, FinancialTypeId = Type1Id, WalletId = AdminWalletId };
+            { 
+                Id = AdminOperationId, 
+                Amount = 250m, 
+                Date = new DateTime(2026, 3, 1), 
+                Note = "walletAdmin operation", 
+                IsDeleted = false, 
+                FinancialTypeId = Type1Id, 
+                WalletId = AdminWalletId,
+                CurrencyId = CurrencyUahId,
+            };
+
             var wallet1Operation = new FinancialOperation
-            { Id = Wallet1OperationId, Amount = 150, Date = new DateTime(2026, 3, 1), Currency = nameof(Currencies.UAH), Note = "wallet1 operation", IsDeleted = false, FinancialTypeId = Type1Id, WalletId = Wallet1Id };
+            { 
+                Id = Wallet1OperationId, 
+                Amount = 150m, 
+                Date = new DateTime(2026, 3, 1), 
+                Note = "wallet1 operation", 
+                IsDeleted = false, 
+                FinancialTypeId = Type1Id, 
+                WalletId = Wallet1Id,
+                CurrencyId = CurrencyUahId
+            };
+
             var wallet2Operation = new FinancialOperation
-            { Id = Wallet2OperationId, Amount = 120, Date = new DateTime(2026, 3, 1), Currency = nameof(Currencies.UAH), Note = "wallet2 operation", IsDeleted = false, FinancialTypeId = Type1Id, WalletId = Wallet2Id };
+            { 
+                Id = Wallet2OperationId, 
+                Amount = 120m, 
+                Date = new DateTime(2026, 3, 1),
+                Note = "wallet2 operation", 
+                IsDeleted = false, 
+                FinancialTypeId = Type1Id, 
+                WalletId = Wallet2Id,
+                CurrencyId = CurrencyUahId
+            };
+
             var deletedOperation = new FinancialOperation
-            { Id = DeletedOperationId, Amount = 300, Date = new DateTime(2026, 3, 1), Currency = nameof(Currencies.UAH), Note = "deleted operation", IsDeleted = true, FinancialTypeId = Type1Id, WalletId = Wallet2Id };
+            { 
+                Id = DeletedOperationId, 
+                Amount = 300m, 
+                Date = new DateTime(2026, 3, 1), 
+                Note = "deleted operation", 
+                IsDeleted = true, 
+                FinancialTypeId = Type1Id, 
+                WalletId = Wallet2Id,
+                CurrencyId = CurrencyUahId
+            };
 
             context.Users.AddRange(adminUser, user1, user2);
             context.Wallets.AddRange(adminWallet, wallet1, wallet2);
             context.FinancialTypes.Add(type1);
+            context.Currencies.AddRange(currencyUah, currencyUsd);
             context.FinancialOperations.AddRange(walletAdminOperation, wallet1Operation, wallet2Operation, deletedOperation);
             context.SaveChanges();
         }
@@ -112,19 +159,19 @@ public class OperationGetMethodsUnitTests
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
+        var successResult = await _operationService.GetByIdAsync(Wallet1OperationId);
+        var actualOperation = successResult.Data;
+
         var expectedOperation = new FinancialOperationDto
         {
             Id = Wallet1OperationId,
-            Amount = 150,
+            Amount = 150m,
             Date = new DateTime(2026, 3, 1),
-            Currency = nameof(Currencies.UAH),
+            Currency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
             Note = "wallet1 operation",
-            TypeId = Type1Id,
-            TypeName = "Salary",
-            WalletId = Wallet1Id,
-            WalletName = "user1 wallet"
+            Type = new FinancialTypeListDto { Id = Type1Id, Name = "Salary" },
+            Wallet = new WalletListDto { Id = Wallet1Id, Name = "user1 wallet" }
         };
-        var actualOperation = await _operationService.GetByIdAsync(Wallet1OperationId);
 
         actualOperation.Should().BeEquivalentTo(expectedOperation);
     }
@@ -135,19 +182,19 @@ public class OperationGetMethodsUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
+        var successResult = await _operationService.GetByIdAsync(Wallet1OperationId);
+        var actualOperation = successResult.Data;
+
         var expectedOperation = new FinancialOperationDto
         {
             Id = Wallet1OperationId,
-            Amount = 150,
+            Amount = 150m,
             Date = new DateTime(2026, 3, 1),
-            Currency = nameof(Currencies.UAH),
+            Currency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
             Note = "wallet1 operation",
-            TypeId = Type1Id,
-            TypeName = "Salary",
-            WalletId = Wallet1Id,
-            WalletName = "user1 wallet"
+            Type = new FinancialTypeListDto { Id = Type1Id, Name = "Salary" },
+            Wallet = new WalletListDto { Id = Wallet1Id, Name = "user1 wallet" }
         };
-        var actualOperation = await _operationService.GetByIdAsync(Wallet1OperationId);
 
         actualOperation.Should().BeEquivalentTo(expectedOperation);
     }
@@ -156,9 +203,13 @@ public class OperationGetMethodsUnitTests
     public async Task Test_GetByIdAsync_OperationNotFoundCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
-        var nullOperation = await _operationService.GetByIdAsync(DeletedOperationId);
 
-        nullOperation.Should().BeNull();
+        var failureResult = await _operationService.GetByIdAsync(DeletedOperationId);
+        var isFindSuccess = failureResult.IsSuccess;
+        isFindSuccess.Should().BeFalse();
+
+        var failureMessage = $"Operation with ID {DeletedOperationId} not found";
+        failureResult.Errors.Should().Contain(failureMessage);
     }
 
     [TestMethod]

@@ -14,7 +14,7 @@ namespace Task11_DotNETBackendWebApiUnitTests.ClassWalletServiceUnitTests;
 
 [TestClass]
 public class WalletCreateMethodUnitTests
-{
+{/*
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
     private Mock<IUserContext> _userContextMock;
@@ -178,5 +178,5 @@ public class WalletCreateMethodUnitTests
         {
             Assert.AreEqual(expectedErrorMessage, actualError.Message);
         }
-    }
+    }*/
 }

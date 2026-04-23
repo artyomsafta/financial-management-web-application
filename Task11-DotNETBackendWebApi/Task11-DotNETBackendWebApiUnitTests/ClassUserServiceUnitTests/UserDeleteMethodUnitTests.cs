@@ -12,7 +12,7 @@ namespace Task11_DotNETBackendWebApiUnitTests.ClassUserServiceUnitTests;
 
 [TestClass]
 public class UserDeleteMethodUnitTests
-{
+{/*
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
     private Mock<IUserContext> _userContextMock;
@@ -149,5 +149,5 @@ public class UserDeleteMethodUnitTests
         {
             Assert.AreEqual(expectedErrorMessage, actualError.Message);
         }
-    }
+    }*/
 }

@@ -125,7 +125,7 @@ public class FinancialOperationService : IFinancialOperationService
             Id = Guid.NewGuid(),
             Amount = finalAmount,
             Date = request.Date,
-            Comment = $"The amount in the transaction currency is {request.Amount:F2} {currencyCode}",
+            Comment = $"The amount in the transaction currency is {request.Amount:F4} {currencyCode}",
             Note = request.Note.Trim(),
             IsDeleted = false,
             FinancialTypeId = type.Id,
@@ -145,6 +145,7 @@ public class FinancialOperationService : IFinancialOperationService
                 .AsNoTracking()
                 .Include(o => o.Type)
                 .Include(o => o.Wallet)
+                .Include(o => o.Currency)
                 .FirstOrDefaultAsync(o => o.Id == newOperation.Id);
 
             return Result<FinancialOperationDto>.Success(MapToDto(operation));
@@ -220,7 +221,7 @@ public class FinancialOperationService : IFinancialOperationService
 
         operation.Amount = finalAmount;
         operation.Date = request.Date;
-        operation.Comment = $"The amount in the transaction currency is {request.Amount:F2} {currencyCode}";
+        operation.Comment = $"The amount in the transaction currency is {request.Amount:F4} {currencyCode}";
         operation.Note = request.Note.Trim();
         operation.CurrencyId = await _context.Currencies
             .Where(c => c.Code == currencyCode)

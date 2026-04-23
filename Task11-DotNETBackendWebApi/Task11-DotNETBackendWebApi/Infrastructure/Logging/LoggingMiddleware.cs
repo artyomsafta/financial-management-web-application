@@ -41,6 +41,7 @@ public class LoggingMiddleware
                 _logger.LogInformation("HTTP Response: {StatusCode}", context.Response.StatusCode);
             }
 
+            responseBodyMemoryStream.Position = 0;
             await responseBodyMemoryStream.CopyToAsync(originalBodyStream);
         }
     }

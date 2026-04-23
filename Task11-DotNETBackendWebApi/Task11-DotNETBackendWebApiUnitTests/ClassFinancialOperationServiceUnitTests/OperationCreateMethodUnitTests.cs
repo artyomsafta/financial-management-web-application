@@ -37,6 +37,9 @@ public class OperationCreateMethodUnitTests
     private static readonly Guid Type2Id = Guid.NewGuid();
     private static readonly Guid Type3Id = Guid.NewGuid();
 
+    private static readonly int CurrencyUahId = 1;
+    private static readonly int CurrencyUsdId = 2;
+
     private static readonly Guid WalletNotFoundId = Guid.NewGuid();
     private static readonly Guid TypeNotFoundId = Guid.NewGuid();
 
@@ -50,9 +53,10 @@ public class OperationCreateMethodUnitTests
         _userContextMock = new Mock<IUserContext>();
 
         _ratesServiceMock = new Mock<ICurrencyRatesService>();
+        var successResult = Result<CurrencyRateResult>.Success(_defaultRates);
         _ratesServiceMock
             .Setup(s => s.GetRatesAsync(It.Is<string>(c => c == "USD"), It.IsAny<DateTime>()))
-            .ReturnsAsync(_defaultRates);
+            .ReturnsAsync(successResult);
 
         _loggerMock = new Mock<ILogger<FinancialOperationService>>();
         _operationService = new FinancialOperationService(_context, _userContextMock.Object, _ratesServiceMock.Object, _loggerMock.Object);
@@ -67,16 +71,20 @@ public class OperationCreateMethodUnitTests
             var user1 = new User { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User), IsDeleted = false };
             var user2 = new User { Id = User2Id, Username = "user2", Role = nameof(UserRoles.User), IsDeleted = false };
 
-            var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", BaseCurrency = nameof(Currencies.UAH), IsDeleted = false, UserId = User1Id };
-            var wallet2 = new Wallet { Id = Wallet2Id, Name = "DELETED wallet", BaseCurrency = nameof(Currencies.UAH), IsDeleted = true, UserId = User2Id };
+            var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", IsDeleted = false, UserId = User1Id, CurrencyId = CurrencyUahId };
+            var wallet2 = new Wallet { Id = Wallet2Id, Name = "DELETED wallet", IsDeleted = true, UserId = User2Id, CurrencyId = CurrencyUahId };
 
             var type1 = new FinancialType { Id = Type1Id, Name = "Salary", Description = "Monthly salary", IsIncome = true, IsDeleted = false };
             var type2 = new FinancialType { Id = Type2Id, Name = "Rent", Description = "Monthly rent payment", IsIncome = false, IsDeleted = false };
             var type3 = new FinancialType { Id = Type3Id, Name = "DELETED", Description = "Soft-deleted type", IsIncome = false, IsDeleted = true };
 
+            var currencyUah = new Currency { Id = CurrencyUahId, Code = "UAH" };
+            var currencyUsd = new Currency { Id = CurrencyUsdId, Code = "USD" };
+
             context.Users.AddRange(user1, user2);
             context.Wallets.AddRange(wallet1, wallet2);
             context.FinancialTypes.AddRange(type1, type2, type3);
+            context.Currencies.AddRange(currencyUah, currencyUsd);
             context.SaveChanges();
         }
     }
@@ -92,23 +100,23 @@ public class OperationCreateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 10_000m,
             Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.USD),
+            Currency = "USD",
             Note = "Success test operation"
         };
-        var actualOperation = await _operationService.CreateAsync(request);
+
+        var successResult = await _operationService.CreateAsync(request);
+        var actualOperation = successResult.Data;
 
         var expectedOperation = new FinancialOperationDto
         {
             Id = actualOperation.Id,
             Amount = Math.Round(request.Amount * _defaultRates.PurchaseRate, 4, MidpointRounding.AwayFromZero),
             Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.USD),
+            Currency = new CurrencyListDto { Id = CurrencyUsdId, Code = "USD" },
             Comment = $"The amount in the transaction currency is 10000,0000 USD",
             Note = "Success test operation",
-            TypeId = Type1Id,
-            TypeName = "Salary",
-            WalletId = Wallet1Id,
-            WalletName = "user1 wallet"
+            Type = new FinancialTypeListDto { Id = Type1Id, Name = "Salary" },
+            Wallet = new WalletListDto { Id = Wallet1Id, Name = "user1 wallet" }
         };
 
         actualOperation.Should().BeEquivalentTo(expectedOperation);
@@ -126,23 +134,23 @@ public class OperationCreateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 8_000m,
             Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.USD),
+            Currency = "USD",
             Note = "Success test operation"
         };
-        var actualOperation = await _operationService.CreateAsync(request);
+
+        var successResult = await _operationService.CreateAsync(request);
+        var actualOperation = successResult.Data;
 
         var expectedOperation = new FinancialOperationDto
         {
             Id = actualOperation.Id,
             Amount = Math.Round(request.Amount * _defaultRates.PurchaseRate, 4, MidpointRounding.AwayFromZero),
             Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.USD),
+            Currency = new CurrencyListDto { Id = CurrencyUsdId, Code = "USD" },
             Comment = $"The amount in the transaction currency is 8000,0000 USD",
             Note = "Success test operation",
-            TypeId = Type1Id,
-            TypeName = "Salary",
-            WalletId = Wallet1Id,
-            WalletName = "user1 wallet"
+            Type = new FinancialTypeListDto { Id = Type1Id, Name = "Salary" },
+            Wallet = new WalletListDto { Id = Wallet1Id, Name = "user1 wallet" }
         };
 
         actualOperation.Should().BeEquivalentTo(expectedOperation);
@@ -160,24 +168,25 @@ public class OperationCreateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 200m,
             Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.USD),
+            Currency = "USD",
             Note = "Success test expence operation"
         };
-        var actualOperation = await _operationService.CreateAsync(request);
+
+        var successResult = await _operationService.CreateAsync(request);
+        var actualOperation = successResult.Data;
 
         var expectedOperation = new FinancialOperationDto
         {
             Id = actualOperation.Id,
             Amount = Math.Round(request.Amount * _defaultRates.SaleRate, 4, MidpointRounding.AwayFromZero),
             Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.USD),
+            Currency = new CurrencyListDto { Id = CurrencyUsdId, Code = "USD" },
             Comment = $"The amount in the transaction currency is 200,0000 USD",
             Note = "Success test expence operation",
-            TypeId = Type2Id,
-            TypeName = "Rent",
-            WalletId = Wallet1Id,
-            WalletName = "user1 wallet"
+            Type = new FinancialTypeListDto { Id = Type2Id, Name = "Rent" },
+            Wallet = new WalletListDto { Id = Wallet1Id, Name = "user1 wallet" }
         };
+
 
         actualOperation.Should().BeEquivalentTo(expectedOperation);
     }
@@ -188,34 +197,29 @@ public class OperationCreateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
-        var baseWalletCurrency = await _context.Wallets
-            .Where(w => w.Id == Wallet1Id)
-            .Select(w => w.BaseCurrency)
-            .FirstOrDefaultAsync();
-
         var request = new FinancialOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
             Amount = 10_000m,
             Date = new DateTime(2026, 3, 5),
-            Currency = baseWalletCurrency,
+            Currency = "UAH",
             Note = "Success test operation in base wallet currency"
         };
-        var actualOperation = await _operationService.CreateAsync(request);
+
+        var successResult = await _operationService.CreateAsync(request);
+        var actualOperation = successResult.Data;
 
         var expectedOperation = new FinancialOperationDto
         {
             Id = actualOperation.Id,
             Amount = 10_000m,
             Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.UAH),
+            Currency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
             Comment = $"The amount in the transaction currency is 10000,0000 UAH",
             Note = "Success test operation in base wallet currency",
-            TypeId = Type1Id,
-            TypeName = "Salary",
-            WalletId = Wallet1Id,
-            WalletName = "user1 wallet"
+            Type = new FinancialTypeListDto { Id = Type1Id, Name = "Salary" },
+            Wallet = new WalletListDto { Id = Wallet1Id, Name = "user1 wallet" }
         };
 
         actualOperation.Should().BeEquivalentTo(expectedOperation);
@@ -226,27 +230,27 @@ public class OperationCreateMethodUnitTests
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
+        var failureCurrencyCode = "AAA";
+        var failureMessage = $"Exchange rates for '{failureCurrencyCode}' are currently unavailable.";
+
+        _ratesServiceMock
+            .Setup(s => s.GetRatesAsync(failureCurrencyCode, It.IsAny<DateTime>()))
+            .ReturnsAsync(Result<CurrencyRateResult>.Failure(failureMessage));
+
         var request = new FinancialOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
             Amount = 10_000m,
             Date = new DateTime(2026, 3, 5),
-            Currency = "AAA",
+            Currency = failureCurrencyCode,
             Note = "Test operation with wrong currency code."
         };
 
-        var expectedErrorMessage = $"The specified currency code: {request.Currency} was not found.";
+        var failureResult = await _operationService.CreateAsync(request);
 
-        try
-        {
-            var newOperation = await _operationService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        failureResult.IsSuccess.Should().BeFalse();
+        failureResult.Errors.Should().Contain(failureMessage);
     }
 
     [TestMethod]
@@ -260,21 +264,17 @@ public class OperationCreateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 10_000m,
             Date = new DateTime(2035, 3, 5),
-            Currency = nameof(Currencies.USD),
+            Currency = "USD",
             Note = "Test operation with wrong date."
         };
 
-        var expectedErrorMessage = "The specified date cannot be in the future.";
+        var failureResult = await _operationService.CreateAsync(request);
+        var actualFailureMessages = failureResult.Errors;
 
-        try
-        {
-            var newOperation = await _operationService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        var expectedErrorMessage = new List<string> { "Cannot create operation in the future." };
+
+        failureResult.IsSuccess.Should().BeFalse();
+        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
     }
 
     [TestMethod]
@@ -288,21 +288,17 @@ public class OperationCreateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 10_000m,
             Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.USD),
+            Currency = "USD",
             Note = "Test operation with wrong type."
         };
 
-        var expectedErrorMessage = "The specified type of operation does not exist.";
+        var failureResult = await _operationService.CreateAsync(request);
+        var actualFailureMessages = failureResult.Errors;
 
-        try
-        {
-            var newOperation = await _operationService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        var expectedErrorMessage = new List<string> { "There is no such type of operation." };
+
+        failureResult.IsSuccess.Should().BeFalse();
+        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
     }
 
     [TestMethod]
@@ -316,21 +312,17 @@ public class OperationCreateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 10_000m,
             Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.USD),
+            Currency = "USD",
             Note = "Test operation with wrong type."
         };
 
-        var expectedErrorMessage = "The specified type of operation does not exist.";
+        var failureResult = await _operationService.CreateAsync(request);
+        var actualFailureMessages = failureResult.Errors;
 
-        try
-        {
-            var newOperation = await _operationService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        var expectedErrorMessage = new List<string> { "There is no such type of operation." };
+
+        failureResult.IsSuccess.Should().BeFalse();
+        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
     }
 
     [TestMethod]
@@ -344,21 +336,17 @@ public class OperationCreateMethodUnitTests
             WalletId = WalletNotFoundId,
             Amount = 10_000m,
             Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.USD),
+            Currency = "USD",
             Note = "Test operation with wrong wallet."
         };
 
-        var expectedErrorMessage = "The specified wallet does not exist.";
+        var failureResult = await _operationService.CreateAsync(request);
+        var actualFailureMessages = failureResult.Errors;
 
-        try
-        {
-            var newOperation = await _operationService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        var expectedErrorMessage = new List<string> { "There is no such wallet." };
+
+        failureResult.IsSuccess.Should().BeFalse();
+        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
     }
 
     [TestMethod]
@@ -372,21 +360,17 @@ public class OperationCreateMethodUnitTests
             WalletId = Wallet2Id,
             Amount = 10_000m,
             Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.USD),
+            Currency = "USD",
             Note = "Test operation with wrong wallet."
         };
 
-        var expectedErrorMessage = "The specified wallet does not exist.";
+        var failureResult = await _operationService.CreateAsync(request);
+        var actualFailureMessages = failureResult.Errors;
 
-        try
-        {
-            var newOperation = await _operationService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        var expectedErrorMessage = new List<string> { "There is no such wallet." };
+
+        failureResult.IsSuccess.Should().BeFalse();
+        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
     }
 
     [TestMethod]
@@ -401,7 +385,7 @@ public class OperationCreateMethodUnitTests
             WalletId = Wallet1Id,
             Amount = 10_000m,
             Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.USD),
+            Currency = "USD",
             Note = "Test operation with wrong user."
         };
 
@@ -416,37 +400,5 @@ public class OperationCreateMethodUnitTests
         {
             Assert.AreEqual(expectedErrorMessage, actualError.Message);
         }
-    }
-
-    [TestMethod]
-    public async Task Test_CreateAsync_NoExchangeRatesCase()
-    {
-        _userContextMock.Setup(с => с.IsAdmin).Returns(true);
-
-        var request = new FinancialOperationRequest
-        {
-            TypeId = Type1Id,
-            WalletId = Wallet1Id,
-            Amount = 10_000m,
-            Date = new DateTime(2026, 3, 5),
-            Currency = nameof(Currencies.USD),
-            Note = "Test operation with missing exchange rates."
-        };
-
-        var expectedErrorMessage = $"No exchange rates available for this currency: {request.Currency}";
-
-        _ratesServiceMock
-            .Setup(s => s.GetRatesAsync(It.Is<string>(c => c == "USD"), It.IsAny<DateTime>()))
-            .ThrowsAsync(new InvalidOperationException(expectedErrorMessage));
-
-        try
-        {
-            var newOperation = await _operationService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
-    }
+    }   
 }
