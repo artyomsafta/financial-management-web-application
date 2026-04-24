@@ -14,7 +14,7 @@ namespace Task11_DotNETBackendWebApiUnitTests.ClassWalletServiceUnitTests;
 
 [TestClass]
 public class WalletCreateMethodUnitTests
-{/*
+{
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
     private Mock<IUserContext> _userContextMock;
@@ -25,6 +25,8 @@ public class WalletCreateMethodUnitTests
     private static readonly Guid User2Id = Guid.NewGuid();
 
     private static readonly Guid UserNotFoundId = Guid.NewGuid();
+
+    private static readonly int CurrencyUahId = 1;
 
     [TestInitialize]
     public void Setup()
@@ -47,7 +49,10 @@ public class WalletCreateMethodUnitTests
             var user1 = new User { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User), IsDeleted = false };
             var user2 = new User { Id = User2Id, Username = "user2", Role = nameof(UserRoles.User), IsDeleted = false };
 
+            var currencyUah = new Currency { Id = CurrencyUahId, Code = "UAH" };
+
             context.Users.AddRange(user1, user2);
+            context.Currencies.Add(currencyUah);
             context.SaveChanges();
         }
     }
@@ -64,15 +69,16 @@ public class WalletCreateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var request = new WalletRequest { UserId = User1Id, Name = walletName, BaseCurrency = baseCurrency };
-        var actualWallet = await _walletService.CreateAsync(request);
+
+        var successResult = await _walletService.CreateAsync(request);
+        var actualWallet = successResult.Data;
 
         var expectedWallet = new WalletDto 
         { 
             Id = actualWallet.Id, 
             Name = "user1 wallet", 
-            BaseCurrency = nameof(Currencies.UAH), 
-            UserId = User1Id,
-            Username = "user1"
+            BaseCurrency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
+            User = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) }
         };
 
         actualWallet.Should().BeEquivalentTo(expectedWallet);
@@ -84,16 +90,17 @@ public class WalletCreateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
-        var request = new WalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = nameof(Currencies.UAH) };
-        var actualWallet = await _walletService.CreateAsync(request);
+        var request = new WalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = "UAH" };
+
+        var successResult = await _walletService.CreateAsync(request);
+        var actualWallet = successResult.Data;
 
         var expectedWallet = new WalletDto
         {
             Id = actualWallet.Id,
             Name = "user1 wallet",
-            BaseCurrency = nameof(Currencies.UAH),
-            UserId = User1Id,
-            Username = "user1"
+            BaseCurrency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
+            User = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) }
         };
 
         actualWallet.Should().BeEquivalentTo(expectedWallet);
@@ -105,7 +112,7 @@ public class WalletCreateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
-        var request = new WalletRequest { UserId = User2Id, Name = "user2 wallet", BaseCurrency = nameof(Currencies.UAH) };
+        var request = new WalletRequest { UserId = User2Id, Name = "user2 wallet", BaseCurrency = "UAH" };
 
         var expectedErrorMessage = "Access denied";
 
@@ -120,44 +127,46 @@ public class WalletCreateMethodUnitTests
         }
     }
 
-    [TestMethod]
-    public async Task Test_CreateAsync_InvalidBaseCurrencyCase()
+    [DataTestMethod]
+    [DataRow("")]
+    [DataRow(" ")]
+    [DataRow("   ")]
+    [DataRow("A")]
+    [DataRow("AAAA")]
+    public async Task Test_CreateAsync_InvalidBaseCurrencyCase(string failureCurrencyCode)
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
-        var request = new WalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = "AAA" };
+        var request = new WalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = failureCurrencyCode };
 
-        var expectedErrorMessage = $"The specified currency code: {request.BaseCurrency} was not found.";
+        var failureMessage = "The currency code is incorrect.";
 
-        try
-        {
-            var newWallet = await _walletService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        var failureResult = await _walletService.CreateAsync(request);
+
+        failureResult.IsSuccess.Should().BeFalse();
+        failureResult.Errors.Should().Contain(failureMessage);
     }
 
+    [DataTestMethod]
+    [DataRow("usd")]
+    [DataRow("   usd")]
+    [DataRow("usd   ")]
+    [DataRow("UsD")]
+    [DataRow("  uSD")]
+    [DataRow("  USD   ")]
     [TestMethod]
-    public async Task Test_CreateAsync_NotUahBaseCurrencyCase()
+    public async Task Test_CreateAsync_NotUahBaseCurrencyCase(string failureCurrencyCode)
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
-        var request = new WalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = nameof(Currencies.USD) };
+        var request = new WalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = failureCurrencyCode };
 
-        var expectedErrorMessage = "Currently, the base currency of the wallet can only be UAH";
+        var failureMessage = "Currently, the base currency of the wallet can only be UAH";
 
-        try
-        {
-            var newWallet = await _walletService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        var failureResult = await _walletService.CreateAsync(request);
+
+        failureResult.IsSuccess.Should().BeFalse();
+        failureResult.Errors.Should().Contain(failureMessage);
     }
 
     [TestMethod]
@@ -165,18 +174,13 @@ public class WalletCreateMethodUnitTests
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
-        var request = new WalletRequest { UserId = UserNotFoundId, Name = "user1 wallet", BaseCurrency = nameof(Currencies.UAH) };
+        var request = new WalletRequest { UserId = UserNotFoundId, Name = "user1 wallet", BaseCurrency = "UAH" };
 
-        var expectedErrorMessage = $"User with id {request.UserId} does not exist.";
+        var failureMessage = $"User with ID {request.UserId} not found";
 
-        try
-        {
-            var newWallet = await _walletService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
-    }*/
+        var failureResult = await _walletService.CreateAsync(request);
+
+        failureResult.IsSuccess.Should().BeFalse();
+        failureResult.Errors.Should().Contain(failureMessage);
+    }
 }

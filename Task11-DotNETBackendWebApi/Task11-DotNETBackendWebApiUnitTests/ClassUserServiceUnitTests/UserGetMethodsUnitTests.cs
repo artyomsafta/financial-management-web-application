@@ -13,7 +13,7 @@ namespace Task11_DotNETBackendWebApiUnitTests.ClassUserServiceUnitTests;
 
 [TestClass]
 public class UserGetMethodsUnitTests
-{/*
+{
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
     private Mock<IUserContext> _userContextMock;
@@ -56,8 +56,10 @@ public class UserGetMethodsUnitTests
     }
 
     [TestMethod]
-    public async Task Test_GetListAsync_PositiveCases()
+    public async Task Test_GetListAsync_PositiveAdminCases()
     {
+        _userContextMock.Setup(с => с.IsAdmin).Returns(true);
+
         var users = await _userService.GetListAsync();
         Assert.HasCount(3, users.ToList());
         Assert.IsTrue(users.Any(u => u.Username == "admin"));
@@ -67,12 +69,25 @@ public class UserGetMethodsUnitTests
     }
 
     [TestMethod]
+    public async Task Test_GetListAsync_PositiveUserCases()
+    {
+        _userContextMock.Setup(с => с.IsAdmin).Returns(false);
+        _userContextMock.Setup(c => c.UserId).Returns(User1Id);
+
+        var users = await _userService.GetListAsync();
+        Assert.HasCount(1, users.ToList());
+        Assert.IsTrue(users.Any(u => u.Username == "user1"));
+    }
+
+    [TestMethod]
     public async Task Test_GetByIdAsync_PositiveAdminCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
+        var successResult = await _userService.GetByIdAsync(User1Id);
+        var actualUser = successResult.Data;
+
         var expectedUser = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) };
-        var actualUser = await _userService.GetByIdAsync(User1Id);
 
         actualUser.Should().BeEquivalentTo(expectedUser);
     }
@@ -83,8 +98,10 @@ public class UserGetMethodsUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
+        var successResult = await _userService.GetByIdAsync(User1Id);
+        var actualUser = successResult.Data;
+
         var expectedUser = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) };
-        var actualUser = await _userService.GetByIdAsync(User1Id);
 
         actualUser.Should().BeEquivalentTo(expectedUser);
     }
@@ -93,9 +110,13 @@ public class UserGetMethodsUnitTests
     public async Task Test_GetByIdAsync_UserNotFoundCase()
     {
         _userContextMock.Setup(c => c.UserId).Returns(UserNotFoundId);
-        var nullUser = await _userService.GetByIdAsync(UserNotFoundId);
 
-        nullUser.Should().BeNull();
+        var failureResult = await _userService.GetByIdAsync(UserNotFoundId);
+        var isFindSuccess = failureResult.IsSuccess;
+        isFindSuccess.Should().BeFalse();
+
+        var failureMessage = $"User with ID {UserNotFoundId} not found";
+        failureResult.Errors.Should().Contain(failureMessage);
     }
 
     [TestMethod]
@@ -115,5 +136,5 @@ public class UserGetMethodsUnitTests
         {
             Assert.AreEqual(expectedErrorMessage, actualError.Message);
         }
-    }*/
+    }
 }

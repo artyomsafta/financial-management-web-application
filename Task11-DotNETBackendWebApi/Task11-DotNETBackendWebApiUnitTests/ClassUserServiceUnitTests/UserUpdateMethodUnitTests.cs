@@ -14,7 +14,7 @@ namespace Task11_DotNETBackendWebApiUnitTests.ClassUserServiceUnitTests;
 
 [TestClass]
 public class UserUpdateMethodUnitTests
-{/*
+{
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
     private Mock<IUserContext> _userContextMock;
@@ -64,12 +64,14 @@ public class UserUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var userId = User1Id;
-        var request = new UserRegisterRequest { Username = username, Password = "12345" };
+        var request = new UserRegisterRequest { Username = username, Password = "A#345678" };
 
-        var isUpdateSuccess = await _userService.UpdateAsync(userId, request);
+        var successResult = await _userService.UpdateAsync(userId, request);
+        var isUpdateSuccess = successResult.IsSuccess;
         isUpdateSuccess.Should().BeTrue();
 
         var expectedUser = new UserDto { Id = userId, Username = "Updated user1", Role = nameof(UserRoles.User) };
+
         var userEntity = await _context.Users.FindAsync(userId);
         var actualUser = new UserDto
         {
@@ -92,12 +94,14 @@ public class UserUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
         var userId = User1Id;
-        var request = new UserRegisterRequest { Username = username, Password = "12345" };
+        var request = new UserRegisterRequest { Username = username, Password = "A#345678" };
 
-        var isUpdateSuccess = await _userService.UpdateAsync(userId, request);
+        var successResult = await _userService.UpdateAsync(userId, request);
+        var isUpdateSuccess = successResult.IsSuccess;
         isUpdateSuccess.Should().BeTrue();
 
         var expectedUser = new UserDto { Id = userId, Username = "Updated user1", Role = nameof(UserRoles.User) };
+
         var userEntity = await _context.Users.FindAsync(userId);
         var actualUser = new UserDto
         {
@@ -115,10 +119,14 @@ public class UserUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         
         var userId = UserNotFoundId;
-        var request = new UserRegisterRequest { Username = "Updated user1", Password = "12345" };
+        var request = new UserRegisterRequest { Username = "Updated user1", Password = "A#345678" };
 
-        var isUpdateSuccess = await _userService.UpdateAsync(userId, request);
-        isUpdateSuccess.Should().BeFalse();
+        var failureResult = await _userService.UpdateAsync(userId, request);
+
+        var failureMessage = $"User with ID {userId} not found";
+
+        failureResult.IsSuccess.Should().BeFalse();
+        failureResult.Errors.Should().Contain(failureMessage);
     }
 
     [TestMethod]
@@ -128,7 +136,7 @@ public class UserUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
 
         var userId = User1Id;
-        var request = new UserRegisterRequest { Username = "Updated user1", Password = "12345" };
+        var request = new UserRegisterRequest { Username = "Updated user1", Password = "A#345678" };
 
         var expectedErrorMessage = "Access denied";
 
@@ -158,19 +166,35 @@ public class UserUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
 
-        var request = new UserRegisterRequest { Username = username, Password = "12345" };
         var userId = User2Id;
+        var request = new UserRegisterRequest { Username = username, Password = "A#345678" };
 
-        var expectedErrorMessage = "A user with the same name already exists.";
+        var failureResult = await _userService.UpdateAsync(userId, request);
+        var failureMessage = "A user with the same username already exists.";
 
-        try
-        {
-            var isUpdateSuccess = await _userService.UpdateAsync(userId, request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
-    }*/
+        failureResult.IsSuccess.Should().BeFalse();
+        failureResult.Errors.Should().Contain(failureMessage);
+    }
+
+    [DataTestMethod]
+    [DataRow("", "Password cannot be empty or consist only of spaces.")]
+    [DataRow("    ", "Password cannot be empty or consist only of spaces.")]
+    [DataRow("1A#", "Password must be between 8 and 64 characters long.")]
+    [DataRow("1234567890abcdefghijklmnopqrstyvwxyzABCDEFGHIJKLMNOPQRSTYVWXYZ@#$", "Password must be between 8 and 64 characters long.")]
+    [DataRow("1234567#", "Password must contain at least one uppercase letter.")]
+    [DataRow("abcdefG#", "Password must contain at least one digit.")]
+    [DataRow("1234567A", "Password must contain at least one special character.")]
+    public async Task Test_UpdateAsync_InvalidPasswordComplexityCase(string weakPassword, string expectedErrorMessage)
+    {
+        _userContextMock.Setup(с => с.IsAdmin).Returns(false);
+        _userContextMock.Setup(c => c.UserId).Returns(User1Id);
+
+        var userId = User1Id;
+        var request = new UserRegisterRequest { Username = "Updated user1", Password = weakPassword };
+
+        var failureResult = await _userService.UpdateAsync(userId, request);
+
+        failureResult.IsSuccess.Should().BeFalse();
+        failureResult.Errors.Should().Contain(expectedErrorMessage);
+    }
 }

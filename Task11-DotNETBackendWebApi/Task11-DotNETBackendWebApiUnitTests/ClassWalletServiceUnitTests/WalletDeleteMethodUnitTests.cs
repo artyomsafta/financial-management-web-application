@@ -12,7 +12,7 @@ namespace Task11_DotNETBackendWebApiUnitTests.ClassWalletServiceUnitTests;
 
 [TestClass]
 public class WalletDeleteMethodUnitTests
-{/*
+{
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
     private Mock<IUserContext> _userContextMock;
@@ -26,6 +26,9 @@ public class WalletDeleteMethodUnitTests
     private static readonly Guid Wallet1Id = Guid.NewGuid();
     private static readonly Guid Wallet2Id = Guid.NewGuid();
     private static readonly Guid Wallet3Id = Guid.NewGuid();
+
+    private static readonly int CurrencyUahId = 1;
+    private static readonly int CurrencyUsdId = 2;
 
     private static readonly Guid WalletNotFoundId = Guid.NewGuid();
 
@@ -51,36 +54,40 @@ public class WalletDeleteMethodUnitTests
             var user2 = new User { Id = User2Id, Username = "user2", Role = nameof(UserRoles.User), IsDeleted = false };
             var user3 = new User { Id = User3Id, Username = "user3", Role = nameof(UserRoles.User), IsDeleted = false };
 
-            var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", IsDeleted = false, UserId = User1Id };
-            var wallet2 = new Wallet { Id = Wallet2Id, Name = "user2 wallet", IsDeleted = false, UserId = User2Id };
-            var wallet3 = new Wallet { Id = Wallet3Id, Name = "user3 wallet", IsDeleted = false, UserId = User3Id };
+            var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", IsDeleted = false, UserId = User1Id, CurrencyId = CurrencyUahId };
+            var wallet2 = new Wallet { Id = Wallet2Id, Name = "user2 wallet", IsDeleted = false, UserId = User2Id, CurrencyId = CurrencyUahId };
+            var wallet3 = new Wallet { Id = Wallet3Id, Name = "user3 wallet", IsDeleted = false, UserId = User3Id, CurrencyId = CurrencyUahId };
+
+            var currencyUah = new Currency { Id = CurrencyUahId, Code = "UAH" };
+            var currencyUsd = new Currency { Id = CurrencyUsdId, Code = "USD" };
 
             var wallet1Operation = new FinancialOperation
             {
                 Id = Guid.NewGuid(),
-                Amount = 100,
+                Amount = 100m,
                 Date = DateTime.UtcNow,
-                Currency = nameof(Currencies.UAH),
                 Note = "deleted operation for positive tests",
                 IsDeleted = true,
                 FinancialTypeId = Guid.NewGuid(),
-                WalletId = Wallet1Id
+                WalletId = Wallet1Id,
+                CurrencyId = CurrencyUahId
             };
 
             var wallet3Operation = new FinancialOperation
             {
                 Id = Guid.NewGuid(),
-                Amount = 150,
+                Amount = 150m,
                 Date = DateTime.UtcNow,
-                Currency = nameof(Currencies.UAH),
                 Note = "existing operation. You can't delete my wallet!",
                 IsDeleted = false,
                 FinancialTypeId = Guid.NewGuid(),
-                WalletId = Wallet3Id
+                WalletId = Wallet3Id,
+                CurrencyId = CurrencyUahId
             };
 
             context.Users.AddRange(user1, user2, user3);
             context.Wallets.AddRange(wallet1, wallet2, wallet3);
+            context.Currencies.AddRange(currencyUah, currencyUsd);
             context.FinancialOperations.AddRange(wallet1Operation, wallet3Operation);
             context.SaveChanges();
         }
@@ -92,7 +99,8 @@ public class WalletDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var walletId = Wallet1Id;
 
-        var isDeleteSuccess = await _walletService.DeleteAsync(walletId);
+        var successResult = await _walletService.DeleteAsync(walletId);
+        var isDeleteSuccess = successResult.IsSuccess;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedWallet = await _context.Wallets.FindAsync(walletId);
@@ -106,7 +114,8 @@ public class WalletDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var walletId = Wallet1Id;
 
-        var isDeleteSuccess = await _walletService.DeleteAsync(walletId);
+        var successResult = await _walletService.DeleteAsync(walletId);
+        var isDeleteSuccess = successResult.IsSuccess;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedWallet = await _context.Wallets.FindAsync(walletId);
@@ -120,7 +129,8 @@ public class WalletDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
         var walletId = Wallet2Id;
 
-        var isDeleteSuccess = await _walletService.DeleteAsync(walletId);
+        var successResult = await _walletService.DeleteAsync(walletId);
+        var isDeleteSuccess = successResult.IsSuccess;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedWallet = await _context.Wallets.FindAsync(walletId);
@@ -133,8 +143,12 @@ public class WalletDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var walletId = WalletNotFoundId;
 
-        var isDeleteSuccess = await _walletService.DeleteAsync(walletId);
+        var failureResult = await _walletService.DeleteAsync(walletId);
+        var isDeleteSuccess = failureResult.IsSuccess;
         isDeleteSuccess.Should().BeFalse();
+
+        var failureMessage = "Wallet not found";
+        failureResult.Errors.Should().Contain(failureMessage);
     }
 
     [TestMethod]
@@ -164,16 +178,11 @@ public class WalletDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User3Id);
         var walletId = Wallet3Id;
 
-        var expectedErrorMessage = "Cannot delete a wallet that has associated financial operations.";
+        var failureResult = await _walletService.DeleteAsync(walletId);
+        var isDeleteSuccess = failureResult.IsSuccess;
+        isDeleteSuccess.Should().BeFalse();
 
-        try
-        {
-            var isDeleteSuccess = await _walletService.DeleteAsync(walletId);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
-    }*/
+        var failureMessage = "Cannot delete a wallet that has associated financial operations.";
+        failureResult.Errors.Should().Contain(failureMessage);
+    }
 }

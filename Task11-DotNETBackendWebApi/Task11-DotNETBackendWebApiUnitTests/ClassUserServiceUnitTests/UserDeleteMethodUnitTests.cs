@@ -12,7 +12,7 @@ namespace Task11_DotNETBackendWebApiUnitTests.ClassUserServiceUnitTests;
 
 [TestClass]
 public class UserDeleteMethodUnitTests
-{/*
+{
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
     private Mock<IUserContext> _userContextMock;
@@ -28,6 +28,8 @@ public class UserDeleteMethodUnitTests
 
     private static readonly Guid Wallet1Id = Guid.NewGuid();
     private static readonly Guid Wallet2Id = Guid.NewGuid();
+
+    private static readonly int CurrencyUahId = 1;
 
     [TestInitialize]
     public void Setup()
@@ -52,8 +54,8 @@ public class UserDeleteMethodUnitTests
             var user2 = new User { Id = User2Id, Username = "user2", Role = nameof(UserRoles.User), IsDeleted = false };
             var user3 = new User { Id = User3Id, Username = "user3", Role = nameof(UserRoles.User), IsDeleted = false };
 
-            var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", IsDeleted = true, UserId = User1Id };
-            var wallet2 = new Wallet { Id = Wallet2Id, Name = "user2 wallet", IsDeleted = false, UserId = User2Id };
+            var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", IsDeleted = true, UserId = User1Id, CurrencyId = CurrencyUahId };
+            var wallet2 = new Wallet { Id = Wallet2Id, Name = "user2 wallet", IsDeleted = false, UserId = User2Id, CurrencyId = CurrencyUahId };
 
             context.Users.AddRange(adminUser, user1, user2, user3);
             context.Wallets.AddRange(wallet1, wallet2);
@@ -67,7 +69,8 @@ public class UserDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var userId = User1Id;
 
-        var isDeleteSuccess = await _userService.DeleteAsync(userId);
+        var successResult = await _userService.DeleteAsync(userId);
+        var isDeleteSuccess = successResult.IsSuccess;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedUser = await _context.Users.FindAsync(userId);
@@ -81,7 +84,8 @@ public class UserDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var userId = User1Id;
 
-        var isDeleteSuccess = await _userService.DeleteAsync(userId);
+        var successResult = await _userService.DeleteAsync(userId);
+        var isDeleteSuccess = successResult.IsSuccess;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedUser = await _context.Users.FindAsync(userId);
@@ -94,7 +98,8 @@ public class UserDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var userId = User3Id;
 
-        var isDeleteSuccess = await _userService.DeleteAsync(userId);
+        var successResult = await _userService.DeleteAsync(userId);
+        var isDeleteSuccess = successResult.IsSuccess;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedUser = await _context.Users.FindAsync(userId);
@@ -107,8 +112,12 @@ public class UserDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var userId = UserNotFoundId;
 
-        var isDeleteSuccess = await _userService.DeleteAsync(userId);
+        var failureResult = await _userService.DeleteAsync(userId);
+        var isDeleteSuccess = failureResult.IsSuccess;
         isDeleteSuccess.Should().BeFalse();
+
+        var failureMessage = $"User with ID {userId} not found";
+        failureResult.Errors.Should().Contain(failureMessage);
     }
 
     [TestMethod]
@@ -138,16 +147,11 @@ public class UserDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
         var userId = User2Id;
 
-        var expectedErrorMessage = "You cannot delete a user that has active wallets.";
+        var failureResult = await _userService.DeleteAsync(userId);
+        var isDeleteSuccess = failureResult.IsSuccess;
+        isDeleteSuccess.Should().BeFalse();
 
-        try
-        {
-            var isDeleteSuccess = await _userService.DeleteAsync(userId);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
-    }*/
+        var failureMessage = "You cannot delete a user that has active wallets.";
+        failureResult.Errors.Should().Contain(failureMessage);
+    }
 }

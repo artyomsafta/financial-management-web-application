@@ -13,7 +13,7 @@ namespace Task11_DotNETBackendWebApiUnitTests.ClassWalletServiceUnitTests;
 
 [TestClass]
 public class WalletGetMethodsUnitTests
-{/*
+{
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
     private Mock<IUserContext> _userContextMock;
@@ -33,6 +33,8 @@ public class WalletGetMethodsUnitTests
     private static readonly Guid Wallet4Id = Guid.NewGuid();
 
     private static readonly Guid WalletNotFoundId = Guid.NewGuid();
+
+    private static readonly int CurrencyUahId = 1;
 
     [TestInitialize]
     public void Setup()
@@ -58,14 +60,17 @@ public class WalletGetMethodsUnitTests
             var user3 = new User { Id = User3Id, Username = "user3", Role = nameof(UserRoles.User), IsDeleted = false };
             var user4 = new User { Id = User4Id, Username = "user4", Role = nameof(UserRoles.User), IsDeleted = false };
 
-            var adminWallet = new Wallet { Id = AdminWalletId, Name = "admin wallet", IsDeleted = false, UserId = AdminUserId };
-            var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", IsDeleted = false, UserId = User1Id };
-            var wallet2 = new Wallet { Id = Wallet2Id, Name = "user2 wallet", IsDeleted = false, UserId = User2Id };
-            var wallet3 = new Wallet { Id = Wallet3Id, Name = "user3 wallet", IsDeleted = false, UserId = User3Id };
-            var wallet4 = new Wallet { Id = Wallet4Id, Name = "DELETED wallet", IsDeleted = true, UserId = User4Id };
+            var adminWallet = new Wallet { Id = AdminWalletId, Name = "admin wallet", IsDeleted = false, UserId = AdminUserId, CurrencyId = CurrencyUahId };
+            var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", IsDeleted = false, UserId = User1Id, CurrencyId = CurrencyUahId };
+            var wallet2 = new Wallet { Id = Wallet2Id, Name = "user2 wallet", IsDeleted = false, UserId = User2Id, CurrencyId = CurrencyUahId };
+            var wallet3 = new Wallet { Id = Wallet3Id, Name = "user3 wallet", IsDeleted = false, UserId = User3Id, CurrencyId = CurrencyUahId };
+            var wallet4 = new Wallet { Id = Wallet4Id, Name = "DELETED wallet", IsDeleted = true, UserId = User4Id, CurrencyId = CurrencyUahId };
+
+            var currencyUah = new Currency { Id = CurrencyUahId, Code = "UAH" };
 
             context.Users.AddRange(adminUser, user1, user2, user3, user4);
             context.Wallets.AddRange(adminWallet, wallet1, wallet2, wallet3, wallet4);
+            context.Currencies.Add(currencyUah);
             context.SaveChanges();
         }
     }
@@ -104,11 +109,12 @@ public class WalletGetMethodsUnitTests
         { 
             Id = Wallet1Id, 
             Name = "user1 wallet", 
-            BaseCurrency = nameof(Currencies.UAH), 
-            UserId = User1Id, 
-            Username = "user1" 
+            BaseCurrency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
+            User = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) }
         };
-        var actualWallet = await _walletService.GetByIdAsync(Wallet1Id);
+
+        var successResult = await _walletService.GetByIdAsync(Wallet1Id);
+        var actualWallet = successResult.Data;
 
         actualWallet.Should().BeEquivalentTo(expectedWallet);
     }
@@ -123,11 +129,12 @@ public class WalletGetMethodsUnitTests
         {
             Id = Wallet1Id,
             Name = "user1 wallet",
-            BaseCurrency = nameof(Currencies.UAH),
-            UserId = User1Id,
-            Username = "user1"
+            BaseCurrency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
+            User = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) }
         };
-        var actualWallet = await _walletService.GetByIdAsync(Wallet1Id);
+
+        var successResult = await _walletService.GetByIdAsync(Wallet1Id);
+        var actualWallet = successResult.Data;
 
         actualWallet.Should().BeEquivalentTo(expectedWallet);
     }
@@ -136,9 +143,13 @@ public class WalletGetMethodsUnitTests
     public async Task Test_GetByIdAsync_WalletNotFoundCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
-        var nullWallet = await _walletService.GetByIdAsync(WalletNotFoundId);
 
-        nullWallet.Should().BeNull();
+        var failureResult = await _walletService.GetByIdAsync(WalletNotFoundId);
+        var isFindSuccess = failureResult.IsSuccess;
+        isFindSuccess.Should().BeFalse();
+
+        var failureMessage = $"Wallet with ID {WalletNotFoundId} not found";
+        failureResult.Errors.Should().Contain(failureMessage);
     }
 
     [TestMethod]
@@ -158,5 +169,5 @@ public class WalletGetMethodsUnitTests
         {
             Assert.AreEqual(expectedErrorMessage, actualError.Message);
         }
-    }*/
+    }
 }

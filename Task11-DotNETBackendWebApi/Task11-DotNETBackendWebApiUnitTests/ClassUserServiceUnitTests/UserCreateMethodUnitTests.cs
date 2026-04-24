@@ -14,7 +14,7 @@ namespace Task11_DotNETBackendWebApiUnitTests.ClassUserServiceUnitTests;
 
 [TestClass]
 public class UserCreateMethodUnitTests
-{/*
+{
     private DbContextOptions<AppDbContext> _options;
     private AppDbContext _context;
     private Mock<IUserContext> _userContextMock;
@@ -55,8 +55,10 @@ public class UserCreateMethodUnitTests
     [DataRow("   New user   ")]
     public async Task Test_CreateAsync_PositiveCases(string username)
     {
-        var request = new UserRegisterRequest { Username = username, Password = "12345" };
-        var actualUser = await _userService.CreateAsync(request);
+        var request = new UserRegisterRequest { Username = username, Password = "A#345678" };
+
+        var successResult = await _userService.CreateAsync(request);
+        var actualUser = successResult.Data;
 
         var expectedUser = new UserDto { Id = actualUser.Id, Username = "New user", Role = nameof(UserRoles.User) };
 
@@ -75,18 +77,30 @@ public class UserCreateMethodUnitTests
     [DataRow("UsEr1")]
     public async Task Test_CreateAsync_NameTakenCase(string username)
     {
-        var request = new UserRegisterRequest { Username = username, Password = "12345" };
+        var request = new UserRegisterRequest { Username = username, Password = "A#345678" };
 
-        var expectedErrorMessage = "A user with the same name already exists.";
+        var failureResult = await _userService.CreateAsync(request);
+        var failureMessage = "A user with the same username already exists.";
 
-        try
-        {
-            var newUser = await _userService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError) 
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
-    }*/
+        failureResult.IsSuccess.Should().BeFalse();
+        failureResult.Errors.Should().Contain(failureMessage);
+    }
+
+    [DataTestMethod]
+    [DataRow("", "Password cannot be empty or consist only of spaces.")]
+    [DataRow("    ", "Password cannot be empty or consist only of spaces.")]
+    [DataRow("1A#", "Password must be between 8 and 64 characters long.")]
+    [DataRow("1234567890abcdefghijklmnopqrstyvwxyzABCDEFGHIJKLMNOPQRSTYVWXYZ@#$", "Password must be between 8 and 64 characters long.")]
+    [DataRow("1234567#", "Password must contain at least one uppercase letter.")]
+    [DataRow("abcdefG#", "Password must contain at least one digit.")]
+    [DataRow("1234567A", "Password must contain at least one special character.")]
+    public async Task Test_CreateAsync_InvalidPasswordComplexityCase(string weakPassword, string expectedErrorMessage)
+    {
+        var request = new UserRegisterRequest { Username = "New user", Password = weakPassword };
+
+        var failureResult = await _userService.CreateAsync(request);
+
+        failureResult.IsSuccess.Should().BeFalse();
+        failureResult.Errors.Should().Contain(expectedErrorMessage);
+    }
 }
