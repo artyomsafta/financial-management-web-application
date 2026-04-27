@@ -74,6 +74,7 @@ public class LoggingMiddleware
 
         maskedBody = Regex.Replace(maskedBody, @"(""password""\s*:\s*"")([^""]+)("")", "$1***$3", RegexOptions.IgnoreCase);
         maskedBody = Regex.Replace(maskedBody, @"(""token""\s*:\s*"")([^""]+)("")", "$1***$3", RegexOptions.IgnoreCase);
+        maskedBody = Regex.Replace(maskedBody, @"(""amount""\s*:\s*)([0-9.+-]+)", "$1***", RegexOptions.IgnoreCase);
 
         return maskedBody;
     }

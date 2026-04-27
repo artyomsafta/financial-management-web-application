@@ -45,6 +45,7 @@ public class ReportService : IReportService
                 .AsNoTracking()
                 .Include(o => o.Type)
                 .Include(o => o.Wallet)
+                .Include(o => o.Currency)
                 .Where(o => o.Date >= startDate && o.Date <= endDate)
                 .ToListAsync();
 
