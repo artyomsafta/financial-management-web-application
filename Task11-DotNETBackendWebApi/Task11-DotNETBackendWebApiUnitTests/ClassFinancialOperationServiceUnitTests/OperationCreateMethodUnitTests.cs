@@ -225,6 +225,58 @@ public class OperationCreateMethodUnitTests
         actualOperation.Should().BeEquivalentTo(expectedOperation);
     }
 
+
+    [DataTestMethod]
+    [DataRow("EUR")]
+    [DataRow("   EUR")]
+    [DataRow("EUR   ")]
+    [DataRow("  EUR  ")]
+    [DataRow("Eur")]
+    [DataRow("   eUR")]
+    [DataRow("eur     ")]
+    public async Task Test_CreateAsync_AddingNewCurrencyToDbCase(string newCurrencyCode)
+    {
+        _userContextMock.Setup(с => с.IsAdmin).Returns(true);
+
+        _defaultRates = new CurrencyRateResult
+        {
+            PurchaseRate = 50.25m,
+            SaleRate = 51.25m
+        };
+
+        var successRatesResult = Result<CurrencyRateResult>.Success(_defaultRates);
+        _ratesServiceMock
+            .Setup(s => s.GetRatesAsync(It.Is<string>(c => c == "EUR"), It.IsAny<DateTime>()))
+            .ReturnsAsync(successRatesResult);
+
+        var request = new FinancialOperationRequest
+        {
+            TypeId = Type1Id,
+            WalletId = Wallet1Id,
+            Amount = 10_000m,
+            Date = new DateTime(2026, 3, 5),
+            Currency = newCurrencyCode,
+            Note = "Success test operation with new currency."
+        };
+
+        var successResult = await _operationService.CreateAsync(request);
+        var actualOperation = successResult.Data;
+
+        var expectedOperation = new FinancialOperationDto
+        {
+            Id = actualOperation.Id,
+            Amount = Math.Round(request.Amount * _defaultRates.PurchaseRate, 4, MidpointRounding.AwayFromZero),
+            Date = new DateTime(2026, 3, 5),
+            Currency = new CurrencyListDto { Id = 3, Code = "EUR" },
+            Comment = $"The amount in the transaction currency is 10000,0000 EUR",
+            Note = "Success test operation with new currency.",
+            Type = new FinancialTypeListDto { Id = Type1Id, Name = "Salary" },
+            Wallet = new WalletListDto { Id = Wallet1Id, Name = "user1 wallet" }
+        };
+
+        actualOperation.Should().BeEquivalentTo(expectedOperation);
+    }
+
     [TestMethod]
     public async Task Test_CreateAsync_InvalidCurrentCurrencyCase()
     {

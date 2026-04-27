@@ -323,6 +323,10 @@ public class FinancialOperationService : IFinancialOperationService
         {
             _logger.LogWarning(ex, "Currency {Currency} already exists or failed to create.", currencyCode);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled error occurred while adding currency {Currency}.", currencyCode);
+        }
     }
 
     private FinancialOperationDto MapToDto(FinancialOperation operation)

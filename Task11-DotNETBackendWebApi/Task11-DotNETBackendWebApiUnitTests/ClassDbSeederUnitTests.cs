@@ -6,7 +6,7 @@ namespace Task11_DotNETBackendWebApiUnitTests;
 
 [TestClass]
 public class ClassDbSeederUnitTests
-{/*
+{
     [TestMethod]
     public void Test_Seed_EmptyDb()
     {
@@ -20,6 +20,7 @@ public class ClassDbSeederUnitTests
             emptyDbSeeder.Seed();
 
             Assert.AreEqual(4, context.FinancialTypes.Count());
+            Assert.AreEqual(5, context.Currencies.Count());
             Assert.AreEqual(1, context.Users.Count());
         }
     }
@@ -34,6 +35,14 @@ public class ClassDbSeederUnitTests
         using (var context = new AppDbContext(options))
         {
             var existingFinancialType = new FinancialType { Name = "Existing Type", IsIncome = true };
+
+            var existingCurrencies = new List<Currency>
+            {
+                new Currency { Code = "UAH" },
+                new Currency { Code = "USD" },
+                new Currency { Code = "EUR" }
+            };
+
             var existingUsers = new List<User>
             {
                 new User { Username = "Existing User1", Role = "User" },
@@ -41,6 +50,7 @@ public class ClassDbSeederUnitTests
             };
 
             context.FinancialTypes.Add(existingFinancialType);
+            context.Currencies.AddRange(existingCurrencies);
             context.Users.AddRange(existingUsers);
 
             context.SaveChanges();
@@ -49,7 +59,8 @@ public class ClassDbSeederUnitTests
             dbWithDataSeeder.Seed();
 
             Assert.AreEqual(1, context.FinancialTypes.Count());
+            Assert.AreEqual(3, context.Currencies.Count());
             Assert.AreEqual(2, context.Users.Count());
         }
-    }*/
+    }
 }

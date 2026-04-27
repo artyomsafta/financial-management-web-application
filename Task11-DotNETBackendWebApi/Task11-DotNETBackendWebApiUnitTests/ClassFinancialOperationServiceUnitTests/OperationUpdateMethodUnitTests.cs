@@ -344,6 +344,80 @@ public class OperationUpdateMethodUnitTests
         actualOperation.Should().BeEquivalentTo(expectedOperation);
     }
 
+    [DataTestMethod]
+    [DataRow("EUR")]
+    [DataRow("   EUR")]
+    [DataRow("EUR   ")]
+    [DataRow("  EUR  ")]
+    [DataRow("Eur")]
+    [DataRow("   eUR")]
+    [DataRow("eur     ")]
+    public async Task Test_UpdateAsync_AddingNewCurrencyToDbCase(string newCurrencyCode)
+    {
+        _userContextMock.Setup(с => с.IsAdmin).Returns(false);
+        _userContextMock.Setup(c => c.UserId).Returns(User1Id);
+
+        var operationId = Wallet1OperationId;
+
+        _defaultRates = new CurrencyRateResult
+        {
+            PurchaseRate = 50.25m,
+            SaleRate = 51.25m
+        };
+
+        var successRatesResult = Result<CurrencyRateResult>.Success(_defaultRates);
+        _ratesServiceMock
+            .Setup(s => s.GetRatesAsync(It.Is<string>(c => c == "EUR"), It.IsAny<DateTime>()))
+            .ReturnsAsync(successRatesResult);
+
+        var request = new FinancialOperationRequest
+        {
+            TypeId = Type1Id,
+            WalletId = Wallet1Id,
+            Amount = 2_000m,
+            Date = new DateTime(2026, 3, 9),
+            Currency = newCurrencyCode,
+            Note = "Success test operation with new currency."
+        };
+
+        var successResult = await _operationService.UpdateAsync(operationId, request);
+        var isUpdateSuccess = successResult.IsSuccess;
+        isUpdateSuccess.Should().BeTrue();
+
+        var expectedOperation = new FinancialOperationDto
+        {
+            Id = operationId,
+            Amount = Math.Round(request.Amount * _defaultRates.PurchaseRate, 4, MidpointRounding.AwayFromZero),
+            Date = new DateTime(2026, 3, 9),
+            Currency = new CurrencyListDto { Id = 3, Code = "EUR" },
+            Comment = "The amount in the transaction currency is 2000,0000 EUR",
+            Note = "Success test operation with new currency.",
+            Type = new FinancialTypeListDto { Id = Type1Id, Name = "Salary" },
+            Wallet = new WalletListDto { Id = Wallet1Id, Name = "user1 wallet" }
+        };
+
+        var operationEntity = await _context.FinancialOperations
+            .Where(o => o.Id == operationId)
+            .Include(o => o.Type)
+            .Include(o => o.Wallet)
+            .Include(o => o.Currency)
+            .FirstOrDefaultAsync();
+
+        var actualOperation = new FinancialOperationDto
+        {
+            Id = operationEntity.Id,
+            Amount = operationEntity.Amount,
+            Date = operationEntity.Date,
+            Currency = new CurrencyListDto { Id = operationEntity.Currency.Id, Code = operationEntity.Currency.Code },
+            Comment = operationEntity.Comment,
+            Note = operationEntity.Note,
+            Type = new FinancialTypeListDto { Id = operationEntity.FinancialTypeId, Name = operationEntity.Type.Name },
+            Wallet = new WalletListDto { Id = operationEntity.WalletId, Name = operationEntity.Wallet.Name }
+        };
+
+        actualOperation.Should().BeEquivalentTo(expectedOperation);
+    }
+
     [TestMethod]
     public async Task Test_UpdateAsync_InvalidOperationNewCurrencyCase()
     {

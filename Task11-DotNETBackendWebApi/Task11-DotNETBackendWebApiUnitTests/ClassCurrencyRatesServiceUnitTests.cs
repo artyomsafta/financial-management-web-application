@@ -1,7 +1,8 @@
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Moq;
 using System.Text;
-using Task11_DotNETBackendWebApi.Helpers.Enums;
 using Task11_DotNETBackendWebApi.Services;
 
 namespace Task11_DotNETBackendWebApiUnitTests;
@@ -23,8 +24,9 @@ public class MockHttpMessageHandler : HttpMessageHandler
 
 [TestClass]
 public class ClassCurrencyRatesServiceUnitTests
-{/*
+{
     private IConfiguration _configuration;
+    private Mock<ILogger<CurrencyRatesService>> _loggerMock;
 
     [TestInitialize]
     public void Setup()
@@ -35,6 +37,8 @@ public class ClassCurrencyRatesServiceUnitTests
                 ["ExchangeRatesApi:BaseUrl"] = "http://mock-api.com/"
             })
             .Build();
+
+        _loggerMock = new Mock<ILogger<CurrencyRatesService>>();
     }
 
     [DataTestMethod]
@@ -47,7 +51,7 @@ public class ClassCurrencyRatesServiceUnitTests
     [DataRow("Usd", 43.30, 42.70)]
     [DataRow("Eur", 51.30, 50.31)]
     [DataRow("Chf", 58.30, 55.75)]
-    public async Task Test_GetRateAsync_PositiveCases(string currency, double saleRate, double purchaseRate)
+    public async Task Test_GetRatesAsync_PositiveCases(string currency, double saleRate, double purchaseRate)
     {
         var mockJson = """
         {
@@ -70,19 +74,19 @@ public class ClassCurrencyRatesServiceUnitTests
 
         var mockHandler = new MockHttpMessageHandler(response);
         var httpClient = new HttpClient(mockHandler);
-        var service = new CurrencyRatesService(httpClient, _configuration);
+        var service = new CurrencyRatesService(httpClient, _configuration, _loggerMock.Object);
 
-        var result = await service.GetRatesAsync(currency, new DateTime(2026, 3, 1));
+        var successResult = await service.GetRatesAsync(currency, new DateTime(2026, 3, 1));
 
-        result.SaleRate.Should().Be((decimal)saleRate);
-        result.PurchaseRate.Should().Be((decimal)purchaseRate);
+        successResult.Data.SaleRate.Should().Be((decimal)saleRate);
+        successResult.Data.PurchaseRate.Should().Be((decimal)purchaseRate);
     }
 
     [DataTestMethod]
     [DataRow("GBP")]
     [DataRow("gbp")]
     [DataRow("Gbp")]
-    public async Task Test_GetRateAsync_CurrencyNotFoundCase(string currency)
+    public async Task Test_GetRatesAsync_CurrencyNotFoundCase(string currency)
     {
         var mockJson = """
         {
@@ -105,19 +109,13 @@ public class ClassCurrencyRatesServiceUnitTests
 
         var mockHandler = new MockHttpMessageHandler(response);
         var httpClient = new HttpClient(mockHandler);
-        var service = new CurrencyRatesService(httpClient, _configuration);
+        var service = new CurrencyRatesService(httpClient, _configuration, _loggerMock.Object);
 
-        var expectedErrorMessage = $"No exchange rates available for this currency: {currency}";
+        var failureResult = await service.GetRatesAsync(currency, new DateTime(2026, 3, 1));
+        failureResult.IsSuccess.Should().BeFalse();
 
-        try
-        {
-            var result = await service.GetRatesAsync(currency, new DateTime(2026, 3, 1));
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        var failureMessage = $"Exchange rates for '{currency}' are currently unavailable.";
+        failureResult.Errors.Should().Contain(failureMessage);
     }
 
     [DataTestMethod]
@@ -127,7 +125,7 @@ public class ClassCurrencyRatesServiceUnitTests
     [DataRow("uah")]
     [DataRow("Aud")]
     [DataRow("Uah")]
-    public async Task Test_GetRateAsync_NoRateCase(string currency)
+    public async Task Test_GetRatesAsync_NoRateCase(string currency)
     {
         var mockJson = """
         {
@@ -149,23 +147,17 @@ public class ClassCurrencyRatesServiceUnitTests
 
         var mockHandler = new MockHttpMessageHandler(response);
         var httpClient = new HttpClient(mockHandler);
-        var service = new CurrencyRatesService(httpClient, _configuration);
+        var service = new CurrencyRatesService(httpClient, _configuration, _loggerMock.Object);
 
-        var expectedErrorMessage = $"No exchange rates available for this currency: {currency}";
+        var failureResult = await service.GetRatesAsync(currency, new DateTime(2026, 3, 1));
+        failureResult.IsSuccess.Should().BeFalse();
 
-        try
-        {
-            var result = await service.GetRatesAsync(currency, new DateTime(2026, 3, 1));
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        var failureMessage = $"Exchange rates for '{currency}' are currently unavailable.";
+        failureResult.Errors.Should().Contain(failureMessage);
     }
 
     [TestMethod]
-    public async Task Test_GetRateAsync_EmptyResponseCase()
+    public async Task Test_GetRatesAsync_EmptyResponseCase()
     {
         var mockJson = """
         {
@@ -184,42 +176,56 @@ public class ClassCurrencyRatesServiceUnitTests
 
         var mockHandler = new MockHttpMessageHandler(response);
         var httpClient = new HttpClient(mockHandler);
-        var service = new CurrencyRatesService(httpClient, _configuration);
-        var currency = nameof(Currencies.USD);
+        var service = new CurrencyRatesService(httpClient, _configuration, _loggerMock.Object);
 
-        var expectedErrorMessage = "No exchange rates available for this date: 01.03.2027";
+        var currency = "USD";
+        var date = new DateTime(2026, 3, 1);
 
-        try
-        {
-            var result = await service.GetRatesAsync(currency, new DateTime(2027, 3, 1));
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (InvalidOperationException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        var failureResult = await service.GetRatesAsync(currency, date);
+        failureResult.IsSuccess.Should().BeFalse();
+
+        var failureMessage = $"No exchange rates available for this date: {date.ToString("dd.MM.yyyy")}";
+        failureResult.Errors.Should().Contain(failureMessage);
     }
 
     [TestMethod]
-    public async Task Test_GetRateAsync_HttpRequestExceptionCase()
+    public async Task Test_GetRatesAsync_HttpRequestExceptionCase()
     {
         var response = new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError);
         var mockHandler = new MockHttpMessageHandler(response);
         var httpClient = new HttpClient(mockHandler);
-        var service = new CurrencyRatesService(httpClient, _configuration);
-        var currency = nameof(Currencies.USD);
+        var service = new CurrencyRatesService(httpClient, _configuration, _loggerMock.Object);
+        var currency = "USD";
 
-        var expectedErrorMessage = "Failed to retrieve exchange rates. Please try again later.";
+        var failureResult = await service.GetRatesAsync(currency, new DateTime(2026, 3, 1));
+        failureResult.IsSuccess.Should().BeFalse();
 
-        try
+        var failureMessage = $"Failed to retrieve exchange rates. Bank API returned status: {response.StatusCode}";
+        failureResult.Errors.Should().Contain(failureMessage);
+    }
+
+    [TestMethod]
+    public async Task Test_GetRatesAsync_BrokenResponseCase()
+    {
+        var mockJson = """
         {
-            var result = await service.GetRatesAsync(currency, new DateTime(2026, 3, 1));
-            Assert.Fail("Expected Exception was not thrown.");
+            "someBrokenJson": [
         }
-        catch (InvalidOperationException actualError)
+        """;
+
+        var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
         {
-            Assert.Contains(expectedErrorMessage, actualError.Message);
-            Assert.IsInstanceOfType(actualError.InnerException, typeof(HttpRequestException));
-        }
-    }*/
+            Content = new StringContent(mockJson, Encoding.UTF8, "application/json")
+        };
+
+        var mockHandler = new MockHttpMessageHandler(response);
+        var httpClient = new HttpClient(mockHandler);
+        var service = new CurrencyRatesService(httpClient, _configuration, _loggerMock.Object);
+
+        var failureResult = await service.GetRatesAsync("USD", new DateTime(2026, 3, 1));
+        failureResult.IsSuccess.Should().BeFalse();
+
+        var failureMessage = "Received invalid data from the bank. Please try again later.";
+        failureResult.Errors.Should().Contain(failureMessage);
+    }
 }
