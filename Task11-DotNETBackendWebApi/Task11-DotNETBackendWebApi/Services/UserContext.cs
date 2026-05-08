@@ -1,5 +1,5 @@
 ﻿using System.Security.Claims;
-using Task11_DotNETBackendWebApi.Helpers.Enums;
+using Task11_DotNETBackendWebApi.Data.Entities;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
 namespace Task11_DotNETBackendWebApi.Services;

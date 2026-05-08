@@ -12,13 +12,13 @@ public class FinancialType
 
     [Required]
     [MaxLength(100)]
-    public string Name { get; set; } = string.Empty;
-
-    [MaxLength(255)]
-    public string Description { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
 
     [Required]
     public bool IsIncome { get; set; }
+
+    [MaxLength(255)]
+    public string Description { get; set; } = "";
 
     [Required]
     public bool IsDeleted { get; set; } = false;

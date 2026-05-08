@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Helpers.Enums;
 
 namespace Task11_DotNETBackendWebApi.Data;
 
