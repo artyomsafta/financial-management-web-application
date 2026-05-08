@@ -13,7 +13,11 @@ public class FinancialTypeService : IFinancialTypeService
     private readonly IUserContext _userContext;
     private readonly ILogger<FinancialTypeService> _logger;
 
-    public FinancialTypeService(AppDbContext context, IUserContext userContext, ILogger<FinancialTypeService> logger)
+    public FinancialTypeService(
+        AppDbContext context, 
+        IUserContext userContext, 
+        ILogger<FinancialTypeService> logger
+    )
     {
         _context = context;
         _userContext = userContext;

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 using Task11_DotNETBackendWebApi.Data.Entities;
 
 namespace Task11_DotNETBackendWebApi.Data;
@@ -91,4 +92,8 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.LogTo(message => Debug.WriteLine(message));
+
 }

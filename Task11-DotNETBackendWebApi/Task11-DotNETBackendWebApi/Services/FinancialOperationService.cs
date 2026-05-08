@@ -14,7 +14,12 @@ public class FinancialOperationService : IFinancialOperationService
     private readonly ICurrencyRatesService _currencyRatesService;
     private readonly ILogger<FinancialOperationService> _logger;
 
-    public FinancialOperationService(AppDbContext context, IUserContext userContext, ICurrencyRatesService currencyRatesService, ILogger<FinancialOperationService> logger)
+    public FinancialOperationService(
+        AppDbContext context, 
+        IUserContext userContext, 
+        ICurrencyRatesService currencyRatesService, 
+        ILogger<FinancialOperationService> logger
+    )
     {
         _context = context;
         _userContext = userContext;
@@ -33,9 +38,9 @@ public class FinancialOperationService : IFinancialOperationService
 
         return await query
             .AsNoTracking()
-            .Include(o => o.Type)
-            .Include(o => o.Wallet)
-            .Include(o => o.Currency)
+            //.Include(o => o.Type)
+            //.Include(o => o.Wallet)
+            //.Include(o => o.Currency)
             .Select(o => new FinancialOperationDto
             {
                 Id = o.Id,
@@ -283,7 +288,13 @@ public class FinancialOperationService : IFinancialOperationService
         }
     }
 
-    private async Task<Result<decimal>> CalculateAmountAsync(decimal requestAmount, string baseCurrency, string currentCurrency, DateTime requestDate, bool isIncome)
+    private async Task<Result<decimal>> CalculateAmountAsync(
+        decimal requestAmount, 
+        string baseCurrency, 
+        string currentCurrency, 
+        DateTime requestDate, 
+        bool isIncome
+    )
     {
         if (baseCurrency == currentCurrency)
         {

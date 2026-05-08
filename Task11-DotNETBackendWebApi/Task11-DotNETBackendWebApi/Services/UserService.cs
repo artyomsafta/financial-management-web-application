@@ -16,7 +16,11 @@ public class UserService : IUserService
     private readonly ILogger<UserService> _logger;
     private readonly PasswordHasher<User> _passwordHasher;
 
-    public UserService(AppDbContext context, IUserContext userContext, ILogger<UserService> logger)
+    public UserService(
+        AppDbContext context, 
+        IUserContext userContext, 
+        ILogger<UserService> logger
+    )
     {
         _context = context;
         _userContext = userContext;

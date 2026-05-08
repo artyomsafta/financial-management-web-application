@@ -12,7 +12,11 @@ public class ReportService : IReportService
     private readonly IUserContext _userContext;
     private readonly ILogger<ReportService> _logger;
 
-    public ReportService(AppDbContext context, IUserContext userContext, ILogger<ReportService> logger)
+    public ReportService(
+        AppDbContext context, 
+        IUserContext userContext, 
+        ILogger<ReportService> logger
+    )
     {
         _context = context;
         _userContext = userContext;

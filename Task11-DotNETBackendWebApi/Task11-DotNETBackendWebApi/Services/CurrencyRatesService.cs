@@ -9,12 +9,18 @@ public class CurrencyRatesService : ICurrencyRatesService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
+    private readonly string _baseUrl;
     private readonly ILogger<CurrencyRatesService> _logger;
 
-    public CurrencyRatesService(HttpClient httpClient, IConfiguration configuration, ILogger<CurrencyRatesService> logger)
+    public CurrencyRatesService(
+        HttpClient httpClient, 
+        IConfiguration configuration, 
+        ILogger<CurrencyRatesService> logger
+    )
     {
         _httpClient = httpClient;
         _configuration = configuration;
+        _baseUrl = _configuration["ExchangeRatesApi:BaseUrl"] ?? throw new ArgumentNullException("ExchangeRatesApi:BaseUrl"); //TODO: handle null case in a middleware
         _logger = logger;
     }
    
@@ -62,9 +68,8 @@ public class CurrencyRatesService : ICurrencyRatesService
 
     private async Task<Result<List<ExchangeRate>>> GetRatesListAsync(DateTime date)
     {
-        var baseUrl = _configuration["ExchangeRatesApi:BaseUrl"];
         var dateString = date.ToString("dd.MM.yyyy");
-        var url = $"{baseUrl}{dateString}";
+        var url = $"{_baseUrl}{dateString}";
 
         var response = await _httpClient.GetAsync(url);
 

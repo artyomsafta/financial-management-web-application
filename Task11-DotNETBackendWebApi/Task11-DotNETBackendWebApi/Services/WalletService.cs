@@ -12,7 +12,11 @@ public class WalletService : IWalletService
     private readonly AppDbContext _context;
     private readonly IUserContext _userContext;
     private readonly ILogger<WalletService> _logger;
-    public WalletService(AppDbContext context, IUserContext userContext, ILogger<WalletService> logger)
+    public WalletService(
+        AppDbContext context, 
+        IUserContext userContext, 
+        ILogger<WalletService> logger
+    )
     {
         _context = context;
         _userContext = userContext;
