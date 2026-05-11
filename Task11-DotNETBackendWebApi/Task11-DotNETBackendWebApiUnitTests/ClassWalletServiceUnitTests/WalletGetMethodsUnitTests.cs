@@ -53,11 +53,11 @@ public class WalletGetMethodsUnitTests
     {
         using (var context = new AppDbContext(_options))
         {
-            var adminUser = new User { Id = AdminUserId, Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__", Role = nameof(UserRoles.Admin), IsDeleted = false };
-            var user1 = new User { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User), IsDeleted = false };
-            var user2 = new User { Id = User2Id, Username = "user2", Role = nameof(UserRoles.User), IsDeleted = false };
-            var user3 = new User { Id = User3Id, Username = "user3", Role = nameof(UserRoles.User), IsDeleted = false };
-            var user4 = new User { Id = User4Id, Username = "user4", Role = nameof(UserRoles.User), IsDeleted = false };
+            var adminUser = new User { Id = AdminUserId, Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__", Role = UserRoles.Admin, IsDeleted = false };
+            var user1 = new User { Id = User1Id, Username = "user1", Role = UserRoles.User, IsDeleted = false };
+            var user2 = new User { Id = User2Id, Username = "user2", Role = UserRoles.User, IsDeleted = false };
+            var user3 = new User { Id = User3Id, Username = "user3", Role = UserRoles.User, IsDeleted = false };
+            var user4 = new User { Id = User4Id, Username = "user4", Role = UserRoles.User, IsDeleted = false };
 
             var adminWallet = new Wallet { Id = AdminWalletId, Name = "admin wallet", IsDeleted = false, UserId = AdminUserId, CurrencyId = CurrencyUahId };
             var wallet1 = new Wallet { Id = Wallet1Id, Name = "user1 wallet", IsDeleted = false, UserId = User1Id, CurrencyId = CurrencyUahId };
@@ -109,7 +109,7 @@ public class WalletGetMethodsUnitTests
             Id = Wallet1Id, 
             Name = "user1 wallet", 
             BaseCurrency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
-            User = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) }
+            User = new UserDto { Id = User1Id, Username = "user1", Role = UserRoles.User }
         };
 
         var successResult = await _walletService.GetByIdAsync(Wallet1Id);
@@ -129,7 +129,7 @@ public class WalletGetMethodsUnitTests
             Id = Wallet1Id,
             Name = "user1 wallet",
             BaseCurrency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
-            User = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) }
+            User = new UserDto { Id = User1Id, Username = "user1", Role = UserRoles.User }
         };
 
         var successResult = await _walletService.GetByIdAsync(Wallet1Id);

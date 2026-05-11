@@ -40,7 +40,7 @@ public class UserCreateMethodUnitTests
     {
         using (var context = new AppDbContext(_options))
         {
-            var user1 = new User { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User), IsDeleted = false };
+            var user1 = new User { Id = User1Id, Username = "user1", Role = UserRoles.User, IsDeleted = false };
 
             context.Users.Add(user1);
             context.SaveChanges();
@@ -59,7 +59,7 @@ public class UserCreateMethodUnitTests
         var successResult = await _userService.CreateAsync(request);
         var actualUser = successResult.Data;
 
-        var expectedUser = new UserDto { Id = actualUser.Id, Username = "New user", Role = nameof(UserRoles.User) };
+        var expectedUser = new UserDto { Id = actualUser.Id, Username = "New user", Role = UserRoles.User };
 
         actualUser.Should().BeEquivalentTo(expectedUser);
     }

@@ -45,8 +45,8 @@ public class WalletCreateMethodUnitTests
     {
         using (var context = new AppDbContext(_options))
         {
-            var user1 = new User { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User), IsDeleted = false };
-            var user2 = new User { Id = User2Id, Username = "user2", Role = nameof(UserRoles.User), IsDeleted = false };
+            var user1 = new User { Id = User1Id, Username = "user1", Role = UserRoles.User, IsDeleted = false };
+            var user2 = new User { Id = User2Id, Username = "user2", Role = UserRoles.User, IsDeleted = false };
 
             var currencyUah = new Currency { Id = CurrencyUahId, Code = "UAH" };
 
@@ -77,7 +77,7 @@ public class WalletCreateMethodUnitTests
             Id = actualWallet.Id, 
             Name = "user1 wallet", 
             BaseCurrency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
-            User = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) }
+            User = new UserDto { Id = User1Id, Username = "user1", Role = UserRoles.User }
         };
 
         actualWallet.Should().BeEquivalentTo(expectedWallet);
@@ -99,7 +99,7 @@ public class WalletCreateMethodUnitTests
             Id = actualWallet.Id,
             Name = "user1 wallet",
             BaseCurrency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
-            User = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) }
+            User = new UserDto { Id = User1Id, Username = "user1", Role = UserRoles.User }
         };
 
         actualWallet.Should().BeEquivalentTo(expectedWallet);

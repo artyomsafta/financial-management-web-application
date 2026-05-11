@@ -45,8 +45,8 @@ public class ClassDbSeederUnitTests
 
             var existingUsers = new List<User>
             {
-                new User { Username = "Existing User1", Role = "User" },
-                new User { Username = "Existing User2", Role = "User" }
+                new User { Username = "Existing User1", Role = UserRoles.User },
+                new User { Username = "Existing User2", Role = UserRoles.User }
             };
 
             context.FinancialTypes.Add(existingFinancialType);

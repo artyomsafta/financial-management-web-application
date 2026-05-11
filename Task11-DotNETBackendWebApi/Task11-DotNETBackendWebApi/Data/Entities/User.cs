@@ -17,7 +17,7 @@ public class User
     public string PasswordHash { get; set; } = "";
 
     [Required]
-    public string Role { get; set; } = nameof(UserRoles.User);
+    public UserRoles Role { get; set; } = UserRoles.User;
 
     [Required]
     public bool IsDeleted { get; set; } = false;

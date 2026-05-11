@@ -44,9 +44,9 @@ public class UserUpdateMethodUnitTests
     {
         using (var context = new AppDbContext(_options))
         {
-            var adminUser = new User { Id = AdminUserId, Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__", Role = nameof(UserRoles.Admin), IsDeleted = false };
-            var user1 = new User { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User), IsDeleted = false };
-            var user2 = new User { Id = User2Id, Username = "user2", Role = nameof(UserRoles.User), IsDeleted = false };
+            var adminUser = new User { Id = AdminUserId, Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__", Role = UserRoles.Admin, IsDeleted = false };
+            var user1 = new User { Id = User1Id, Username = "user1", Role = UserRoles.User, IsDeleted = false };
+            var user2 = new User { Id = User2Id, Username = "user2", Role = UserRoles.User, IsDeleted = false };
 
             context.Users.AddRange(adminUser, user1, user2);
             context.SaveChanges();
@@ -69,7 +69,7 @@ public class UserUpdateMethodUnitTests
         var isUpdateSuccess = successResult.IsSuccess;
         isUpdateSuccess.Should().BeTrue();
 
-        var expectedUser = new UserDto { Id = userId, Username = "Updated user1", Role = nameof(UserRoles.User) };
+        var expectedUser = new UserDto { Id = userId, Username = "Updated user1", Role = UserRoles.User };
 
         var userEntity = await _context.Users.FindAsync(userId);
         var actualUser = new UserDto
@@ -99,7 +99,7 @@ public class UserUpdateMethodUnitTests
         var isUpdateSuccess = successResult.IsSuccess;
         isUpdateSuccess.Should().BeTrue();
 
-        var expectedUser = new UserDto { Id = userId, Username = "Updated user1", Role = nameof(UserRoles.User) };
+        var expectedUser = new UserDto { Id = userId, Username = "Updated user1", Role = UserRoles.User };
 
         var userEntity = await _context.Users.FindAsync(userId);
         var actualUser = new UserDto

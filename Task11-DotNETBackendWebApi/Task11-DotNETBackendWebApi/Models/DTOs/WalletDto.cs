@@ -3,7 +3,7 @@
 public class WalletDto
 {
     public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
     public CurrencyListDto BaseCurrency { get; set; }
     public UserDto User { get; set; }
 }

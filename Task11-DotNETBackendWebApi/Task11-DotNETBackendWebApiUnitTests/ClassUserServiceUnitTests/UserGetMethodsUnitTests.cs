@@ -44,10 +44,10 @@ public class UserGetMethodsUnitTests
     {
         using (var context = new AppDbContext(_options))
         {
-            var adminUser = new User { Id = AdminUserId, Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__", Role = nameof(UserRoles.Admin), IsDeleted = false };
-            var user1 = new User { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User), IsDeleted = false };
-            var user2 = new User { Id = User2Id, Username = "user2", Role = nameof(UserRoles.User), IsDeleted = false };
-            var user3 = new User { Id = User3Id, Username = "DELETED", Role = nameof(UserRoles.User), IsDeleted = true };
+            var adminUser = new User { Id = AdminUserId, Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__", Role = UserRoles.Admin, IsDeleted = false };
+            var user1 = new User { Id = User1Id, Username = "user1", Role = UserRoles.User, IsDeleted = false };
+            var user2 = new User { Id = User2Id, Username = "user2", Role = UserRoles.User, IsDeleted = false };
+            var user3 = new User { Id = User3Id, Username = "DELETED", Role = UserRoles.User, IsDeleted = true };
 
             context.Users.AddRange(adminUser, user1, user2, user3);
             context.SaveChanges();
@@ -86,7 +86,7 @@ public class UserGetMethodsUnitTests
         var successResult = await _userService.GetByIdAsync(User1Id);
         var actualUser = successResult.Data;
 
-        var expectedUser = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) };
+        var expectedUser = new UserDto { Id = User1Id, Username = "user1", Role = UserRoles.User };
 
         actualUser.Should().BeEquivalentTo(expectedUser);
     }
@@ -100,7 +100,7 @@ public class UserGetMethodsUnitTests
         var successResult = await _userService.GetByIdAsync(User1Id);
         var actualUser = successResult.Data;
 
-        var expectedUser = new UserDto { Id = User1Id, Username = "user1", Role = nameof(UserRoles.User) };
+        var expectedUser = new UserDto { Id = User1Id, Username = "user1", Role = UserRoles.User };
 
         actualUser.Should().BeEquivalentTo(expectedUser);
     }

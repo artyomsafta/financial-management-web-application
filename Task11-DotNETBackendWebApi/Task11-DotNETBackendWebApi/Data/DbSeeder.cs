@@ -49,7 +49,7 @@ public class DbSeeder
             {
                 Id = Guid.NewGuid(),
                 Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__",
-                Role = nameof(UserRoles.Admin)
+                Role = UserRoles.Admin
             };
             adminUser.PasswordHash = hasher.HashPassword(adminUser, "__REMOVED_BOOTSTRAP_ADMIN_PASSWORD__");
 
