@@ -38,9 +38,6 @@ public class FinancialOperationService : IFinancialOperationService
 
         return await query
             .AsNoTracking()
-            //.Include(o => o.Type)
-            //.Include(o => o.Wallet)
-            //.Include(o => o.Currency)
             .Select(o => new FinancialOperationDto
             {
                 Id = o.Id,
@@ -69,24 +66,47 @@ public class FinancialOperationService : IFinancialOperationService
 
     public async Task<Result<FinancialOperationDto>> GetByIdAsync(Guid id)
     {
-        var operation = await _context.FinancialOperations
+        var query = _context.FinancialOperations
             .AsNoTracking()
-            .Include(o => o.Type)
-            .Include(o => o.Wallet)
-            .Include(o => o.Currency)
-            .FirstOrDefaultAsync(o => o.Id == id);
+            .Where(o => o.Id == id);
+
+        if (!_userContext.IsAdmin)
+        {
+            query = query.Where(o => o.Wallet.UserId == _userContext.UserId);
+        }
+
+        var operation = await query
+            .Select(o => new FinancialOperationDto
+            {
+                Id = o.Id,
+                Amount = o.Amount,
+                Date = o.Date,
+                Currency = new CurrencyListDto
+                {
+                    Id = o.CurrencyId,
+                    Code = o.Currency.Code
+                },
+                Comment = o.Comment,
+                Note = o.Note,
+                Type = new FinancialTypeListDto
+                {
+                    Id = o.FinancialTypeId,
+                    Name = o.Type.Name
+                },
+                Wallet = new WalletListDto
+                {
+                    Id = o.WalletId,
+                    Name = o.Wallet.Name
+                }
+            })
+            .FirstOrDefaultAsync();
 
         if (operation is null)
         {
             return Result<FinancialOperationDto>.Failure($"Operation with ID {id} not found");
         }
 
-        if (!_userContext.IsAdmin && operation.Wallet.UserId != _userContext.UserId)
-        {
-            throw new UnauthorizedAccessException("Access denied");
-        }
-
-        return Result<FinancialOperationDto>.Success(MapToDto(operation));
+        return Result<FinancialOperationDto>.Success(operation);
     }
 
     public async Task<Result<FinancialOperationDto>> CreateAsync(FinancialOperationRequest request)

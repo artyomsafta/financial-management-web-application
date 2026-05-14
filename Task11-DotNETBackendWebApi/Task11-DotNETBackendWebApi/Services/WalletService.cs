@@ -34,8 +34,6 @@ public class WalletService : IWalletService
 
         return await query
             .AsNoTracking()
-            .Include(w => w.User)
-            .Include(w => w.Currency)
             .Select(w => new WalletDto
             {
                 Id = w.Id,
@@ -57,23 +55,40 @@ public class WalletService : IWalletService
 
     public async Task<Result<WalletDto>> GetByIdAsync(Guid id)
     {
-        var wallet = await _context.Wallets
+        var query = _context.Wallets
             .AsNoTracking()
-            .Include(w => w.User)
-            .Include(w => w.Currency)
-            .FirstOrDefaultAsync(w => w.Id == id);
+            .Where(w => w.Id == id);
+
+        if (!_userContext.IsAdmin)
+        {
+            query = query.Where(w => w.UserId == _userContext.UserId);
+        }
+
+        var wallet = await query
+            .Select(w => new WalletDto
+            {
+                Id = w.Id,
+                Name = w.Name,
+                BaseCurrency = new CurrencyListDto
+                {
+                    Id = w.CurrencyId,
+                    Code = w.Currency.Code
+                },
+                User = new UserDto
+                {
+                    Id = w.UserId,
+                    Username = w.User.Username,
+                    Role = w.User.Role
+                }
+            })
+            .FirstOrDefaultAsync();
 
         if (wallet is null)
         {
             return Result<WalletDto>.Failure($"Wallet with ID {id} not found");
         }
 
-        if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
-        {
-            throw new UnauthorizedAccessException("Access denied");
-        }
-
-        return Result<WalletDto>.Success(MapToDto(wallet));
+        return Result<WalletDto>.Success(wallet);
     }
 
     public async Task<Result<WalletDto>> CreateAsync(WalletRequest request)
