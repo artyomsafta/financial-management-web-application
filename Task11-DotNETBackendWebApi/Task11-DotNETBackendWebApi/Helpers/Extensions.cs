@@ -23,4 +23,15 @@ public static class Extensions
 
         return host;
     }
+
+    public static bool IsValidCurrencyCode(this string currencyCode)
+    {
+        var currency = currencyCode.Trim().ToUpper();
+
+        if (string.IsNullOrEmpty(currency) || currency.Length != 3)
+        {
+            return false;
+        } 
+        return true;
+    }
 }

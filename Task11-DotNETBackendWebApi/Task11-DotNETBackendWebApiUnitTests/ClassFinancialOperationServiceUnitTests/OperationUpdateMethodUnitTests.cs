@@ -153,7 +153,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
@@ -208,7 +208,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
         var operationId = Wallet1OperationId;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
@@ -263,7 +263,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
 
         var operationId = Wallet2Operation2Id;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type4Id,
             WalletId = Wallet2Id,
@@ -295,7 +295,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
 
         var operationId = Wallet2Operation2Id;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type2Id,
             WalletId = Wallet2Id,
@@ -369,7 +369,7 @@ public class OperationUpdateMethodUnitTests
             .Setup(s => s.GetRatesAsync(It.Is<string>(c => c == "EUR"), It.IsAny<DateTime>()))
             .ReturnsAsync(successRatesResult);
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
@@ -430,7 +430,7 @@ public class OperationUpdateMethodUnitTests
             .ReturnsAsync(Result<CurrencyRateResult>.Failure(failureMessage));
 
         var operationId = Wallet1OperationId;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
@@ -452,7 +452,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
@@ -477,7 +477,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = OperationNotFoundId;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
@@ -503,7 +503,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
 
         var operationId = Wallet2Operation3Id;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type2Id,
             WalletId = Wallet2Id,
@@ -528,7 +528,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = TypeNotFoundId,
             WalletId = Wallet1Id,
@@ -553,7 +553,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type3Id,
             WalletId = Wallet1Id,
@@ -578,7 +578,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = WalletNotFoundId,
@@ -603,7 +603,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet3Id,
@@ -628,7 +628,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet2Id,
@@ -654,7 +654,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
 
         var operationId = Wallet1OperationId;
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,

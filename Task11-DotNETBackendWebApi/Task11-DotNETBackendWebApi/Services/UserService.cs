@@ -67,17 +67,17 @@ public class UserService : IUserService
         return Result<UserDto>.Success(MapToDto(user));
     }
 
-    public async Task<Result<UserDto>> CreateAsync(UserRegisterRequest request)
+    public async Task<Result<Guid>> CreateAsync(UserRegisterRequest request)
     {
         if (await _context.Users.AnyAsync(t => t.Username.ToLower() == request.Username.Trim().ToLower()))
         {
-            return Result<UserDto>.Failure("A user with the same username already exists.");
+            return Result<Guid>.Failure("A user with the same username already exists.");
         }
 
         var passwordErrors = ValidatePassword(request.Password);
         if (passwordErrors.Any())
         {
-            return Result<UserDto>.Failure(passwordErrors);
+            return Result<Guid>.Failure(passwordErrors);
         }
 
         var newUser = new User
@@ -92,17 +92,17 @@ public class UserService : IUserService
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            return Result<UserDto>.Success(MapToDto(newUser));
+            return Result<Guid>.Success(newUser.Id);
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while creating a new user {Username}", request.Username);
-            return Result<UserDto>.Failure("Operation aborted due to database connection error.");
+            return Result<Guid>.Failure("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(CreateAsync));
-            return Result<UserDto>.Failure("An unexpected system error occurred.");
+            return Result<Guid>.Failure("An unexpected system error occurred.");
         }
     }
 
@@ -128,7 +128,7 @@ public class UserService : IUserService
         var passwordErrors = ValidatePassword(request.Password);
         if (passwordErrors.Any())
         {
-            return Result<UserDto>.Failure(passwordErrors);
+            return Result.Failure(passwordErrors);
         }
 
         user.Username = request.Username.Trim();

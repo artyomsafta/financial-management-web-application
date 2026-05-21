@@ -93,7 +93,7 @@ public class OperationCreateMethodUnitTests
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
@@ -127,7 +127,7 @@ public class OperationCreateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
@@ -161,7 +161,7 @@ public class OperationCreateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type2Id,
             WalletId = Wallet1Id,
@@ -196,7 +196,7 @@ public class OperationCreateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
@@ -248,7 +248,7 @@ public class OperationCreateMethodUnitTests
             .Setup(s => s.GetRatesAsync(It.Is<string>(c => c == "EUR"), It.IsAny<DateTime>()))
             .ReturnsAsync(successRatesResult);
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
@@ -288,7 +288,7 @@ public class OperationCreateMethodUnitTests
             .Setup(s => s.GetRatesAsync(failureCurrencyCode, It.IsAny<DateTime>()))
             .ReturnsAsync(Result<CurrencyRateResult>.Failure(failureMessage));
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
@@ -309,7 +309,7 @@ public class OperationCreateMethodUnitTests
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,
@@ -333,7 +333,7 @@ public class OperationCreateMethodUnitTests
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = TypeNotFoundId,
             WalletId = Wallet1Id,
@@ -357,7 +357,7 @@ public class OperationCreateMethodUnitTests
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type3Id,
             WalletId = Wallet1Id,
@@ -381,7 +381,7 @@ public class OperationCreateMethodUnitTests
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = WalletNotFoundId,
@@ -405,7 +405,7 @@ public class OperationCreateMethodUnitTests
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet2Id,
@@ -430,7 +430,7 @@ public class OperationCreateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
 
-        var request = new FinancialOperationRequest
+        var request = new CreateFinOperationRequest
         {
             TypeId = Type1Id,
             WalletId = Wallet1Id,

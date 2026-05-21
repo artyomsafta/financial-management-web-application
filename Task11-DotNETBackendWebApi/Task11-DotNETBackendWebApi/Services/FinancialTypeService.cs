@@ -52,7 +52,7 @@ public class FinancialTypeService : IFinancialTypeService
         return Result<FinancialTypeDto>.Success(MapToDto(type));
     }
 
-    public async Task<Result<FinancialTypeDto>> CreateAsync(FinancialTypeRequest request)
+    public async Task<Result<Guid>> CreateAsync(FinancialTypeRequest request)
     {
         if (!_userContext.IsAdmin)
         {
@@ -61,7 +61,7 @@ public class FinancialTypeService : IFinancialTypeService
 
         if (await _context.FinancialTypes.AnyAsync(t => t.Name.ToLower() == request.Name.Trim().ToLower()))
         {
-            return Result<FinancialTypeDto>.Failure("A financial type with the same name already exists.");
+            return Result<Guid>.Failure("A financial type with the same name already exists.");
         }
 
         var newType = new FinancialType
@@ -77,17 +77,17 @@ public class FinancialTypeService : IFinancialTypeService
             _context.FinancialTypes.Add(newType);
             await _context.SaveChangesAsync();
 
-            return Result<FinancialTypeDto>.Success(MapToDto(newType));
+            return Result<Guid>.Success(newType.Id);
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while creating the financial type {Name}", request.Name);
-            return Result<FinancialTypeDto>.Failure("Operation aborted due to database connection error.");
+            return Result<Guid>.Failure("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(CreateAsync));
-            return Result<FinancialTypeDto>.Failure("An unexpected system error occurred.");
+            return Result<Guid>.Failure("An unexpected system error occurred.");
         }
     }
 

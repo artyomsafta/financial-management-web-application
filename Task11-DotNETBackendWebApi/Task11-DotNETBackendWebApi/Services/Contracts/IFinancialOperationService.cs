@@ -7,7 +7,7 @@ public interface IFinancialOperationService
 {
     Task<IEnumerable<FinancialOperationDto>> GetListAsync();
     Task<Result<FinancialOperationDto>> GetByIdAsync(Guid id);
-    Task<Result<FinancialOperationDto>> CreateAsync(FinancialOperationRequest request);
-    Task<Result> UpdateAsync(Guid id, FinancialOperationRequest request);
+    Task<Result<Guid>> CreateAsync(CreateFinOperationRequest request);
+    Task<Result> UpdateAsync(Guid id, UpdateFinOperationRequest request);
     Task<Result> DeleteAsync(Guid id);
 }

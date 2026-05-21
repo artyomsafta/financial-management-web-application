@@ -2,13 +2,10 @@
 
 namespace Task11_DotNETBackendWebApi.Models;
 
-public class FinancialOperationRequest
+public class UpdateFinOperationRequest
 {
     [Required]
     public Guid TypeId { get; set; }
-
-    [Required]
-    public Guid WalletId { get; set; }
 
     [Required]
     [Range(0.00, double.MaxValue, ErrorMessage = "The amount must be greater than zero.")]

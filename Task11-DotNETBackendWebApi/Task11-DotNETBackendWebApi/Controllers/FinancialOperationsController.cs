@@ -47,7 +47,7 @@ public class FinancialOperationsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<FinancialOperationDto>> Create([FromBody] FinancialOperationRequest request)
+    public async Task<ActionResult<FinancialOperationDto>> Create([FromBody] CreateFinOperationRequest request)
     {
         try
         {
@@ -57,7 +57,7 @@ public class FinancialOperationsController : ControllerBase
                 return BadRequest(new { errors = result.Errors });
             }
 
-            return CreatedAtAction(nameof(GetById), new { id = result.Data.Id }, result.Data);
+            return CreatedAtAction(nameof(GetById), new { id = result }, result.Data);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -66,7 +66,7 @@ public class FinancialOperationsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] FinancialOperationRequest request)
+    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateFinOperationRequest request)
     {
         try
         {

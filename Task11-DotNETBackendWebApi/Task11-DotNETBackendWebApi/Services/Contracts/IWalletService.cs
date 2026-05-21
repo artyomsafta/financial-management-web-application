@@ -7,7 +7,7 @@ public interface IWalletService
 {
     Task<IEnumerable<WalletDto>> GetListAsync();
     Task<Result<WalletDto>> GetByIdAsync(Guid id);
-    Task<Result<WalletDto>> CreateAsync(WalletRequest request);
+    Task<Result<Guid>> CreateAsync(WalletRequest request);
     Task<Result> UpdateAsync(Guid id, WalletRequest request);
     Task<Result> DeleteAsync(Guid id);
 }

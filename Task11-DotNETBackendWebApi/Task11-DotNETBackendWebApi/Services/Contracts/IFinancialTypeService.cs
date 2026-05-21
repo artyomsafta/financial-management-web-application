@@ -7,7 +7,7 @@ public interface IFinancialTypeService
 {
     Task<IEnumerable<FinancialTypeDto>> GetListAsync();
     Task<Result<FinancialTypeDto>> GetByIdAsync(Guid id);
-    Task<Result<FinancialTypeDto>> CreateAsync(FinancialTypeRequest request);
+    Task<Result<Guid>> CreateAsync(FinancialTypeRequest request);
     Task<Result> UpdateAsync(Guid id, FinancialTypeRequest request);
     Task<Result> DeleteAsync(Guid id);
 }

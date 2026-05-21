@@ -58,7 +58,7 @@ public class UsersController : ControllerBase
             return BadRequest(new { errors = result.Errors });
         }
 
-        return CreatedAtAction(nameof(GetById), new { id = result.Data.Id }, result.Data);        
+        return CreatedAtAction(nameof(GetById), new { id = result }, result.Data);        
     }
 
     [HttpPut("{id}")]

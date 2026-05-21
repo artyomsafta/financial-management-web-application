@@ -91,7 +91,7 @@ public class WalletService : IWalletService
         return Result<WalletDto>.Success(wallet);
     }
 
-    public async Task<Result<WalletDto>> CreateAsync(WalletRequest request)
+    public async Task<Result<Guid>> CreateAsync(WalletRequest request)
     {
         if (!_userContext.IsAdmin && request.UserId != _userContext.UserId)
         {
@@ -100,11 +100,11 @@ public class WalletService : IWalletService
 
         var currencyCode = request.BaseCurrency.Trim().ToUpper();
         if (string.IsNullOrEmpty(currencyCode) || currencyCode.Length != 3)
-            return Result<WalletDto>.Failure("The currency code is incorrect.");
+            return Result<Guid>.Failure("The currency code is incorrect.");
 
         if (currencyCode != "UAH")
         {
-            return Result<WalletDto>.Failure("Currently, the base currency of the wallet can only be UAH");
+            return Result<Guid>.Failure("Currently, the base currency of the wallet can only be UAH");
         }
 
         var user = await _context.Users
@@ -112,7 +112,7 @@ public class WalletService : IWalletService
             .FirstOrDefaultAsync(u => u.Id == request.UserId);
         if (user is null)
         {
-            return Result<WalletDto>.Failure($"User with ID {request.UserId} not found");
+            return Result<Guid>.Failure($"User with ID {request.UserId} not found");
         }
 
         var newWallet = new Wallet
@@ -132,22 +132,17 @@ public class WalletService : IWalletService
             _context.Wallets.Add(newWallet);
             await _context.SaveChangesAsync();
 
-            var wallet = await _context.Wallets
-                .Include(w => w.User)
-                .Include(w => w.Currency)
-                .FirstOrDefaultAsync(w => w.Id == newWallet.Id);
-
-            return Result<WalletDto>.Success(MapToDto(wallet));
+            return Result<Guid>.Success(newWallet.Id);
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while creating a new wallet with id {Id}.", newWallet.Id);
-            return Result<WalletDto>.Failure("Operation aborted due to database connection error.");
+            return Result<Guid>.Failure("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(CreateAsync));
-            return Result<WalletDto>.Failure("An unexpected system error occurred.");
+            return Result<Guid>.Failure("An unexpected system error occurred.");
         }
     }
 
