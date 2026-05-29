@@ -7,6 +7,7 @@ using Microsoft.OpenApi;
 using System.Text;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Helpers;
+using Task11_DotNETBackendWebApi.Infrastructure;
 using Task11_DotNETBackendWebApi.Infrastructure.Logging;
 using Task11_DotNETBackendWebApi.Services;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -130,6 +131,7 @@ public class Program
 
         app.UseMiddleware<UserLoggingMiddleware>();
         app.UseMiddleware<LoggingMiddleware>();
+        app.UseMiddleware<ExceptionHandlingMiddleware>();
 
         app.MapControllers();
 

@@ -38,7 +38,7 @@ public class FinancialTypeService : IFinancialTypeService
             .ToListAsync();
     }
 
-    public async Task<Result<FinancialTypeDto>> GetByIdAsync(Guid id)
+    public async Task <FinancialTypeDto> GetByIdAsync(Guid id)
     {
         var type = await _context.FinancialTypes
             .AsNoTracking()
@@ -46,13 +46,13 @@ public class FinancialTypeService : IFinancialTypeService
 
         if (type is null)
         {
-            return Result<FinancialTypeDto>.Failure($"Type with ID {id} not found");
+            throw new KeyNotFoundException($"Type with ID {id} not found");
         }
 
-        return Result<FinancialTypeDto>.Success(MapToDto(type));
+        return MapToDto(type);
     }
 
-    public async Task<Result<Guid>> CreateAsync(FinancialTypeRequest request)
+    public async Task<Guid> CreateAsync(FinancialTypeRequest request)
     {
         if (!_userContext.IsAdmin)
         {
@@ -61,7 +61,7 @@ public class FinancialTypeService : IFinancialTypeService
 
         if (await _context.FinancialTypes.AnyAsync(t => t.Name.ToLower() == request.Name.Trim().ToLower()))
         {
-            return Result<Guid>.Failure("A financial type with the same name already exists.");
+            throw new InvalidOperationException("A financial type with the same name already exists.");
         }
 
         var newType = new FinancialType
@@ -77,21 +77,21 @@ public class FinancialTypeService : IFinancialTypeService
             _context.FinancialTypes.Add(newType);
             await _context.SaveChangesAsync();
 
-            return Result<Guid>.Success(newType.Id);
+            return newType.Id;
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while creating the financial type {Name}", request.Name);
-            return Result<Guid>.Failure("Operation aborted due to database connection error.");
+            throw new DbUpdateException("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(CreateAsync));
-            return Result<Guid>.Failure("An unexpected system error occurred.");
+            throw new Exception("An unexpected system error occurred.");
         }
     }
 
-    public async Task<Result> UpdateAsync(Guid id, FinancialTypeRequest request)
+    public async Task<bool> UpdateAsync(Guid id, FinancialTypeRequest request)
     {
         if (!_userContext.IsAdmin)
         {
@@ -101,12 +101,12 @@ public class FinancialTypeService : IFinancialTypeService
         var type = await _context.FinancialTypes.FindAsync(id);
         if (type is null)
         {
-            return Result.Failure("The financial type does not exist.");
+            throw new KeyNotFoundException("The financial type does not exist.");
         }
 
         if (await _context.FinancialTypes.AnyAsync(t => t.Name.ToLower() == request.Name.Trim().ToLower()))
         {
-            return Result.Failure("The financial type with the same name already exists.");
+            throw new InvalidOperationException("The financial type with the same name already exists.");
         }
 
         type.Name = request.Name.Trim();
@@ -118,21 +118,21 @@ public class FinancialTypeService : IFinancialTypeService
             _context.FinancialTypes.Update(type);
             await _context.SaveChangesAsync();
 
-            return Result.Success();
+            return true;
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while updating the financial type {Name}", request.Name);
-            return Result.Failure("Operation aborted due to database connection error.");
+            throw new DbUpdateException("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(UpdateAsync));
-            return Result.Failure("An unexpected system error occurred.");
+            throw new Exception("An unexpected system error occurred.");
         }
     }
 
-    public async Task<Result> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         if (!_userContext.IsAdmin)
         {
@@ -144,12 +144,12 @@ public class FinancialTypeService : IFinancialTypeService
             .FirstOrDefaultAsync(t => t.Id == id);
         if (type is null)
         {
-            return Result.Failure("The financial type does not exist.");
+            throw new KeyNotFoundException("The financial type does not exist.");
         }
 
         if (type.FinancialOperations.Any(o => !o.IsDeleted))
         {
-            return Result.Failure("You cannot delete a type that has financial operations.");
+            throw new InvalidOperationException("You cannot delete a type that has financial operations.");
         }
 
         try
@@ -157,17 +157,17 @@ public class FinancialTypeService : IFinancialTypeService
             type.IsDeleted = true;
             await _context.SaveChangesAsync();
 
-            return Result.Success();
+            return true;
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while deleting the financial type {Name}", type.Name);
-            return Result.Failure("Operation aborted due to database connection error.");
+            throw new DbUpdateException("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(DeleteAsync));
-            return Result.Failure("An unexpected system error occurred.");
+            throw new Exception("An unexpected system error occurred.");
         }
     }
 

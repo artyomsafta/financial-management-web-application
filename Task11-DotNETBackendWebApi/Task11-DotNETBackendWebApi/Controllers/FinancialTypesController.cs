@@ -32,71 +32,30 @@ public class FinancialTypesController : ControllerBase
     public async Task<ActionResult<FinancialTypeDto>> GetById([FromRoute] Guid id)
     {
         var result = await _typeService.GetByIdAsync(id);
-        if (!result.IsSuccess)
-        {
-            return NotFound(new { errors = result.Errors });
-        }
-
-        return Ok(result.Data);
+        return Ok(result);
     }
 
     [HttpPost]
     [Authorize(Roles = nameof(UserRoles.Admin))]
     public async Task<ActionResult<FinancialTypeDto>> Create([FromBody] FinancialTypeRequest request)
     {
-        try
-        {
-            var result = await _typeService.CreateAsync(request);
-            if (!result.IsSuccess)
-            {
-                return BadRequest(new { errors = result.Errors });
-            }
-
-            return CreatedAtAction(nameof(GetById), new { id = result }, result.Data);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return StatusCode(403, new { message = ex.Message });
-        }
+        var result = await _typeService.CreateAsync(request);
+        return CreatedAtAction(nameof(GetById), new { id = result }, result);
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = nameof(UserRoles.Admin))]
     public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] FinancialTypeRequest request)
     {
-        try
-        {
-            var result = await _typeService.UpdateAsync(id, request);
-            if (!result.IsSuccess)
-            {
-                return BadRequest(new { errors = result.Errors });
-            }
-
-            return NoContent();
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return StatusCode(403, new { message = ex.Message });
-        }
+        var result = await _typeService.UpdateAsync(id, request);
+        return NoContent();
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = nameof(UserRoles.Admin))]
     public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
-        try
-        {
-            var result = await _typeService.DeleteAsync(id);
-            if (!result.IsSuccess)
-            {
-                return BadRequest(new { errors = result.Errors });
-            }
-
-            return NoContent();
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return StatusCode(403, new { message = ex.Message });
-        }
+        var result = await _typeService.DeleteAsync(id);
+        return NoContent();
     }
 }
