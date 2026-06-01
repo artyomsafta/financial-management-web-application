@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
+using Task11_DotNETBackendWebApi.Helpers;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -64,7 +65,7 @@ public class UserService : IUserService
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        return Result<UserDto>.Success(MapToDto(user));
+        return Result<UserDto>.Success(user.MapToUserDto());
     }
 
     public async Task<Result<Guid>> CreateAsync(UserRegisterRequest request)
@@ -192,16 +193,6 @@ public class UserService : IUserService
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(DeleteAsync));
             return Result.Failure("An unexpected system error occurred.");
         }
-    }
-
-    private UserDto MapToDto(User user)
-    {
-        return new UserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            Role = user.Role
-        };
     }
 
     private List<string> ValidatePassword(string password)

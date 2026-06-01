@@ -1,4 +1,6 @@
 ﻿using Task11_DotNETBackendWebApi.Data;
+using Task11_DotNETBackendWebApi.Data.Entities;
+using Task11_DotNETBackendWebApi.Models.DTOs;
 
 namespace Task11_DotNETBackendWebApi.Helpers;
 
@@ -33,5 +35,26 @@ public static class Extensions
             return false;
         } 
         return true;
+    }
+
+    public static FinancialTypeDto MapToFinTypeDto(this FinancialType type)
+    {
+        return new FinancialTypeDto
+        {
+            Id = type.Id,
+            Name = type.Name,
+            Description = type.Description,
+            IsIncome = type.IsIncome
+        };
+    }
+
+    public static UserDto MapToUserDto(this User user)
+    {
+        return new UserDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Role = user.Role
+        };
     }
 }

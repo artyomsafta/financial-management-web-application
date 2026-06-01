@@ -244,24 +244,4 @@ public class WalletService : IWalletService
             return Result.Failure("An unexpected system error occurred.");
         }
     }
-
-    private WalletDto MapToDto(Wallet wallet)
-    {
-        return new WalletDto
-        {
-            Id = wallet.Id,
-            Name = wallet.Name,
-            BaseCurrency = new CurrencyListDto
-            {
-                Id = wallet.CurrencyId,
-                Code = wallet.Currency.Code
-            },
-            User = new UserDto
-            {
-                Id = wallet.UserId,
-                Username = wallet.User.Username,
-                Role = wallet.User.Role
-            }
-        };
-    }
 }

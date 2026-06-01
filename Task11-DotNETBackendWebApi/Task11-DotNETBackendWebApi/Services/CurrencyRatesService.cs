@@ -20,7 +20,8 @@ public class CurrencyRatesService : ICurrencyRatesService
     {
         _httpClient = httpClient;
         _configuration = configuration;
-        _baseUrl = _configuration["ExchangeRatesApi:BaseUrl"] ?? throw new ArgumentNullException("ExchangeRatesApi:BaseUrl"); //TODO: handle null case in a middleware
+        _baseUrl = _configuration["ExchangeRatesApi:BaseUrl"] 
+            ?? throw new InvalidOperationException("Base url for exchange rates API is missing.");
         _logger = logger;
     }
    

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
+using Task11_DotNETBackendWebApi.Helpers;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -49,7 +50,7 @@ public class FinancialTypeService : IFinancialTypeService
             throw new KeyNotFoundException($"Type with ID {id} not found");
         }
 
-        return MapToDto(type);
+        return type.MapToFinTypeDto();
     }
 
     public async Task<Guid> CreateAsync(FinancialTypeRequest request)
@@ -169,16 +170,5 @@ public class FinancialTypeService : IFinancialTypeService
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(DeleteAsync));
             throw new Exception("An unexpected system error occurred.");
         }
-    }
-
-    private FinancialTypeDto MapToDto(FinancialType type)
-    {
-        return new FinancialTypeDto
-        {
-            Id = type.Id,
-            Name = type.Name,
-            Description = type.Description,
-            IsIncome = type.IsIncome
-        };
     }
 }
