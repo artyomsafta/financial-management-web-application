@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using Task11_DotNETBackendWebApi.Data;
-using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
@@ -23,16 +23,16 @@ public class ReportService : IReportService
         _logger = logger;
     }
 
-    public async Task<Result<ReportDto>> GetDailyReportAsync(DateTime date)
+    public async Task<ReportDto> GetDailyReportAsync(DateTime date)
     {
         return await GetPeriodReportAsync(date, date);
     }
 
-    public async Task<Result<ReportDto>> GetPeriodReportAsync(DateTime start, DateTime end)
+    public async Task<ReportDto> GetPeriodReportAsync(DateTime start, DateTime end)
     {
         if (start > end)
         {
-            return Result<ReportDto>.Failure("The start date must be earlier or equal to the end date.");
+            throw new ValidationException("The start date must be earlier or equal to the end date.");
         }
 
         var startDate = start.Date;
@@ -94,6 +94,6 @@ public class ReportService : IReportService
                 .ToList()
         };
 
-        return Result<ReportDto>.Success(data);
+        return data;
     }
 }

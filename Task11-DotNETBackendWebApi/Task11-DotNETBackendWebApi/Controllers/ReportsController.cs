@@ -1,7 +1,6 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
 namespace Task11_DotNETBackendWebApi.Controllers;
@@ -20,26 +19,16 @@ public class ReportsController : ControllerBase
     }
 
     [HttpGet("daily")]
-    public async Task<ActionResult<ReportDto>> GetDailyReport([FromQuery] DateTime date)
+    public async Task<ActionResult> GetDailyReport([FromQuery] DateTime date)
     {
         var result = await _reportService.GetDailyReportAsync(date);
-        if (!result.IsSuccess)
-        {
-            return BadRequest(new { errors = result.Errors });
-        }
-
-        return Ok(result.Data);      
+        return Ok(result);      
     }
 
     [HttpGet("period")]
-    public async Task<ActionResult<ReportDto>> GetPeriodReport([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+    public async Task<ActionResult> GetPeriodReport([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
     {
         var result = await _reportService.GetPeriodReportAsync(startDate, endDate);
-        if (!result.IsSuccess)
-        {
-            return BadRequest(new { errors = result.Errors });
-        }
-
-        return Ok(result.Data);
+        return Ok(result);
     }
 }

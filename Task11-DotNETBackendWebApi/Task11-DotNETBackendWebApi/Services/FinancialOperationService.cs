@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
 using Task11_DotNETBackendWebApi.Helpers;
@@ -65,7 +66,7 @@ public class FinancialOperationService : IFinancialOperationService
             .ToListAsync();
     }
 
-    public async Task<Result<FinancialOperationDto>> GetByIdAsync(Guid id)
+    public async Task<FinancialOperationDto> GetByIdAsync(Guid id)
     {
         var query = _context.FinancialOperations
             .AsNoTracking()
@@ -104,29 +105,29 @@ public class FinancialOperationService : IFinancialOperationService
 
         if (operation is null)
         {
-            return Result<FinancialOperationDto>.Failure($"Operation with ID {id} not found");
+            throw new KeyNotFoundException($"Operation with ID {id} not found");
         }
 
-        return Result<FinancialOperationDto>.Success(operation);
+        return operation;
     }
 
-    public async Task<Result<Guid>> CreateAsync(CreateFinOperationRequest request)
+    public async Task<Guid> CreateAsync(CreateFinOperationRequest request)
     {
         if (!request.Currency.IsValidCurrencyCode())
-            return Result<Guid>.Failure("The currency code is incorrect.");
+            throw new ValidationException("The currency code is incorrect.");
 
         var wallet = await _context.Wallets
             .AsNoTracking()
             .Include(w => w.Currency)
             .FirstOrDefaultAsync(w => w.Id == request.WalletId);
         if (wallet is null)
-            return Result<Guid>.Failure("There is no such wallet.");
+            throw new KeyNotFoundException("There is no such wallet.");
 
         var type = await _context.FinancialTypes
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == request.TypeId);
         if (type is null)
-            return Result<Guid>.Failure("There is no such type of operation.");
+            throw new KeyNotFoundException("There is no such type of operation.");
 
         if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
         {
@@ -136,20 +137,13 @@ public class FinancialOperationService : IFinancialOperationService
         var baseCurrency = wallet.Currency.Code;
         var currentCurrency = request.Currency.Trim().ToUpper();
 
-        var calculationResult = await CalculateAmountAsync(
+        var calculatedAmount = await CalculateAmountAsync(
             request.Amount, 
             baseCurrency, 
             currentCurrency, 
             request.Date, 
             type.IsIncome
         );
-
-        if (!calculationResult.IsSuccess)
-        {
-            return Result<Guid>.Failure(calculationResult.Errors);
-        }
-
-        var finalAmount = calculationResult.Data;
 
         var currencyId = await GetOrCreateCurrencyIdAsync(currentCurrency);
 
@@ -158,7 +152,7 @@ public class FinancialOperationService : IFinancialOperationService
         var newOperation = new FinancialOperation
         {
             Id = Guid.NewGuid(),
-            Amount = finalAmount,
+            Amount = calculatedAmount,
             Date = request.Date,
             Comment = comment,
             Note = request.Note.Trim(),
@@ -173,24 +167,24 @@ public class FinancialOperationService : IFinancialOperationService
             _context.FinancialOperations.Add(newOperation);
             await _context.SaveChangesAsync();
 
-            return Result<Guid>.Success(newOperation.Id);
+            return newOperation.Id;
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while creating the financial operation with id {Id}.", newOperation.Id);
-            return Result<Guid>.Failure("Operation aborted due to database connection error.");
+            throw new DbUpdateException("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(CreateAsync));
-            return Result<Guid>.Failure("An unexpected system error occurred.");
+            throw new Exception("An unexpected system error occurred.");
         }
     }
 
-    public async Task<Result> UpdateAsync(Guid id, UpdateFinOperationRequest request)
+    public async Task<bool> UpdateAsync(Guid id, UpdateFinOperationRequest request)
     {
         if (!request.Currency.IsValidCurrencyCode())
-            return Result.Failure("The currency code is incorrect.");
+            throw new ValidationException("The currency code is incorrect.");
 
         var operation = await _context.FinancialOperations
             .Include(o => o.Wallet)
@@ -199,7 +193,7 @@ public class FinancialOperationService : IFinancialOperationService
             .FirstOrDefaultAsync(o => o.Id == id);
         if (operation is null)
         {
-            return Result.Failure("The financial operation does not exist.");
+            throw new KeyNotFoundException("The financial operation does not exist.");
         }
 
         if (!_userContext.IsAdmin && operation.Wallet.UserId != _userContext.UserId)
@@ -207,21 +201,20 @@ public class FinancialOperationService : IFinancialOperationService
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        var baseCurrency = operation.Wallet.Currency.Code;
-        var currentCurrency = request.Currency.Trim().ToUpper();
-        var currencyId = await GetOrCreateCurrencyIdAsync(currentCurrency);
-
         if (operation.FinancialTypeId != request.TypeId)
         {
             var type = await _context.FinancialTypes
                 .FirstOrDefaultAsync(t => t.Id == request.TypeId);
             if (type is null)
-                return Result.Failure("There is no such type of operation.");
+                throw new KeyNotFoundException("There is no such type of operation.");
 
             operation.Type = type;
         }
 
-        var calculationResult = await CalculateAmountAsync(
+        var baseCurrency = operation.Wallet.Currency.Code;
+        var currentCurrency = request.Currency.Trim().ToUpper();
+
+        var calculatedAmount = await CalculateAmountAsync(
             request.Amount, 
             baseCurrency, 
             currentCurrency, 
@@ -229,16 +222,11 @@ public class FinancialOperationService : IFinancialOperationService
             operation.Type.IsIncome
         );
 
-        if (!calculationResult.IsSuccess)
-        {
-            return Result.Failure(calculationResult.Errors);
-        }
-
-        var finalAmount = calculationResult.Data;
+        var currencyId = await GetOrCreateCurrencyIdAsync(currentCurrency);
 
         var comment = (baseCurrency == currentCurrency) ? "" : $"The amount in the transaction currency is {request.Amount:F4} {currentCurrency}";
 
-        operation.Amount = finalAmount;
+        operation.Amount = calculatedAmount;
         operation.Date = request.Date;
         operation.Comment = comment;
         operation.Note = request.Note.Trim();
@@ -247,26 +235,26 @@ public class FinancialOperationService : IFinancialOperationService
         try
         {            
             await _context.SaveChangesAsync();
-            return Result.Success();
+            return true;
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while updating the financial operation with id {Id}.", operation.Id);
-            return Result.Failure("Operation aborted due to database connection error.");
+            throw new DbUpdateException("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(UpdateAsync));
-            return Result.Failure("An unexpected system error occurred.");
+            throw new Exception("An unexpected system error occurred.");
         }
     }
 
-    public async Task<Result> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var operation = await _context.FinancialOperations.FindAsync(id);
         if (operation is null)
         {
-            return Result.Failure("The financial operation does not exist.");
+            throw new KeyNotFoundException("The financial operation does not exist.");
         }
 
         var wallet = await _context.Wallets.FindAsync(operation.WalletId);
@@ -276,28 +264,26 @@ public class FinancialOperationService : IFinancialOperationService
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        operation.IsDeleted = true;
-
         try
         {
-            _context.FinancialOperations.Update(operation);
+            operation.IsDeleted = true;
             await _context.SaveChangesAsync();
 
-            return Result.Success();
+            return true;
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while deleting the financial operation with id {Id}.", operation.Id);
-            return Result.Failure("Operation aborted due to database connection error.");
+            throw new DbUpdateException("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(DeleteAsync));
-            return Result.Failure("An unexpected system error occurred.");
+            throw new Exception("An unexpected system error occurred.");
         }
     }
 
-    private async Task<Result<decimal>> CalculateAmountAsync(
+    private async Task<decimal> CalculateAmountAsync(
         decimal requestAmount, 
         string baseCurrency, 
         string currentCurrency, 
@@ -307,20 +293,15 @@ public class FinancialOperationService : IFinancialOperationService
     {
         if (baseCurrency == currentCurrency)
         {
-            return Result<decimal>.Success(Math.Round(requestAmount, 4, MidpointRounding.AwayFromZero));
+            return Math.Round(requestAmount, 4, MidpointRounding.AwayFromZero);
         }
 
         var ratesResult = await _currencyRatesService.GetRatesAsync(currentCurrency, requestDate);
 
-        if (!ratesResult.IsSuccess)
-        {
-            return Result<decimal>.Failure(ratesResult.Errors);
-        }
-
-        var rate = isIncome ? ratesResult.Data.PurchaseRate : ratesResult.Data.SaleRate;
+        var rate = isIncome ? ratesResult.PurchaseRate : ratesResult.SaleRate;
         var finalAmount = requestAmount * rate;
 
-        return Result<decimal>.Success(Math.Round(finalAmount, 4, MidpointRounding.AwayFromZero));
+        return Math.Round(finalAmount, 4, MidpointRounding.AwayFromZero);
     }
 
     private async Task<int> GetOrCreateCurrencyIdAsync(string currencyCode)

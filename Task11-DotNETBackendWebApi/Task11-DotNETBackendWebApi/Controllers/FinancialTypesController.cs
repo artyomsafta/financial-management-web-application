@@ -23,8 +23,8 @@ public class FinancialTypesController : ControllerBase
     [HttpGet("list")]
     public async Task<ActionResult> GetList()
     {
-        var types = await _typeService.GetListAsync();
-        return Ok(types);
+        var result = await _typeService.GetListAsync();
+        return Ok(result);
     }
 
     [HttpGet("{id}")]

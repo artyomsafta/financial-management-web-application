@@ -1,4 +1,6 @@
-﻿namespace Task11_DotNETBackendWebApi.Infrastructure;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Task11_DotNETBackendWebApi.Infrastructure;
 
 public class ExceptionHandlingMiddleware
 {
@@ -31,6 +33,7 @@ public class ExceptionHandlingMiddleware
         var statusCode = exception switch
         {
             InvalidOperationException => StatusCodes.Status400BadRequest,
+            ValidationException => StatusCodes.Status400BadRequest,
             KeyNotFoundException => StatusCodes.Status404NotFound,
             UnauthorizedAccessException => StatusCodes.Status403Forbidden,
             _ => StatusCodes.Status500InternalServerError

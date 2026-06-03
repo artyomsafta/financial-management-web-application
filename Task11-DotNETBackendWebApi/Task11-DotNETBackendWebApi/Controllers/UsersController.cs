@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Task11_DotNETBackendWebApi.Data.Entities;
 using Task11_DotNETBackendWebApi.Models;
-using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
 namespace Task11_DotNETBackendWebApi.Controllers;
@@ -23,79 +22,38 @@ public class UsersController : ControllerBase
 
     [HttpGet("list")]
     [Authorize(Roles = nameof(UserRoles.Admin))]
-    public async Task<ActionResult<IEnumerable<UserDto>>> GetList()
+    public async Task<ActionResult> GetList()
     {
-        var users = await _userService.GetListAsync();
-        return Ok(users);
+        var result = await _userService.GetListAsync();
+        return Ok(result);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<UserDto>> GetById([FromRoute] Guid id)
+    public async Task<ActionResult> GetById([FromRoute] Guid id)
     {
-        try
-        {
-            var result = await _userService.GetByIdAsync(id);
-            if (!result.IsSuccess)
-            {
-                return NotFound(new { errors = result.Errors });
-            }
-
-            return Ok(result.Data);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return StatusCode(403, new { message = ex.Message });
-        }
+        var result = await _userService.GetByIdAsync(id);
+        return Ok(result);
     }
 
     [HttpPost]
     [AllowAnonymous]
-    public async Task<ActionResult<UserDto>> Create([FromBody] UserRegisterRequest request)
+    public async Task<ActionResult> Create([FromBody] UserRegisterRequest request)
     {
         var result = await _userService.CreateAsync(request);
-        if (!result.IsSuccess)
-        {
-            return BadRequest(new { errors = result.Errors });
-        }
-
-        return CreatedAtAction(nameof(GetById), new { id = result }, result.Data);        
+        return Ok(result);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UserRegisterRequest request)
+    public async Task<ActionResult> Update([FromRoute] Guid id, [FromBody] UserRegisterRequest request)
     {
-        try
-        {
-            var result = await _userService.UpdateAsync(id, request);
-            if (!result.IsSuccess)
-            {
-                return BadRequest(new { errors = result.Errors });
-            }
-
-            return NoContent();
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return StatusCode(403, new { message = ex.Message });
-        }
+        var result = await _userService.UpdateAsync(id, request);
+        return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete([FromRoute] Guid id)
+    public async Task<ActionResult> Delete([FromRoute] Guid id)
     {
-        try
-        {
-            var result = await _userService.DeleteAsync(id);
-            if (!result.IsSuccess)
-            {
-                return BadRequest(new { errors = result.Errors });
-            }
-
-            return NoContent();
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return StatusCode(403, new { message = ex.Message });
-        }
+        var result = await _userService.DeleteAsync(id);
+        return NoContent();
     }
 }

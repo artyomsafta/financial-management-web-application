@@ -6,8 +6,8 @@ namespace Task11_DotNETBackendWebApi.Services.Contracts;
 public interface IFinancialOperationService
 {
     Task<IEnumerable<FinancialOperationDto>> GetListAsync();
-    Task<Result<FinancialOperationDto>> GetByIdAsync(Guid id);
-    Task<Result<Guid>> CreateAsync(CreateFinOperationRequest request);
-    Task<Result> UpdateAsync(Guid id, UpdateFinOperationRequest request);
-    Task<Result> DeleteAsync(Guid id);
+    Task<FinancialOperationDto> GetByIdAsync(Guid id);
+    Task<Guid> CreateAsync(CreateFinOperationRequest request);
+    Task<bool> UpdateAsync(Guid id, UpdateFinOperationRequest request);
+    Task<bool> DeleteAsync(Guid id);
 }

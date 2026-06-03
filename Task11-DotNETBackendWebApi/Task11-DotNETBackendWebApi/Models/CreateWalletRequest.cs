@@ -2,7 +2,7 @@
 
 namespace Task11_DotNETBackendWebApi.Models;
 
-public class WalletRequest
+public class CreateWalletRequest
 {
     [Required]
     public Guid UserId { get; set; }

@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
+using Task11_DotNETBackendWebApi.Helpers;
 using Task11_DotNETBackendWebApi.Models;
 using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
@@ -53,7 +55,7 @@ public class WalletService : IWalletService
             .ToListAsync();
     }
 
-    public async Task<Result<WalletDto>> GetByIdAsync(Guid id)
+    public async Task<WalletDto> GetByIdAsync(Guid id)
     {
         var query = _context.Wallets
             .AsNoTracking()
@@ -85,26 +87,27 @@ public class WalletService : IWalletService
 
         if (wallet is null)
         {
-            return Result<WalletDto>.Failure($"Wallet with ID {id} not found");
+            throw new KeyNotFoundException($"Wallet with ID {id} not found");
         }
 
-        return Result<WalletDto>.Success(wallet);
+        return wallet;
     }
 
-    public async Task<Result<Guid>> CreateAsync(WalletRequest request)
+    public async Task<Guid> CreateAsync(CreateWalletRequest request)
     {
         if (!_userContext.IsAdmin && request.UserId != _userContext.UserId)
         {
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        var currencyCode = request.BaseCurrency.Trim().ToUpper();
-        if (string.IsNullOrEmpty(currencyCode) || currencyCode.Length != 3)
-            return Result<Guid>.Failure("The currency code is incorrect.");
+        if (!request.BaseCurrency.IsValidCurrencyCode())
+            throw new ValidationException("The currency code is incorrect.");
 
-        if (currencyCode != "UAH")
+        var baseCurrency = request.BaseCurrency.Trim().ToUpper();
+
+        if (baseCurrency != "UAH")
         {
-            return Result<Guid>.Failure("Currently, the base currency of the wallet can only be UAH");
+            throw new ValidationException("Currently, the base currency of the wallet can only be UAH");
         }
 
         var user = await _context.Users
@@ -112,19 +115,18 @@ public class WalletService : IWalletService
             .FirstOrDefaultAsync(u => u.Id == request.UserId);
         if (user is null)
         {
-            return Result<Guid>.Failure($"User with ID {request.UserId} not found");
+            throw new KeyNotFoundException($"User with ID {request.UserId} not found");
         }
+
+        var currencyId = await GetOrCreateCurrencyIdAsync(baseCurrency);
 
         var newWallet = new Wallet
         {
             Id = Guid.NewGuid(),
             Name = request.Name.Trim(),
-            IsDeleted = false,
             UserId = user.Id,
-            CurrencyId = await _context.Currencies
-                .Where(c => c.Code == currencyCode)
-                .Select(c => c.Id)
-                .FirstOrDefaultAsync()
+            CurrencyId = currencyId,
+            IsDeleted = false
         };
 
         try
@@ -132,80 +134,68 @@ public class WalletService : IWalletService
             _context.Wallets.Add(newWallet);
             await _context.SaveChangesAsync();
 
-            return Result<Guid>.Success(newWallet.Id);
+            return newWallet.Id;
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while creating a new wallet with id {Id}.", newWallet.Id);
-            return Result<Guid>.Failure("Operation aborted due to database connection error.");
+            throw new DbUpdateException("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(CreateAsync));
-            return Result<Guid>.Failure("An unexpected system error occurred.");
+            throw new Exception("An unexpected system error occurred.");
         }
     }
 
-    public async Task<Result> UpdateAsync(Guid id, WalletRequest request)
+    public async Task<bool> UpdateAsync(Guid id, UpdateWalletRequest request)
     {
-        if (!_userContext.IsAdmin && request.UserId != _userContext.UserId)
-        {
-            throw new UnauthorizedAccessException("Access denied");
-        }
+        if (!request.BaseCurrency.IsValidCurrencyCode())
+            throw new ValidationException("The currency code is incorrect.");
 
-        var currencyCode = request.BaseCurrency.Trim().ToUpper();
-        if (string.IsNullOrEmpty(currencyCode) || currencyCode.Length != 3)
-            return Result.Failure("The currency code is incorrect.");
+        var baseCurrency = request.BaseCurrency.Trim().ToUpper();
 
-        if (currencyCode != "UAH")
+        if (baseCurrency != "UAH")
         {
-            return Result.Failure("Currently, the base currency of the wallet can only be UAH");
+            throw new ValidationException("Currently, the base currency of the wallet can only be UAH");
         }
 
         var wallet = await _context.Wallets.FindAsync(id);
         if (wallet is null)
         {
-            return Result.Failure("Wallet not found");
+            throw new KeyNotFoundException("Wallet not found");
         }
 
-        if (wallet.UserId != request.UserId)
+        if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
         {
-            var user = await _context.Users
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Id == request.UserId);
-            if (user is null)
-            {
-                return Result.Failure($"User with ID {request.UserId} not found");
-            }
-            wallet.UserId = user.Id;
+            throw new UnauthorizedAccessException("Access denied");
         }
+
+        var currencyId = await GetOrCreateCurrencyIdAsync(baseCurrency);
 
         wallet.Name = request.Name.Trim();
-        wallet.CurrencyId = await _context.Currencies
-            .Where(c => c.Code == currencyCode)
-            .Select(c => c.Id)
-            .FirstOrDefaultAsync();
+        wallet.CurrencyId = currencyId;
 
         try 
         {
             _context.Wallets.Update(wallet);
             await _context.SaveChangesAsync();
 
-            return Result.Success();
+            return true;
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while updating the wallet with id {Id}.", wallet.Id);
-            return Result.Failure("Operation aborted due to database connection error.");
+            throw new DbUpdateException("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(UpdateAsync));
-            return Result.Failure("An unexpected system error occurred.");
+            throw new Exception("An unexpected system error occurred.");
         }
     }
 
-    public async Task<Result> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var wallet = await _context.Wallets
             .Include(w => w.FinancialOperations)
@@ -213,7 +203,7 @@ public class WalletService : IWalletService
 
         if (wallet is null)
         {
-            return Result.Failure("Wallet not found");
+            throw new KeyNotFoundException("Wallet not found");
         }
 
         if (!_userContext.IsAdmin && wallet.UserId != _userContext.UserId)
@@ -223,7 +213,7 @@ public class WalletService : IWalletService
 
         if (wallet.FinancialOperations.Any(o => !o.IsDeleted))
         {
-            return Result.Failure("Cannot delete a wallet that has associated financial operations.");
+            throw new InvalidOperationException("Cannot delete a wallet that has associated financial operations.");
         }
 
         try 
@@ -231,17 +221,36 @@ public class WalletService : IWalletService
             wallet.IsDeleted = true;
             await _context.SaveChangesAsync();
 
-            return Result.Success();
+            return true;
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while deleting the wallet with id {Id}.", wallet.Id);
-            return Result.Failure("Operation aborted due to database connection error.");
+            throw new DbUpdateException("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(DeleteAsync));
-            return Result.Failure("An unexpected system error occurred.");
+            throw new Exception("An unexpected system error occurred.");
         }
+    }
+
+    private async Task<int> GetOrCreateCurrencyIdAsync(string currencyCode)
+    {
+        var currency = await _context.Currencies
+            .FirstOrDefaultAsync(c => c.Code == currencyCode);
+
+        if (currency is null)
+        {
+            currency = new Currency
+            {
+                Code = currencyCode
+            };
+
+            _context.Currencies.Add(currency);
+            await _context.SaveChangesAsync();
+        }
+
+        return currency.Id;
     }
 }

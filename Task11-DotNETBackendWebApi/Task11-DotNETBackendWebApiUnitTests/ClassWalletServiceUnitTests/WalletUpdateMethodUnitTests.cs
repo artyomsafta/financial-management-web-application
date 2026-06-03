@@ -74,7 +74,7 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var walletId = Wallet1Id;
 
-        var request = new WalletRequest { UserId = User1Id, Name = walletName, BaseCurrency = baseCurrency };
+        var request = new CreateWalletRequest { UserId = User1Id, Name = walletName, BaseCurrency = baseCurrency };
 
         var successResult = await _walletService.UpdateAsync(walletId, request);
         var isUpdateSuccess = successResult.IsSuccess;
@@ -111,7 +111,7 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var walletId = Wallet1Id;
 
-        var request = new WalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = "UAH" };
+        var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = "UAH" };
 
         var successResult = await _walletService.UpdateAsync(walletId, request);
         var isUpdateSuccess = successResult.IsSuccess;
@@ -148,7 +148,7 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
         var walletId = Wallet1Id;
 
-        var request = new WalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = "UAH" };
+        var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = "UAH" };
 
         var expectedErrorMessage = "Access denied";
 
@@ -175,7 +175,7 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var walletId = Wallet1Id;
 
-        var request = new WalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = failureCurrencyCode };
+        var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = failureCurrencyCode };
 
         var failureMessage = "The currency code is incorrect.";
 
@@ -199,7 +199,7 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var walletId = Wallet1Id;
 
-        var request = new WalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = failureCurrencyCode };
+        var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = failureCurrencyCode };
 
         var failureMessage = "Currently, the base currency of the wallet can only be UAH";
 
@@ -215,7 +215,7 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var walletId = WalletNotFoundId;
 
-        var request = new WalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = "UAH" };
+        var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = "UAH" };
 
         var failureMessage = "Wallet not found";
 
@@ -231,7 +231,7 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var walletId = Wallet1Id;
 
-        var request = new WalletRequest { UserId = UserNotFoundId, Name = "user1 wallet", BaseCurrency = "UAH" };
+        var request = new CreateWalletRequest { UserId = UserNotFoundId, Name = "user1 wallet", BaseCurrency = "UAH" };
 
         var failureMessage = $"User with ID {request.UserId} not found";
 

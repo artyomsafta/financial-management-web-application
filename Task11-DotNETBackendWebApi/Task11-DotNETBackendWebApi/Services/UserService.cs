@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
@@ -49,7 +50,7 @@ public class UserService : IUserService
             .ToListAsync();
     }
 
-    public async Task<Result<UserDto>> GetByIdAsync(Guid id)
+    public async Task<UserDto> GetByIdAsync(Guid id)
     {
         var user = await _context.Users
             .AsNoTracking()
@@ -57,7 +58,7 @@ public class UserService : IUserService
 
         if (user is null)
         {
-            return Result<UserDto>.Failure($"User with ID {id} not found");
+            throw new KeyNotFoundException($"User with ID {id} not found");
         }
 
         if (!_userContext.IsAdmin && user.Id != _userContext.UserId)
@@ -65,20 +66,20 @@ public class UserService : IUserService
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        return Result<UserDto>.Success(user.MapToUserDto());
+        return user.MapToUserDto();
     }
 
-    public async Task<Result<Guid>> CreateAsync(UserRegisterRequest request)
+    public async Task<Guid> CreateAsync(UserRegisterRequest request)
     {
         if (await _context.Users.AnyAsync(t => t.Username.ToLower() == request.Username.Trim().ToLower()))
         {
-            return Result<Guid>.Failure("A user with the same username already exists.");
+            throw new InvalidOperationException("A user with the same username already exists.");
         }
 
-        var passwordErrors = ValidatePassword(request.Password);
-        if (passwordErrors.Any())
+        var passwordErrorMessage = ValidatePassword(request.Password);
+        if (!string.IsNullOrEmpty(passwordErrorMessage))
         {
-            return Result<Guid>.Failure(passwordErrors);
+            throw new ValidationException(passwordErrorMessage);
         }
 
         var newUser = new User
@@ -93,27 +94,27 @@ public class UserService : IUserService
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            return Result<Guid>.Success(newUser.Id);
+            return newUser.Id;
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while creating a new user {Username}", request.Username);
-            return Result<Guid>.Failure("Operation aborted due to database connection error.");
+            throw new DbUpdateException("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(CreateAsync));
-            return Result<Guid>.Failure("An unexpected system error occurred.");
+            throw new Exception("An unexpected system error occurred.");
         }
     }
 
-    public async Task<Result> UpdateAsync(Guid id, UserRegisterRequest request)
+    public async Task<bool> UpdateAsync(Guid id, UserRegisterRequest request)
     {
         var user = await _context.Users.FindAsync(id);
 
         if (user is null) 
-        { 
-            return Result.Failure($"User with ID {id} not found");
+        {
+            throw new KeyNotFoundException($"User with ID {id} not found");
         }
 
         if (!_userContext.IsAdmin && user.Id != _userContext.UserId)
@@ -123,13 +124,13 @@ public class UserService : IUserService
 
         if (await _context.Users.AnyAsync(t => t.Username.ToLower() == request.Username.Trim().ToLower()))
         {
-            return Result.Failure("A user with the same username already exists.");
+            throw new InvalidOperationException("A user with the same username already exists.");
         }
 
-        var passwordErrors = ValidatePassword(request.Password);
-        if (passwordErrors.Any())
+        var passwordErrorMessage = ValidatePassword(request.Password);
+        if (!string.IsNullOrEmpty(passwordErrorMessage))
         {
-            return Result.Failure(passwordErrors);
+            throw new ValidationException(passwordErrorMessage);
         }
 
         user.Username = request.Username.Trim();
@@ -140,22 +141,22 @@ public class UserService : IUserService
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
-            return Result.Success();
+            return true;
 
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while updating user {Username}", request.Username);
-            return Result.Failure("Operation aborted due to database connection error.");
+            throw new DbUpdateException("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(UpdateAsync));
-            return Result.Failure("An unexpected system error occurred.");
+            throw new Exception("An unexpected system error occurred.");
         }
     }
 
-    public async Task<Result> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var user = await _context.Users
             .Include(u => u.Wallets)
@@ -163,7 +164,7 @@ public class UserService : IUserService
 
         if (user is null)
         {
-            return Result.Failure($"User with ID {id} not found");
+            throw new KeyNotFoundException($"User with ID {id} not found");
         }
 
         if (!_userContext.IsAdmin && user.Id != _userContext.UserId)
@@ -173,7 +174,7 @@ public class UserService : IUserService
 
         if (user.Wallets.Any(w => !w.IsDeleted))
         {
-            return Result.Failure("You cannot delete a user that has active wallets.");
+            throw new InvalidOperationException("You cannot delete a user that has active wallets.");
         }
 
         try
@@ -181,44 +182,41 @@ public class UserService : IUserService
             user.IsDeleted = true;
             await _context.SaveChangesAsync();
 
-            return Result.Success();
+            return true;
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error occurred while deleting user {Username}", user.Username);
-            return Result.Failure("Operation aborted due to database connection error.");
+            throw new DbUpdateException("Operation aborted due to database connection error.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled error occurred in {MethodName} logic.", nameof(DeleteAsync));
-            return Result.Failure("An unexpected system error occurred.");
+            throw new Exception("An unexpected system error occurred.");
         }
     }
 
-    private List<string> ValidatePassword(string password)
+    private string ValidatePassword(string password)
     {
-        var errors = new List<string>();
-
         if (string.IsNullOrWhiteSpace(password))
         {
-            errors.Add("Password cannot be empty or consist only of spaces.");
-            return errors;
+            return "Password cannot be empty or consist only of spaces.";
         }
 
         if (password.Length < 8 || password.Length > 64)
         {
-            errors.Add("Password must be between 8 and 64 characters long.");
+            return "Password must be between 8 and 64 characters long.";
         }
 
         if (!Regex.IsMatch(password, @"[A-Z]"))
-            errors.Add("Password must contain at least one uppercase letter.");
+            return "Password must contain at least one uppercase letter.";
 
         if (!Regex.IsMatch(password, @"[0-9]"))
-            errors.Add("Password must contain at least one digit.");
+            return "Password must contain at least one digit.";
 
         if (!Regex.IsMatch(password, @"[!@#$%^&*()_+=\[{\]};:<>|./?,-]"))
-            errors.Add("Password must contain at least one special character.");
+            return "Password must contain at least one special character.";
 
-        return errors;
+        return "";
     }
 }

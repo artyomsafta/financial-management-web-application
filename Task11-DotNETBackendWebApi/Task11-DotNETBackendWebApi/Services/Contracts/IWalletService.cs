@@ -6,8 +6,8 @@ namespace Task11_DotNETBackendWebApi.Services.Contracts;
 public interface IWalletService
 {
     Task<IEnumerable<WalletDto>> GetListAsync();
-    Task<Result<WalletDto>> GetByIdAsync(Guid id);
-    Task<Result<Guid>> CreateAsync(WalletRequest request);
-    Task<Result> UpdateAsync(Guid id, WalletRequest request);
-    Task<Result> DeleteAsync(Guid id);
+    Task<WalletDto> GetByIdAsync(Guid id);
+    Task<Guid> CreateAsync(CreateWalletRequest request);
+    Task<bool> UpdateAsync(Guid id, UpdateWalletRequest request);
+    Task<bool> DeleteAsync(Guid id);
 }
