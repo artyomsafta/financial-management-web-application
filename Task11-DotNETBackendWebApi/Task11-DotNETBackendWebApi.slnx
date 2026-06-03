@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Task11-DotNETBackendWebApi/Task11-DotNETBackendWebApi.csproj" />
+  <Project Path="Task11-DotNETBackendWebApiUnitTests/Task11-DotNETBackendWebApiUnitTests.csproj" Id="dcb4839d-656c-4dd2-a6ec-d98ab330991b" />
+</Solution>
