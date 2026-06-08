@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Task11_DotNETBackendWebApi.Models;
+namespace Shared.Models;
 
 public class CreateFinOperationRequest
 {

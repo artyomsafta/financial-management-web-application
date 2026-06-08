@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Shared.Models;
+using Shared.Models.DTOs;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
 using Task11_DotNETBackendWebApi.Helpers;
-using Task11_DotNETBackendWebApi.Models;
-using Task11_DotNETBackendWebApi.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
 namespace Task11_DotNETBackendWebApi.Services;

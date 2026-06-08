@@ -1,6 +1,4 @@
-﻿using Task11_DotNETBackendWebApi.Data.Entities;
-
-namespace Task11_DotNETBackendWebApi.Models.DTOs;
+﻿namespace Shared.Models.DTOs;
 
 public class UserDto
 {

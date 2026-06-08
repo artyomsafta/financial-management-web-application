@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Shared.Models;
 using Task11_DotNETBackendWebApi.Data.Entities;
 
 namespace Task11_DotNETBackendWebApi.Data;

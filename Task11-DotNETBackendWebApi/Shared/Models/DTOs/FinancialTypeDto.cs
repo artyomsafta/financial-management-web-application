@@ -1,4 +1,4 @@
-﻿namespace Task11_DotNETBackendWebApi.Models.DTOs;
+﻿namespace Shared.Models.DTOs;
 
 public class FinancialTypeDto
 {

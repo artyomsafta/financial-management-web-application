@@ -1,6 +1,6 @@
-﻿using Task11_DotNETBackendWebApi.Data;
+﻿using Shared.Models.DTOs;
+using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Models.DTOs;
 
 namespace Task11_DotNETBackendWebApi.Helpers;
 

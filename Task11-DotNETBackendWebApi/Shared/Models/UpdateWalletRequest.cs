@@ -1,12 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Task11_DotNETBackendWebApi.Models;
+namespace Shared.Models;
 
-public class CreateWalletRequest
+public class UpdateWalletRequest
 {
-    [Required]
-    public Guid UserId { get; set; }
-
     [Required(ErrorMessage = "Wallet name is required")]
     public string Name { get; set; }
 

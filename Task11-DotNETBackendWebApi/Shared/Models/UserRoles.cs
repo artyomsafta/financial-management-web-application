@@ -1,4 +1,4 @@
-﻿namespace Task11_DotNETBackendWebApi.Data.Entities;
+﻿namespace Shared.Models;
 
 public enum UserRoles
 {
