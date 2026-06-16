@@ -1,0 +1,151 @@
+﻿@page "/types"
+@using Shared.Models.DTOs
+@using Task12_ASPNETCoreBlazorUI.Components.Dialogs
+@inject IHttpClientFactory ClientFactory
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" Class="mb-4">Financial types</MudText>
+    <MudText Typo="Typo.body1" Class="mb-6" Color="Color.Secondary">
+        CRUD for financial types.
+    </MudText>
+
+    @if (typesList == null)
+    {
+        <MudStack Spacing="4">
+            <MudSkeleton Width="40%" Height="20px" />
+            <MudSkeleton Width="100%" Height="56px" SkeletonType="SkeletonType.Rectangle" Class="rounded" />
+
+            <MudGrid Spacing="2" Class="mt-2">
+                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
+                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
+                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
+            </MudGrid>
+        </MudStack>
+    }
+    else
+    {
+        <MudStack Spacing="6">
+
+            <MudSelect T="FinancialTypeDto"
+                       Label="Select a financial type:"
+                       Variant="Variant.Outlined"
+                       @bind-Value="selectedType"
+                       ToStringFunc="@(t => t == null ? "" : $"{t.Name}")">
+
+                @foreach (var type in typesList)
+                {
+                    <MudSelectItem Value="@type" />
+                }
+            </MudSelect>
+
+            <MudGrid Spacing="2" Justify="Justify.Center">
+
+                <MudItem xs="4">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="OnCreateClick">
+                        Create
+                    </MudButton>
+                </MudItem>
+
+                <MudItem xs="4">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Warning"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Edit"
+                               Disabled="@(selectedType == null)"
+                               OnClick="OnEditClick">
+                        Edit
+                    </MudButton>
+                </MudItem>
+
+                <MudItem xs="4">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Error"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Delete"
+                               Disabled="@(selectedType == null)"
+                               OnClick="OnDeleteClick">
+                        Delete
+                    </MudButton>
+                </MudItem>
+
+            </MudGrid>
+
+            @if (selectedType != null)
+            {
+                <MudPaper Class="pa-4 mt-4" Elevation="1">
+                    <MudText Typo="Typo.subtitle2">Type name:</MudText>
+                    <MudText Typo="Typo.caption" Class="mt-2">@selectedType.Name</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Description:</MudText>
+                    <MudText Typo="Typo.body2">@selectedType.Description</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Is Income:</MudText>
+                    <MudText Typo="Typo.body2">@selectedType.IsIncome</MudText>
+                </MudPaper>
+            }
+
+        </MudStack>
+    }
+</MudContainer>
+
+@code {
+    private List<FinancialTypeDto>? typesList;
+    private FinancialTypeDto? selectedType;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshListAsync();
+    }
+
+    private async Task RefreshListAsync()
+    {
+        try
+        {
+            var client = ClientFactory.CreateClient("WebAPI");
+            typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("api/v1/FinancialTypes/list");
+
+            selectedType = null;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"List update error: {ex.Message}", Severity.Error);
+            typesList = new List<FinancialTypeDto>();
+        }
+    }
+
+	// TODO: Implement actual modals for create, edit, and delete operations. For now, just show snackbars
+
+    private async Task OnCreateClick()
+    {
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+			BackdropClick = false,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateTypeDialog>("", options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await RefreshListAsync();
+        }
+    }
+
+    private void OnEditClick()
+    {
+        Snackbar.Add($"There will be an edit modal for: {selectedType?.Name}", Severity.Info);
+    }
+
+    private void OnDeleteClick()
+    {
+        Snackbar.Add($"There will be a delete modal for: {selectedType?.Name}", Severity.Warning);
+    }
+}

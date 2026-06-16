@@ -1,3 +1,4 @@
+using MudBlazor.Services;
 using Task12_ASPNETCoreBlazorUI.Components;
 
 namespace Task12_ASPNETCoreBlazorUI;
@@ -11,6 +12,13 @@ public class Program
         // Add services to the container.
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents();
+
+        builder.Services.AddMudServices();
+
+        builder.Services.AddHttpClient("WebAPI", client =>
+        {
+            client.BaseAddress = new Uri("https://localhost:7087/");
+        });
 
         var app = builder.Build();
 
