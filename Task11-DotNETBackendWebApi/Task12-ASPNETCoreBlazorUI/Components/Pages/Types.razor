@@ -92,13 +92,27 @@
     }
 </MudContainer>
 
+
+@* TODO : Rewrite this section *@
+
+
 @code {
     private List<FinancialTypeDto>? typesList;
     private FinancialTypeDto? selectedType;
+    private bool _isFirstRender = true;
 
-    protected override async Task OnInitializedAsync()
+    // protected override async Task OnInitializedAsync()
+    // {        
+    //     await RefreshListAsync();
+    // }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await RefreshListAsync();
+        if (firstRender)
+        {
+            _isFirstRender = false;
+            await RefreshListAsync();
+        }
     }
 
     private async Task RefreshListAsync()
@@ -115,6 +129,7 @@
         {
             Snackbar.Add($"List update error: {ex.Message}", Severity.Error);
             typesList = new List<FinancialTypeDto>();
+            StateHasChanged();
         }
     }
 
