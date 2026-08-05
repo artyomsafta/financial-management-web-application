@@ -31,15 +31,14 @@ public class AuthService : IAuthService
         if (loginResponse is null)
             return null;
 
-        _tokenStore.SetToken(loginResponse.Token);
+        await _tokenStore.SetTokenAsync(loginResponse.Token);
 
         return loginResponse;
     }
 
-    public Task LogoutAsync()
+    public async Task LogoutAsync()
     {
         //TODO: Implement logout logic.
-
-        throw new NotImplementedException();
+        await _tokenStore.ClearTokenAsync();
     }
 }

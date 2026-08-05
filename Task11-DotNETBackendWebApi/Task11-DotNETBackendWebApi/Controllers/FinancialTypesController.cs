@@ -9,8 +9,7 @@ namespace Task11_DotNETBackendWebApi.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
-[Authorize]                                                  // TODO : Uncomment this line when authentication is implemented!!!
-//[AllowAnonymous]                                                //TODO : Remove this line when authentication is implemented!!!
+[Authorize]
 public class FinancialTypesController : ControllerBase
 {
     private readonly IFinancialTypeService _typeService;

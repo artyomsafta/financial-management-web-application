@@ -18,13 +18,14 @@ public class Program
 
         builder.Services.AddScoped<TokenStore>();
         builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<TokenStore>();
 
         builder.Services.AddHttpClient("Api", client =>
         {
             client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]!);
         });
 
-        builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
+        //builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
         builder.Services.AddAuthorizationCore();
 
         var app = builder.Build();

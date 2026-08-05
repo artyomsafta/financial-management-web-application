@@ -1,6 +1,8 @@
 ﻿@using Shared.Models
+@using Task12_ASPNETCoreBlazorUI.Services
 @inject IHttpClientFactory ClientFactory
 @inject ISnackbar Snackbar
+@inject TokenStore TokenStore
 
 <MudDialog>
     <TitleContent>
@@ -76,7 +78,9 @@
         isSending = true;
         try
         {
-            var client = ClientFactory.CreateClient("WebAPI");
+            var client = ClientFactory.CreateClient("Api");
+            var jwtToken = await TokenStore.GetTokenAsync();
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
             var response = await client.PostAsJsonAsync("api/v1/FinancialTypes", model);
 
             if (response.IsSuccessStatusCode)

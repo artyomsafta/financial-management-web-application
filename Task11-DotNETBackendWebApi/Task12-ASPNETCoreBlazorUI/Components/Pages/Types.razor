@@ -1,9 +1,11 @@
 ﻿@page "/types"
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
+@using Task12_ASPNETCoreBlazorUI.Services
 @inject IHttpClientFactory ClientFactory
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject TokenStore TokenStore
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
     <MudText Typo="Typo.h4" Class="mb-4">Financial types</MudText>
@@ -11,7 +13,7 @@
         CRUD for financial types.
     </MudText>
 
-    @if (typesList == null)
+    @if (_typesList == null)
     {
         <MudStack Spacing="4">
             <MudSkeleton Width="40%" Height="20px" />
@@ -31,10 +33,10 @@
             <MudSelect T="FinancialTypeDto"
                        Label="Select a financial type:"
                        Variant="Variant.Outlined"
-                       @bind-Value="selectedType"
+                       @bind-Value="_selectedType"
                        ToStringFunc="@(t => t == null ? "" : $"{t.Name}")">
 
-                @foreach (var type in typesList)
+                @foreach (var type in _typesList)
                 {
                     <MudSelectItem Value="@type" />
                 }
@@ -57,7 +59,7 @@
                                Color="Color.Warning"
                                FullWidth="true"
                                StartIcon="@Icons.Material.Filled.Edit"
-                               Disabled="@(selectedType == null)"
+                               Disabled="@(_selectedType == null)"
                                OnClick="OnEditClick">
                         Edit
                     </MudButton>
@@ -68,7 +70,7 @@
                                Color="Color.Error"
                                FullWidth="true"
                                StartIcon="@Icons.Material.Filled.Delete"
-                               Disabled="@(selectedType == null)"
+                               Disabled="@(_selectedType == null)"
                                OnClick="OnDeleteClick">
                         Delete
                     </MudButton>
@@ -76,15 +78,15 @@
 
             </MudGrid>
 
-            @if (selectedType != null)
+            @if (_selectedType != null)
             {
                 <MudPaper Class="pa-4 mt-4" Elevation="1">
                     <MudText Typo="Typo.subtitle2">Type name:</MudText>
-                    <MudText Typo="Typo.caption" Class="mt-2">@selectedType.Name</MudText>
+                    <MudText Typo="Typo.caption" Class="mt-2">@_selectedType.Name</MudText>
                     <MudText Typo="Typo.subtitle2" Class="mt-2">Description:</MudText>
-                    <MudText Typo="Typo.body2">@selectedType.Description</MudText>
+                    <MudText Typo="Typo.body2">@_selectedType.Description</MudText>
                     <MudText Typo="Typo.subtitle2" Class="mt-2">Is Income:</MudText>
-                    <MudText Typo="Typo.body2">@selectedType.IsIncome</MudText>
+                    <MudText Typo="Typo.body2">@_selectedType.IsIncome</MudText>
                 </MudPaper>
             }
 
@@ -97,8 +99,8 @@
 
 
 @code {
-    private List<FinancialTypeDto>? typesList;
-    private FinancialTypeDto? selectedType;
+    private List<FinancialTypeDto>? _typesList;
+    private FinancialTypeDto? _selectedType;
     private bool _isFirstRender = true;
 
     // protected override async Task OnInitializedAsync()
@@ -111,24 +113,29 @@
         if (firstRender)
         {
             _isFirstRender = false;
+
             await RefreshListAsync();
         }
+
+        
     }
 
     private async Task RefreshListAsync()
     {
         try
         {
-            var client = ClientFactory.CreateClient("WebAPI");
-            typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("api/v1/FinancialTypes/list");
+            var client = ClientFactory.CreateClient("Api");
+            var jwtToken = await TokenStore.GetTokenAsync();
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+            _typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("api/v1/FinancialTypes/list");
 
-            selectedType = null;
+            _selectedType = null;
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"List update error: {ex.Message}", Severity.Error);
-            typesList = new List<FinancialTypeDto>();
+            _typesList = new List<FinancialTypeDto>();
             StateHasChanged();
         }
     }
@@ -156,11 +163,11 @@
 
     private void OnEditClick()
     {
-        Snackbar.Add($"There will be an edit modal for: {selectedType?.Name}", Severity.Info);
+        Snackbar.Add($"There will be an edit modal for: {_selectedType?.Name}", Severity.Info);
     }
 
     private void OnDeleteClick()
     {
-        Snackbar.Add($"There will be a delete modal for: {selectedType?.Name}", Severity.Warning);
+        Snackbar.Add($"There will be a delete modal for: {_selectedType?.Name}", Severity.Warning);
     }
 }
