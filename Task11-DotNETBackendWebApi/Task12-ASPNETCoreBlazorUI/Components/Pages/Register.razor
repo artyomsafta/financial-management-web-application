@@ -1,14 +1,14 @@
-﻿@page "/login"
+﻿@page "/register"
 @using Shared.Models
-@inject Services.Contracts.IAuthService AuthService
 @inject NavigationManager NavigationManager
+@inject IHttpClientFactory ClientFactory
 @inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
     <MudCard Elevation="4" Class="pa-6 rounded-lg">
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h5" Align="Align.Center"><b>Authorization</b></MudText>
+                <MudText Typo="Typo.h5" Align="Align.Center"><b>Registration</b></MudText>
             </CardHeaderContent>
         </MudCardHeader>
 
@@ -38,20 +38,12 @@
                        Color="Color.Primary"
                        Size="Size.Large"
                        Disabled="@(!success || isProcessing)"
-                       OnClick="HandleSignInAsync">
+                       OnClick="HandleRegisterAsync">
                 @if (isProcessing)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                 }
-                Sign in
-            </MudButton>
-
-            <MudButton Variant="Variant.Outlined"
-                       Color="Color.Secondary"
-                       Size="Size.Large"
-                       OnClick="HandleSignUpAsync"
-                       Disabled="@isProcessing">
-                Sign Up
+                Register
             </MudButton>
         </MudCardActions>
     </MudCard>
@@ -59,12 +51,12 @@
 
 @code {
     private MudForm form = default!;
-    private bool success;                   // This variable is unused.
+    private bool success;
     private bool isProcessing;
 
-    private UserLoginRequest model = new();
+    private UserRegisterRequest model = new();
 
-    private async Task HandleSignInAsync()
+    private async Task HandleRegisterAsync()
     {
         await form.ValidateAsync();
         if (!form.IsValid)
@@ -74,30 +66,27 @@
 
         try
         {
-            var loginResponse = await AuthService.LoginAsync(model);
+            var client = ClientFactory.CreateClient("Api");
+            var response = await client.PostAsJsonAsync("api/v1/Users", model);
 
-            if (loginResponse is null)
+            if (response.IsSuccessStatusCode)
             {
-                Snackbar.Add("Invalid username or password.", Severity.Error);
-                return;
+                Snackbar.Add("Registration successful!", Severity.Success);
+                NavigationManager.NavigateTo("/login");
             }
-
-            Snackbar.Add($"Welcome, {loginResponse.Username}", Severity.Success);
-
-            NavigationManager.NavigateTo("/types");
+            else
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                Snackbar.Add(!string.IsNullOrWhiteSpace(errorText) ? errorText : "Server error", Severity.Error);
+            }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error connecting to server: {ex.Message}",Severity.Error);
+            Snackbar.Add($"Error connecting to server: {ex.Message}", Severity.Error);
         }
         finally
         {
             isProcessing = false;
-        } 
-    }   
-
-    private async Task HandleSignUpAsync()
-    {
-        NavigationManager.NavigateTo("/register");
+        }
     }
 }

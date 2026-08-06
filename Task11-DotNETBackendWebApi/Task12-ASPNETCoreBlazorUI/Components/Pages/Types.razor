@@ -94,19 +94,10 @@
     }
 </MudContainer>
 
-
-@* TODO : Rewrite this section *@
-
-
 @code {
     private List<FinancialTypeDto>? _typesList;
     private FinancialTypeDto? _selectedType;
     private bool _isFirstRender = true;
-
-    // protected override async Task OnInitializedAsync()
-    // {        
-    //     await RefreshListAsync();
-    // }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -140,8 +131,6 @@
         }
     }
 
-	// TODO: Implement actual modals for create, edit, and delete operations. For now, just show snackbars
-
     private async Task OnCreateClick()
     {
         var options = new DialogOptions
@@ -161,13 +150,59 @@
         }
     }
 
-    private void OnEditClick()
+    private async Task OnEditClick()
     {
-        Snackbar.Add($"There will be an edit modal for: {_selectedType?.Name}", Severity.Info);
+        if (_selectedType is null) 
+            return;
+
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            BackdropClick = false,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var parameters = new DialogParameters<EditTypeDialog>
+        {
+            { x => x.FinancialTypeId, _selectedType.Id },
+            { x => x.InitialData, _selectedType }
+        };
+
+        var dialog = await DialogService.ShowAsync<EditTypeDialog>("", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await RefreshListAsync();
+        }
     }
 
-    private void OnDeleteClick()
+    private async Task OnDeleteClick()
     {
-        Snackbar.Add($"There will be a delete modal for: {_selectedType?.Name}", Severity.Warning);
+        if (_selectedType is null)
+            return;
+
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            BackdropClick = false,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var parameters = new DialogParameters<DeleteTypeDialog>
+        {
+            { x => x.FinancialTypeId, _selectedType.Id },
+            { x => x.TypeName, _selectedType.Name }
+        };
+
+        var dialog = await DialogService.ShowAsync<DeleteTypeDialog>("", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await RefreshListAsync();
+        }
     }
 }
