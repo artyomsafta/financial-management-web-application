@@ -1,4 +1,4 @@
-﻿@page "/types"
+﻿@page "/operations"
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
 @using Task12_ASPNETCoreBlazorUI.Services
@@ -8,12 +8,12 @@
 @inject TokenStore TokenStore
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
-    <MudText Typo="Typo.h4" Class="mb-4">Financial types</MudText>
+    <MudText Typo="Typo.h4" Class="mb-4">Financial operations</MudText>
     <MudText Typo="Typo.body1" Class="mb-6" Color="Color.Secondary">
-        CRUD for financial types.
+        CRUD for financial operations.
     </MudText>
 
-    @if (_typesList == null)
+    @if (_operationsList == null)
     {
         <MudStack Spacing="4">
             <MudSkeleton Width="40%" Height="20px" />
@@ -30,15 +30,15 @@
     {
         <MudStack Spacing="6">
 
-            <MudSelect T="FinancialTypeDto"
-                       Label="Select a financial type:"
+            <MudSelect T="FinancialOperationDto"
+                       Label="Select a financial operation:"
                        Variant="Variant.Outlined"
-                       @bind-Value="_selectedType"
-                       ToStringFunc="@(t => t == null ? "" : $"{t.Name}")">
+                       @bind-Value="_selectedOperation"
+                       ToStringFunc="@(o => o == null ? "" : $"{o.Date}")">
 
-                @foreach (var type in _typesList)
+                @foreach (var operation in _operationsList)
                 {
-                    <MudSelectItem Value="@type" />
+                    <MudSelectItem Value="@operation" />
                 }
             </MudSelect>
 
@@ -59,7 +59,7 @@
                                Color="Color.Warning"
                                FullWidth="true"
                                StartIcon="@Icons.Material.Filled.Edit"
-                               Disabled="@(_selectedType == null)"
+                               Disabled="@(_selectedOperation == null)"
                                OnClick="OnEditClick">
                         Edit
                     </MudButton>
@@ -70,7 +70,7 @@
                                Color="Color.Error"
                                FullWidth="true"
                                StartIcon="@Icons.Material.Filled.Delete"
-                               Disabled="@(_selectedType == null)"
+                               Disabled="@(_selectedOperation == null)"
                                OnClick="OnDeleteClick">
                         Delete
                     </MudButton>
@@ -78,15 +78,23 @@
 
             </MudGrid>
 
-            @if (_selectedType != null)
+            @if (_selectedOperation != null)
             {
                 <MudPaper Class="pa-4 mt-4" Elevation="1">
-                    <MudText Typo="Typo.subtitle2">Type name:</MudText>
-                    <MudText Typo="Typo.caption" Class="mt-2">@_selectedType.Name</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Description:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedType.Description</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Is Income:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedType.IsIncome</MudText>
+                    <MudText Typo="Typo.subtitle2">Operation date:</MudText>
+                    <MudText Typo="Typo.caption" Class="mt-2">@_selectedOperation.Date</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Wallet:</MudText>
+                    <MudText Typo="Typo.body2">@_selectedOperation.Wallet.Name</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Type:</MudText>
+                    <MudText Typo="Typo.body2">@_selectedOperation.Type.Name</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Currency:</MudText>
+                    <MudText Typo="Typo.body2">@_selectedOperation.Currency.Code</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Amount:</MudText>
+                    <MudText Typo="Typo.body2">@_selectedOperation.Amount</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Comment:</MudText>
+                    <MudText Typo="Typo.body2">@_selectedOperation.Comment</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Notes:</MudText>
+                    <MudText Typo="Typo.body2">@_selectedOperation.Note</MudText>
                 </MudPaper>
             }
 
@@ -95,9 +103,12 @@
 </MudContainer>
 
 @code {
-    private List<FinancialTypeDto>? _typesList;
-    private FinancialTypeDto? _selectedType;
+    private List<FinancialOperationDto>? _operationsList;
+    private FinancialOperationDto? _selectedOperation;
     private bool _isFirstRender = true;
+
+    private List<FinancialTypeDto>? _typesList;
+    private List<WalletDto>? _walletsList;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -116,15 +127,15 @@
             var client = ClientFactory.CreateClient("Api");
             var jwtToken = await TokenStore.GetTokenAsync();
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
-            _typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("api/v1/FinancialTypes/list");
+            _operationsList = await client.GetFromJsonAsync<List<FinancialOperationDto>>("api/v1/FinancialOperations/list");
 
-            _selectedType = null;
+            _selectedOperation = null;
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"List update error: {ex.Message}", Severity.Error);
-            _typesList = new List<FinancialTypeDto>();
+            _operationsList = new List<FinancialOperationDto>();
             StateHasChanged();
         }
     }
@@ -134,12 +145,24 @@
         var options = new DialogOptions
         {
             CloseOnEscapeKey = true,
-			BackdropClick = false,
+            BackdropClick = false,
             MaxWidth = MaxWidth.Small,
             FullWidth = true
         };
 
-        var dialog = await DialogService.ShowAsync<CreateTypeDialog>("", options);
+        var client = ClientFactory.CreateClient("Api");
+        var jwtToken = await TokenStore.GetTokenAsync();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+        _typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("api/v1/FinancialTypes/list");
+        _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("api/v1/Wallets/list");
+
+        var parameters = new DialogParameters<CreateOperationDialog>
+        {
+            { x => x.TypesList, _typesList },
+            { x => x.WalletsList, _walletsList }
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateOperationDialog>("", parameters, options);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)
@@ -150,7 +173,7 @@
 
     private async Task OnEditClick()
     {
-        if (_selectedType is null) 
+        if (_selectedOperation is null)
             return;
 
         var options = new DialogOptions
@@ -161,13 +184,21 @@
             FullWidth = true
         };
 
-        var parameters = new DialogParameters<EditTypeDialog>
+        var client = ClientFactory.CreateClient("Api");
+        var jwtToken = await TokenStore.GetTokenAsync();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+        _typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("api/v1/FinancialTypes/list");
+        _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("api/v1/Wallets/list");
+
+        var parameters = new DialogParameters<EditOperationDialog>
         {
-            { x => x.FinancialTypeId, _selectedType.Id },
-            { x => x.InitialData, _selectedType }
+            { x => x.TypesList, _typesList },
+            { x => x.WalletsList, _walletsList },
+            { x => x.FinancialOperationId, _selectedOperation.Id },
+            { x => x.InitialData, _selectedOperation }
         };
 
-        var dialog = await DialogService.ShowAsync<EditTypeDialog>("", parameters, options);
+        var dialog = await DialogService.ShowAsync<EditOperationDialog>("", parameters, options);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)
@@ -178,7 +209,7 @@
 
     private async Task OnDeleteClick()
     {
-        if (_selectedType is null)
+        if (_selectedOperation is null)
             return;
 
         var options = new DialogOptions
@@ -189,13 +220,13 @@
             FullWidth = true
         };
 
-        var parameters = new DialogParameters<DeleteTypeDialog>
+        var parameters = new DialogParameters<DeleteOperationDialog>
         {
-            { x => x.FinancialTypeId, _selectedType.Id },
-            { x => x.TypeName, _selectedType.Name }
+            { x => x.FinancialOperationId, _selectedOperation.Id },
+            { x => x.InitialData, _selectedOperation }
         };
 
-        var dialog = await DialogService.ShowAsync<DeleteTypeDialog>("", parameters, options);
+        var dialog = await DialogService.ShowAsync<DeleteOperationDialog>("", parameters, options);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)

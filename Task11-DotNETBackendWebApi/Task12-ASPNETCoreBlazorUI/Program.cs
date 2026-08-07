@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor.Services;
 using Task12_ASPNETCoreBlazorUI.Components;
 using Task12_ASPNETCoreBlazorUI.Services;
@@ -25,7 +24,6 @@ public class Program
             client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]!);
         });
 
-        //builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
         builder.Services.AddAuthorizationCore();
 
         var app = builder.Build();

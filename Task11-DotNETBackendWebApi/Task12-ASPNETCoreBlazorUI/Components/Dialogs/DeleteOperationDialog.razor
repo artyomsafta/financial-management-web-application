@@ -1,0 +1,100 @@
+﻿@using Task12_ASPNETCoreBlazorUI.Services
+@using Shared.Models.DTOs
+@inject IHttpClientFactory ClientFactory
+@inject ISnackbar Snackbar
+@inject TokenStore TokenStore
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" Class="mr-3" />
+            Delete financial operation
+        </MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudText>
+            Are you sure you want to delete
+            @if (InitialData != null)
+            {
+                <b>"@InitialData.Date.ToShortDateString() 
+                    @InitialData.Type?.Name 
+                    @InitialData.Amount"
+                </b>
+            }
+            else
+            {
+                <span>this item</span>
+            }
+            ?
+        </MudText>
+        <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-2 d-block">
+            This action cannot be undone.
+        </MudText>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton Color="Color.Error"
+                   Variant="Variant.Filled"
+                   Disabled="@isSending"
+                   OnClick="Submit">
+            @if (isSending)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Deleting...</MudText>
+            }
+            else
+            {
+                <MudText>Delete</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public Guid FinancialOperationId { get; set; }
+
+    [Parameter]
+    public FinancialOperationDto? InitialData { get; set; }
+
+    private bool isSending;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        isSending = true;
+        try
+        {
+            var client = ClientFactory.CreateClient("Api");
+            var jwtToken = await TokenStore.GetTokenAsync();
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+
+            var response = await client.DeleteAsync($"api/v1/FinancialOperations/{FinancialOperationId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Financial operation deleted successfully!", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                Snackbar.Add(!string.IsNullOrWhiteSpace(errorText) ? errorText : "Server error", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Critical error occurred while deleting: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSending = false;
+        }
+    }
+}
