@@ -7,7 +7,7 @@
     <TitleContent>
         <MudText Typo="Typo.h6">
             <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" Class="mr-3" />
-            Delete financial operation
+            Delete wallet
         </MudText>
     </TitleContent>
 
@@ -16,9 +16,8 @@
             Are you sure you want to delete
             @if (InitialData != null)
             {
-                <b>"@InitialData.Date.ToShortDateString() 
-                    @InitialData.Type?.Name 
-                    @InitialData.Amount"
+                <b>
+                    "@InitialData.Name"
                 </b>
             }
             else
@@ -56,10 +55,10 @@
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter]
-    public Guid FinancialOperationId { get; set; }
+    public Guid WalletId { get; set; }
 
     [Parameter]
-    public FinancialOperationDto? InitialData { get; set; }
+    public WalletDto? InitialData { get; set; }
 
     private bool isSending;
 
@@ -71,11 +70,11 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            var response = await client.DeleteAsync($"api/v1/FinancialOperations/{FinancialOperationId}");
+            var response = await client.DeleteAsync($"api/v1/Wallets/{WalletId}");
 
             if (response.IsSuccessStatusCode)
             {
-                Snackbar.Add("Financial operation deleted successfully!", Severity.Success);
+                Snackbar.Add("Wallet deleted successfully!", Severity.Success);
                 MudDialog.Close(DialogResult.Ok(true));
             }
             else

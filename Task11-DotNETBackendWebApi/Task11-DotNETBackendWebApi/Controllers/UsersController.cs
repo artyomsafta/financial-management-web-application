@@ -20,7 +20,6 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("list")]
-    [Authorize(Roles = nameof(UserRoles.Admin))]
     public async Task<ActionResult> GetListAsync()
     {
         var result = await _userService.GetListAsync();

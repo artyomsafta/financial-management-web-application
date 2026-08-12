@@ -1,4 +1,4 @@
-﻿@page "/operations"
+﻿@page "/wallets"
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
@@ -7,12 +7,12 @@
 @inject IDialogService DialogService
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
-    <MudText Typo="Typo.h4" Class="mb-4">Financial operations</MudText>
+    <MudText Typo="Typo.h4" Class="mb-4">Wallets</MudText>
     <MudText Typo="Typo.body1" Class="mb-6" Color="Color.Secondary">
-        CRUD for financial operations.
+        CRUD for wallets.
     </MudText>
 
-    @if (_operationsList == null)
+    @if (_walletsList == null)
     {
         <MudStack Spacing="4">
             <MudSkeleton Width="40%" Height="20px" />
@@ -29,15 +29,15 @@
     {
         <MudStack Spacing="6">
 
-            <MudSelect T="FinancialOperationDto"
-                       Label="Select a financial operation:"
+            <MudSelect T="WalletDto"
+                       Label="Select a wallet:"
                        Variant="Variant.Outlined"
-                       @bind-Value="_selectedOperation"
-                       ToStringFunc="@(o => o == null ? "" : $"{o.Date}")">
+                       @bind-Value="_selectedWallet"
+                       ToStringFunc="@(w => w == null ? "" : $"{w.Name}")">
 
-                @foreach (var operation in _operationsList)
+                @foreach (var wallet in _walletsList)
                 {
-                    <MudSelectItem Value="@operation" />
+                    <MudSelectItem Value="@wallet" />
                 }
             </MudSelect>
 
@@ -58,7 +58,7 @@
                                Color="Color.Warning"
                                FullWidth="true"
                                StartIcon="@Icons.Material.Filled.Edit"
-                               Disabled="@(_selectedOperation == null)"
+                               Disabled="@(_selectedWallet == null)"
                                OnClick="OnEditClick">
                         Edit
                     </MudButton>
@@ -69,7 +69,7 @@
                                Color="Color.Error"
                                FullWidth="true"
                                StartIcon="@Icons.Material.Filled.Delete"
-                               Disabled="@(_selectedOperation == null)"
+                               Disabled="@(_selectedWallet == null)"
                                OnClick="OnDeleteClick">
                         Delete
                     </MudButton>
@@ -77,23 +77,15 @@
 
             </MudGrid>
 
-            @if (_selectedOperation != null)
+            @if (_selectedWallet != null)
             {
                 <MudPaper Class="pa-4 mt-4" Elevation="1">
-                    <MudText Typo="Typo.subtitle2">Operation date:</MudText>
-                    <MudText Typo="Typo.caption" Class="mt-2">@_selectedOperation.Date</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Wallet:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedOperation.Wallet.Name</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Type:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedOperation.Type.Name</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Currency:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedOperation.Currency.Code</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Amount:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedOperation.Amount</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Comment:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedOperation.Comment</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Notes:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedOperation.Note</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Wallet name:</MudText>
+                    <MudText Typo="Typo.body2">@_selectedWallet.Name</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Owner:</MudText>
+                    <MudText Typo="Typo.body2">@_selectedWallet.User.Username</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Wallet currency:</MudText>
+                    <MudText Typo="Typo.body2">@_selectedWallet.BaseCurrency.Code</MudText>
                 </MudPaper>
             }
 
@@ -102,12 +94,11 @@
 </MudContainer>
 
 @code {
-    private List<FinancialOperationDto>? _operationsList;
-    private FinancialOperationDto? _selectedOperation;
+    private List<WalletDto>? _walletsList;
+    private WalletDto? _selectedWallet;
     private bool _isFirstRender = true;
 
-    private List<FinancialTypeDto>? _typesList;
-    private List<WalletDto>? _walletsList;
+    private List<UserDto>? _usersList;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -116,7 +107,7 @@
             _isFirstRender = false;
 
             await RefreshListAsync();
-        }        
+        }
     }
 
     private async Task RefreshListAsync()
@@ -124,15 +115,15 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            _operationsList = await client.GetFromJsonAsync<List<FinancialOperationDto>>("api/v1/FinancialOperations/list");
+            _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("api/v1/Wallets/list");
 
-            _selectedOperation = null;
+            _selectedWallet = null;
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"List update error: {ex.Message}", Severity.Error);
-            _operationsList = new List<FinancialOperationDto>();
+            _walletsList = new List<WalletDto>();
             StateHasChanged();
         }
     }
@@ -148,16 +139,14 @@
         };
 
         var client = await AuthService.CreateAuthenticatedClientAsync();
-        _typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("api/v1/FinancialTypes/list");
-        _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("api/v1/Wallets/list");
+        _usersList = await client.GetFromJsonAsync<List<UserDto>>("api/v1/Users/list");
 
-        var parameters = new DialogParameters<CreateOperationDialog>
+        var parameters = new DialogParameters<CreateWalletDialog>
         {
-            { x => x.TypesList, _typesList },
-            { x => x.WalletsList, _walletsList }
+            { x => x.UsersList, _usersList }
         };
 
-        var dialog = await DialogService.ShowAsync<CreateOperationDialog>("", parameters, options);
+        var dialog = await DialogService.ShowAsync<CreateWalletDialog>("", parameters, options);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)
@@ -168,7 +157,7 @@
 
     private async Task OnEditClick()
     {
-        if (_selectedOperation is null)
+        if (_selectedWallet is null)
             return;
 
         var options = new DialogOptions
@@ -180,18 +169,15 @@
         };
 
         var client = await AuthService.CreateAuthenticatedClientAsync();
-        _typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("api/v1/FinancialTypes/list");
         _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("api/v1/Wallets/list");
 
-        var parameters = new DialogParameters<EditOperationDialog>
+        var parameters = new DialogParameters<EditWalletDialog>
         {
-            { x => x.TypesList, _typesList },
-            { x => x.WalletsList, _walletsList },
-            { x => x.FinancialOperationId, _selectedOperation.Id },
-            { x => x.InitialData, _selectedOperation }
+            { x => x.WalletId, _selectedWallet.Id },
+            { x => x.InitialData, _selectedWallet }
         };
 
-        var dialog = await DialogService.ShowAsync<EditOperationDialog>("", parameters, options);
+        var dialog = await DialogService.ShowAsync<EditWalletDialog>("", parameters, options);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)
@@ -202,7 +188,7 @@
 
     private async Task OnDeleteClick()
     {
-        if (_selectedOperation is null)
+        if (_selectedWallet is null)
             return;
 
         var options = new DialogOptions
@@ -213,13 +199,13 @@
             FullWidth = true
         };
 
-        var parameters = new DialogParameters<DeleteOperationDialog>
+        var parameters = new DialogParameters<DeleteWalletDialog>
         {
-            { x => x.FinancialOperationId, _selectedOperation.Id },
-            { x => x.InitialData, _selectedOperation }
+            { x => x.WalletId, _selectedWallet.Id },
+            { x => x.InitialData, _selectedWallet }
         };
 
-        var dialog = await DialogService.ShowAsync<DeleteOperationDialog>("", parameters, options);
+        var dialog = await DialogService.ShowAsync<DeleteWalletDialog>("", parameters, options);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)

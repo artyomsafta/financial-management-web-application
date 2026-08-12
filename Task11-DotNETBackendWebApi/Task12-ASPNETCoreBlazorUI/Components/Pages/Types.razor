@@ -1,11 +1,10 @@
 ﻿@page "/types"
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
-@using Task12_ASPNETCoreBlazorUI.Services
-@inject IHttpClientFactory ClientFactory
+@using Task12_ASPNETCoreBlazorUI.Services.Contracts
+@inject IAuthService AuthService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-@inject TokenStore TokenStore
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
     <MudText Typo="Typo.h4" Class="mb-4">Financial types</MudText>
@@ -113,9 +112,7 @@
     {
         try
         {
-            var client = ClientFactory.CreateClient("Api");
-            var jwtToken = await TokenStore.GetTokenAsync();
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+            var client = await AuthService.CreateAuthenticatedClientAsync();
             _typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("api/v1/FinancialTypes/list");
 
             _selectedType = null;

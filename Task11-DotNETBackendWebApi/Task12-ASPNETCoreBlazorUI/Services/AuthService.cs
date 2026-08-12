@@ -38,7 +38,14 @@ public class AuthService : IAuthService
 
     public async Task LogoutAsync()
     {
-        //TODO: Implement logout logic.
         await _tokenStore.ClearTokenAsync();
+    }
+
+    public async Task<HttpClient> CreateAuthenticatedClientAsync()
+    {
+        var client = _clientFactory.CreateClient("Api");
+        var jwtToken = await _tokenStore.GetTokenAsync();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+        return client;
     }
 }

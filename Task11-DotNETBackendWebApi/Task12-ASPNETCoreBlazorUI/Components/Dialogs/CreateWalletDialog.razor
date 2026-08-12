@@ -8,74 +8,42 @@
     <TitleContent>
         <MudText Typo="Typo.h6">
             <MudIcon Icon="@Icons.Material.Filled.AddCard" Class="mr-3" />
-            Financial operation creation
+            Wallet creation
         </MudText>
     </TitleContent>
 
     <DialogContent>
         <MudForm @ref="form" @bind-IsValid="@success">
             <MudStack Spacing="4">
-                <MudTextField T="DateTime"
-                              Label="Date"
-                              @bind-Value="model.Date"
-                              Required="true"
-                              RequiredError="Date is required"
-                              Variant="Variant.Outlined" />
-
                 <MudSelect T="Guid"
-                           Label="Type"
-                           @bind-Value="model.TypeId"
+                           Label="User"
+                           @bind-Value="model.UserId"
                            Required="true"
-                           RequiredError="Type is required"
+                           RequiredError="User is required"
                            Variant="Variant.Outlined">
-                    @if (TypesList != null)
+                    @if (UsersList != null)
                     {
-                        @foreach (var type in TypesList)
+                        @foreach (var user in UsersList)
                         {
-                            <MudSelectItem Value="@type.Id">
-                                @type.Name
-                            </MudSelectItem>
-                        }
-                    }
-                </MudSelect>
-
-                <MudSelect T="Guid"
-                            Label="Wallet"
-                            @bind-Value="model.WalletId"
-                            Required="true"
-                            RequiredError="Wallet is required"
-                            Variant="Variant.Outlined">
-                    @if (WalletsList != null)
-                    {
-                        @foreach (var wallet in WalletsList)
-                        {
-                            <MudSelectItem Value="@wallet.Id">
-                                @wallet.Name
+                            <MudSelectItem Value="@user.Id">
+                                @user.Username
                             </MudSelectItem>
                         }
                     }
                 </MudSelect>
 
                 <MudTextField T="string"
-                              Label="Currency"
-                              @bind-Value="model.Currency"
+                              Label="Wallet Name"
+                              @bind-Value="model.Name"
                               Required="true"
-                              RequiredError="Currency is required"
-                              Variant="Variant.Outlined" />
-
-                <MudTextField T="decimal"
-                              Label="Amount"
-                              @bind-Value="model.Amount"
-                              Required="true"
-                              RequiredError="Amount is required"
+                              RequiredError="Wallet name is required"
                               Variant="Variant.Outlined" />
 
                 <MudTextField T="string"
-                              Label="Notes"
-                              @bind-Value="model.Note"
+                              Label="Wallet currency"
+                              @bind-Value="model.BaseCurrency"
                               Required="false"
                               Variant="Variant.Outlined" />
-
             </MudStack>
         </MudForm>
     </DialogContent>
@@ -104,16 +72,13 @@
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter]
-    public List<FinancialTypeDto>? TypesList { get; set; }
-
-    [Parameter]
-    public List<WalletDto>? WalletsList { get; set; }
+    public List<UserDto>? UsersList { get; set; }
 
     private MudForm form = default!;
     private bool success;
     private bool isSending;
 
-    private CreateFinOperationRequest model = new();
+    private CreateWalletRequest model = new();
 
     private void Cancel() => MudDialog.Cancel();
 
@@ -126,11 +91,11 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            var response = await client.PostAsJsonAsync("api/v1/FinancialOperations", model);
+            var response = await client.PostAsJsonAsync("api/v1/Wallets", model);
 
             if (response.IsSuccessStatusCode)
             {
-                Snackbar.Add("Financial operation created successfully!", Severity.Success);
+                Snackbar.Add("Wallet created successfully!", Severity.Success);
                 MudDialog.Close(DialogResult.Ok(true));
             }
             else

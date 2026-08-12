@@ -1,5 +1,4 @@
 ﻿@using Task12_ASPNETCoreBlazorUI.Services.Contracts
-@using Shared.Models.DTOs
 @inject IAuthService AuthService
 @inject ISnackbar Snackbar
 
@@ -7,19 +6,16 @@
     <TitleContent>
         <MudText Typo="Typo.h6">
             <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" Class="mr-3" />
-            Delete financial operation
+            Delete user
         </MudText>
     </TitleContent>
 
     <DialogContent>
         <MudText>
             Are you sure you want to delete
-            @if (InitialData != null)
+            @if (!string.IsNullOrEmpty(UserName))
             {
-                <b>"@InitialData.Date.ToShortDateString() 
-                    @InitialData.Type?.Name 
-                    @InitialData.Amount"
-                </b>
+                <b>"@UserName"</b>
             }
             else
             {
@@ -56,10 +52,10 @@
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter]
-    public Guid FinancialOperationId { get; set; }
+    public Guid UserId { get; set; }
 
     [Parameter]
-    public FinancialOperationDto? InitialData { get; set; }
+    public string? UserName { get; set; }
 
     private bool isSending;
 
@@ -71,11 +67,11 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            var response = await client.DeleteAsync($"api/v1/FinancialOperations/{FinancialOperationId}");
+            var response = await client.DeleteAsync($"api/v1/Users/{UserId}");
 
             if (response.IsSuccessStatusCode)
             {
-                Snackbar.Add("Financial operation deleted successfully!", Severity.Success);
+                Snackbar.Add("User deleted successfully!", Severity.Success);
                 MudDialog.Close(DialogResult.Ok(true));
             }
             else

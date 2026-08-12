@@ -1,7 +1,6 @@
-﻿@using Task12_ASPNETCoreBlazorUI.Services
-@inject IHttpClientFactory ClientFactory
+﻿@using Task12_ASPNETCoreBlazorUI.Services.Contracts
+@inject IAuthService AuthService
 @inject ISnackbar Snackbar
-@inject TokenStore TokenStore
 
 <MudDialog>
     <TitleContent>
@@ -67,10 +66,7 @@
         isSending = true;
         try
         {
-            var client = ClientFactory.CreateClient("Api");
-            var jwtToken = await TokenStore.GetTokenAsync();
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
-
+            var client = await AuthService.CreateAuthenticatedClientAsync();
             var response = await client.DeleteAsync($"api/v1/FinancialTypes/{FinancialTypeId}");
 
             if (response.IsSuccessStatusCode)

@@ -1,5 +1,4 @@
 ﻿@using Shared.Models
-@using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @inject IAuthService AuthService
 @inject ISnackbar Snackbar
@@ -7,8 +6,8 @@
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.EditNote" Class="mr-3" />
-            Financial type editing
+            <MudIcon Icon="@Icons.Material.Filled.AddCard" Class="mr-3" />
+            User creation
         </MudText>
     </TitleContent>
 
@@ -17,24 +16,19 @@
             <MudStack Spacing="4">
 
                 <MudTextField T="string"
-                              Label="Name"
-                              @bind-Value="model.Name"
+                              Label="Username:"
+                              @bind-Value="model.Username"
                               Required="true"
-                              RequiredError="Name is required"
+                              RequiredError="Username is required"
                               Variant="Variant.Outlined" />
 
                 <MudTextField T="string"
-                              Label="Description"
-                              @bind-Value="model.Description"
-                              Lines="3"
+                              Label="Password:"
+                              @bind-Value="model.Password"
+                              Required="true"
+                              RequiredError="Password is required"
+                              InputType="InputType.Password"
                               Variant="Variant.Outlined" />
-
-                <MudSwitch T="bool"
-                           @bind-Value="model.IsIncome"
-                           Color="Color.Success"
-                           UncheckedColor="Color.Error"
-                           Label="@(model.IsIncome ? "This is Income" : "This is Expense")" />
-
             </MudStack>
         </MudForm>
     </DialogContent>
@@ -52,7 +46,7 @@
             }
             else
             {
-                <MudText>Update</MudText>
+                <MudText>Create</MudText>
             }
         </MudButton>
     </DialogActions>
@@ -62,27 +56,11 @@
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter]
-    public Guid FinancialTypeId { get; set; }
-
-    [Parameter]
-    public FinancialTypeDto? InitialData { get; set; }
-
     private MudForm form = default!;
     private bool success;
     private bool isSending;
 
-    private FinancialTypeRequest model = new();
-
-    protected override void OnInitialized()
-    {
-        if (InitialData != null)
-        {
-            model.Name = InitialData.Name;
-            model.Description = InitialData.Description;
-            model.IsIncome = InitialData.IsIncome;
-        }
-    }
+    private UserRegisterRequest model = new();
 
     private void Cancel() => MudDialog.Cancel();
 
@@ -95,11 +73,11 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            var response = await client.PutAsJsonAsync($"api/v1/FinancialTypes/{FinancialTypeId}", model);
+            var response = await client.PostAsJsonAsync("api/v1/Users", model);
 
             if (response.IsSuccessStatusCode)
             {
-                Snackbar.Add("Financial type updated successfully!", Severity.Success);
+                Snackbar.Add("User created successfully!", Severity.Success);
                 MudDialog.Close(DialogResult.Ok(true));
             }
             else

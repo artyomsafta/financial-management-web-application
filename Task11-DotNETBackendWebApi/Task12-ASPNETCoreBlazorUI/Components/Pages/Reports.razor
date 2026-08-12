@@ -1,10 +1,9 @@
 ﻿@page "/reports"
 @using Shared.Models.DTOs
-@using Task12_ASPNETCoreBlazorUI.Services
-@inject IHttpClientFactory ClientFactory
+@using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-@inject TokenStore TokenStore
+@inject IAuthService AuthService
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-8">
     <MudText Typo="Typo.h4" Class="mb-2">Financial Reports</MudText>
@@ -217,7 +216,7 @@
 
         try
         {
-            var client = await CreateAuthenticatedClientAsync();
+            var client = await AuthService.CreateAuthenticatedClientAsync();
 
             var dateStr = _dailyDate.Value.ToString("yyyy-MM-dd");
 
@@ -264,7 +263,7 @@
 
         try
         {
-            var client = await CreateAuthenticatedClientAsync();
+            var client = await AuthService.CreateAuthenticatedClientAsync();
 
             var startStr = _startDate.Value.ToString("yyyy-MM-dd");
             var endStr = _endDate.Value.ToString("yyyy-MM-dd");
@@ -289,13 +288,5 @@
         {
             _isPeriodLoading = false;
         }
-    }
-
-    private async Task<HttpClient> CreateAuthenticatedClientAsync()
-    {
-        var client = ClientFactory.CreateClient("Api");
-        var jwtToken = await TokenStore.GetTokenAsync();
-        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
-        return client;
     }
 }
