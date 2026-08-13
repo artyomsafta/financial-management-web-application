@@ -1,6 +1,6 @@
 ﻿@using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @using Shared.Models.DTOs
-@inject IAuthService AuthService
+@inject IHttpService HttpService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -70,18 +70,16 @@
         isSending = true;
         try
         {
-            var client = await AuthService.CreateAuthenticatedClientAsync();
-            var response = await client.DeleteAsync($"api/v1/FinancialOperations/{FinancialOperationId}");
+            var response = await HttpService.DeleteAsync($"api/v1/FinancialOperations/{FinancialOperationId}", "Financial operation");
 
-            if (response.IsSuccessStatusCode)
+            if (response.IsSuccess)
             {
-                Snackbar.Add("Financial operation deleted successfully!", Severity.Success);
+                Snackbar.Add(response.Message, Severity.Success);
                 MudDialog.Close(DialogResult.Ok(true));
             }
             else
             {
-                var errorText = await response.Content.ReadAsStringAsync();
-                Snackbar.Add(!string.IsNullOrWhiteSpace(errorText) ? errorText : "Server error", Severity.Error);
+                Snackbar.Add(response.Message, Severity.Error);
             }
         }
         catch (Exception ex)

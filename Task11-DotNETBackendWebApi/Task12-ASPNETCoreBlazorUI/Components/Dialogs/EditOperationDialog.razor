@@ -1,7 +1,7 @@
 ﻿@using Shared.Models
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
-@inject IAuthService AuthService
+@inject IHttpService HttpService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -34,23 +34,6 @@
                         {
                             <MudSelectItem Value="@type.Id">
                                 @type.Name
-                            </MudSelectItem>
-                        }
-                    }
-                </MudSelect>
-
-                <MudSelect T="Guid"
-                           Label="Wallet"
-                           @bind-Value="model.WalletId"
-                           Required="true"
-                           RequiredError="Wallet is required"
-                           Variant="Variant.Outlined">
-                    @if (WalletsList != null)
-                    {
-                        @foreach (var wallet in WalletsList)
-                        {
-                            <MudSelectItem Value="@wallet.Id">
-                                @wallet.Name
                             </MudSelectItem>
                         }
                     }
@@ -119,14 +102,13 @@
     private bool success;
     private bool isSending;
 
-    private CreateFinOperationRequest model = new();
+    private UpdateFinOperationRequest model = new();
 
     protected override void OnInitialized()
     {
         if (InitialData != null)
         {
             model.TypeId = InitialData.Type.Id;
-            model.WalletId = InitialData.Wallet.Id;
             model.Amount = InitialData.Amount;
             model.Date = InitialData.Date;
             model.Currency = InitialData.Currency.Code;
@@ -144,18 +126,16 @@
         isSending = true;
         try
         {
-            var client = await AuthService.CreateAuthenticatedClientAsync();
-            var response = await client.PutAsJsonAsync($"api/v1/FinancialOperations/{FinancialOperationId}", model);
+            var response = await HttpService.PutAsync($"api/v1/FinancialOperations/{FinancialOperationId}", model, "Financial operation");
 
-            if (response.IsSuccessStatusCode)
+            if (response.IsSuccess)
             {
-                Snackbar.Add("Financial operation updated successfully!", Severity.Success);
+                Snackbar.Add(response.Message, Severity.Success);
                 MudDialog.Close(DialogResult.Ok(true));
             }
             else
             {
-                var errorText = await response.Content.ReadAsStringAsync();
-                Snackbar.Add(!string.IsNullOrWhiteSpace(errorText) ? errorText : "Server error", Severity.Error);
+                Snackbar.Add(response.Message, Severity.Error);
             }
         }
         catch (Exception ex)

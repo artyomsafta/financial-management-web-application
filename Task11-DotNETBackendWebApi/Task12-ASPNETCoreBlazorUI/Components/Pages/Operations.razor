@@ -2,7 +2,7 @@
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
-@inject IAuthService AuthService
+@inject IHttpService HttpService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -101,7 +101,7 @@
     }
 </MudContainer>
 
-@code {
+    @code {
     private List<FinancialOperationDto>? _operationsList;
     private FinancialOperationDto? _selectedOperation;
     private bool _isFirstRender = true;
@@ -123,8 +123,7 @@
     {
         try
         {
-            var client = await AuthService.CreateAuthenticatedClientAsync();
-            _operationsList = await client.GetFromJsonAsync<List<FinancialOperationDto>>("api/v1/FinancialOperations/list");
+            _operationsList = await HttpService.GetAsync<FinancialOperationDto>("api/v1/FinancialOperations/list");
 
             _selectedOperation = null;
             StateHasChanged();
@@ -147,9 +146,8 @@
             FullWidth = true
         };
 
-        var client = await AuthService.CreateAuthenticatedClientAsync();
-        _typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("api/v1/FinancialTypes/list");
-        _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("api/v1/Wallets/list");
+        _typesList = await HttpService.GetAsync<FinancialTypeDto>("api/v1/FinancialTypes/list");
+        _walletsList = await HttpService.GetAsync<WalletDto>("api/v1/Wallets/list");
 
         var parameters = new DialogParameters<CreateOperationDialog>
         {
@@ -179,9 +177,8 @@
             FullWidth = true
         };
 
-        var client = await AuthService.CreateAuthenticatedClientAsync();
-        _typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("api/v1/FinancialTypes/list");
-        _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("api/v1/Wallets/list");
+        _typesList = await HttpService.GetAsync<FinancialTypeDto>("api/v1/FinancialTypes/list");
+        _walletsList = await HttpService.GetAsync<WalletDto>("api/v1/Wallets/list");
 
         var parameters = new DialogParameters<EditOperationDialog>
         {
