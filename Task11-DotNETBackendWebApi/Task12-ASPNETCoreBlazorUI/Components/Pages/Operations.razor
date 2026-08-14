@@ -1,8 +1,8 @@
 ﻿@page "/operations"
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
-@using Task12_ASPNETCoreBlazorUI.Services.Contracts
-@inject IHttpService HttpService
+@using Task12_ASPNETCoreBlazorUI.Services
+@inject DtoReadService DtoReadService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -123,7 +123,7 @@
     {
         try
         {
-            _operationsList = await HttpService.GetAsync<FinancialOperationDto>("api/v1/FinancialOperations/list");
+            _operationsList = await DtoReadService.GetFinancialOperationsListAsync();
 
             _selectedOperation = null;
             StateHasChanged();
@@ -146,16 +146,7 @@
             FullWidth = true
         };
 
-        _typesList = await HttpService.GetAsync<FinancialTypeDto>("api/v1/FinancialTypes/list");
-        _walletsList = await HttpService.GetAsync<WalletDto>("api/v1/Wallets/list");
-
-        var parameters = new DialogParameters<CreateOperationDialog>
-        {
-            { x => x.TypesList, _typesList },
-            { x => x.WalletsList, _walletsList }
-        };
-
-        var dialog = await DialogService.ShowAsync<CreateOperationDialog>("", parameters, options);
+        var dialog = await DialogService.ShowAsync<CreateOperationDialog>("", options);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)
@@ -177,15 +168,9 @@
             FullWidth = true
         };
 
-        _typesList = await HttpService.GetAsync<FinancialTypeDto>("api/v1/FinancialTypes/list");
-        _walletsList = await HttpService.GetAsync<WalletDto>("api/v1/Wallets/list");
-
         var parameters = new DialogParameters<EditOperationDialog>
         {
-            { x => x.TypesList, _typesList },
-            { x => x.WalletsList, _walletsList },
-            { x => x.FinancialOperationId, _selectedOperation.Id },
-            { x => x.InitialData, _selectedOperation }
+            { x => x.FinancialOperationId, _selectedOperation.Id }
         };
 
         var dialog = await DialogService.ShowAsync<EditOperationDialog>("", parameters, options);
@@ -212,8 +197,7 @@
 
         var parameters = new DialogParameters<DeleteOperationDialog>
         {
-            { x => x.FinancialOperationId, _selectedOperation.Id },
-            { x => x.InitialData, _selectedOperation }
+            { x => x.FinancialOperationId, _selectedOperation.Id }
         };
 
         var dialog = await DialogService.ShowAsync<DeleteOperationDialog>("", parameters, options);

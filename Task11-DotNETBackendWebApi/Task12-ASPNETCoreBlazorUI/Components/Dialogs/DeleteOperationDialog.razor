@@ -1,6 +1,8 @@
-﻿@using Task12_ASPNETCoreBlazorUI.Services.Contracts
-@using Shared.Models.DTOs
+﻿@using Shared.Models.DTOs
+@using Task12_ASPNETCoreBlazorUI.Services
+@using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @inject IHttpService HttpService
+@inject DtoReadService DtoReadService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -58,10 +60,15 @@
     [Parameter]
     public Guid FinancialOperationId { get; set; }
 
-    [Parameter]
     public FinancialOperationDto? InitialData { get; set; }
 
     private bool isSending;
+
+    protected override async Task OnInitializedAsync()
+    {
+        InitialData = await DtoReadService.GetFinancialOperationAsync(FinancialOperationId);
+        StateHasChanged();
+    }
 
     private void Cancel() => MudDialog.Cancel();
 

@@ -18,6 +18,7 @@ public class Program
         builder.Services.AddScoped<TokenStore>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IHttpService, HttpService>();
+        builder.Services.AddScoped<DtoReadService>();
 
         builder.Services.AddHttpClient("Api", client =>
         {

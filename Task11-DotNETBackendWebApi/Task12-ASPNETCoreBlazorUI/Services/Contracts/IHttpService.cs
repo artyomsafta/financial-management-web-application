@@ -4,7 +4,8 @@ namespace Task12_ASPNETCoreBlazorUI.Services.Contracts;
 
 public interface IHttpService
 {
-    Task<List<T>> GetAsync<T>(string requestUri);
+    Task<List<T>> GetListAsync<T>(string requestUri);
+    Task<T?> GetByIdAsync<T>(string requestUri, Guid id);
     Task<ApiResponseDto> PostAsync<T>(string requestUri, T body, string entityType);
     Task<ApiResponseDto> PutAsync<T>(string requestUri, T body, string entityType);
     Task<ApiResponseDto> DeleteAsync(string requestUri, string entityType);

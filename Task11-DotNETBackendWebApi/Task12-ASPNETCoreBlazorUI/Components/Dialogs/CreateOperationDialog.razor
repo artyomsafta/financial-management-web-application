@@ -1,7 +1,9 @@
 ﻿@using Shared.Models
 @using Shared.Models.DTOs
+@using Task12_ASPNETCoreBlazorUI.Services
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @inject IHttpService HttpService
+@inject DtoReadService DtoReadService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -103,10 +105,7 @@
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter]
     public List<FinancialTypeDto>? TypesList { get; set; }
-
-    [Parameter]
     public List<WalletDto>? WalletsList { get; set; }
 
     private MudForm form = default!;
@@ -115,10 +114,19 @@
 
     private CreateFinOperationRequest model = new();
 
+    protected override async Task OnInitializedAsync()
+    {
+        TypesList = await DtoReadService.GetFinancialTypesListAsync();
+        WalletsList = await DtoReadService.GetWalletsListAsync();
+
+        StateHasChanged();
+    }
+
     private void Cancel() => MudDialog.Cancel();
 
     private async Task Submit()
     {
+
         await form.ValidateAsync();
         if (!form.IsValid) return;
 
