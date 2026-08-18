@@ -1,0 +1,232 @@
+﻿@using Shared.Models
+@using Shared.Models.DTOs
+@using Task12_ASPNETCoreBlazorUI.Services
+@using Task12_ASPNETCoreBlazorUI.Services.Contracts
+@using Task12_ASPNETCoreBlazorUI.Models
+@inject IHttpService HttpService
+@inject DtoReadService DtoReadService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@GetDialogIcon()" Class="mr-3" />
+            @GetDialogTitle()
+        </MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_success" Disabled = "@(Mode == FormMode.Delete ? true : false)">
+            <MudStack Spacing="4">
+                <MudTextField T="DateTime"
+                              Label="Date"
+                              @bind-Value="_model.Date"
+                              Required="true"
+                              RequiredError="Date is required"
+                              Variant="Variant.Outlined" />
+
+                <MudSelect T="Guid"
+                           Label="Type"
+                           @bind-Value="_model.Type.Id"
+                           Required="true"
+                           RequiredError="Type is required"
+                           Variant="Variant.Outlined">
+                    @if (TypesList != null)
+                    {
+                        @foreach (var type in TypesList)
+                        {
+                            <MudSelectItem Value="@type.Id">
+                                @type.Name
+                            </MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+
+                @if (Mode != FormMode.Update)
+                {
+                    <MudSelect T="Guid"
+                    Label="Wallet"
+                    @bind-Value="_model.Wallet.Id"
+                    Required="true"
+                    RequiredError="Wallet is required"
+                    Variant="Variant.Outlined">
+                        @if (WalletsList != null)
+                        {
+                            @foreach (var wallet in WalletsList)
+                            {
+                                <MudSelectItem Value="@wallet.Id">
+                                    @wallet.Name
+                                </MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                }
+
+                <MudTextField T="string"
+                              Label="Currency"
+                              @bind-Value="_model.Currency.Code"
+                              Required="true"
+                              RequiredError="Currency is required"
+                              Variant="Variant.Outlined" />
+
+                <MudTextField T="decimal"
+                              Label="Amount"
+                              @bind-Value="_model.Amount"
+                              Required="true"
+                              RequiredError="Amount is required"
+                              Variant="Variant.Outlined" />
+
+                <MudTextField T="string"
+                              Label="Notes"
+                              @bind-Value="_model.Note"
+                              Required="false"
+                              Variant="Variant.Outlined" />
+
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton Color="@(Mode != FormMode.Delete ? Color.Primary : Color.Error)"
+                   Variant="Variant.Filled"
+                   Disabled="@(!_success || _isSending)"
+                   OnClick="Submit">
+            @if (_isSending)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Saving...</MudText>
+            }
+            else
+            {
+                <MudText>@GetSubmitButtonText()</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public FormMode Mode { get; set; }
+
+    [Parameter]
+    public Guid FinancialOperationId { get; set; }
+
+    public List<FinancialTypeDto>? TypesList { get; set; }
+    public List<WalletDto>? WalletsList { get; set; }
+
+    private MudForm _form = default!;
+    private bool _success;
+    private bool _isSending; 
+
+    private FinancialOperationDto _model = new();
+    private static readonly string _endpoint = "api/v1/FinancialOperations";
+    private static readonly string _entityType = "Financial operation";
+
+    protected override async Task OnInitializedAsync()
+    {
+        TypesList = await DtoReadService.GetFinancialTypesListAsync();
+        WalletsList = await DtoReadService.GetWalletsListAsync();
+
+        if (Mode != FormMode.Create)
+            _model = await DtoReadService.GetFinancialOperationAsync(FinancialOperationId);
+
+        StateHasChanged();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+
+        await _form.ValidateAsync();
+        if (!_form.IsValid) 
+            return;
+
+        _isSending = true;
+
+        try
+        {
+            var response = new ApiResponseDto();
+                           
+            switch (Mode)
+            {
+                case FormMode.Create:
+                    var createRequest = new CreateFinOperationRequest
+                    {
+                        TypeId = _model.Type.Id,
+                        WalletId = _model.Wallet.Id,
+                        Amount = _model.Amount,
+                        Date = _model.Date,
+                        Currency = _model.Currency.Code,
+                        Note = _model.Note
+                    };
+
+                    response = await HttpService.PostAsync(_endpoint, createRequest, _entityType);
+                    break;
+                case FormMode.Update:                    
+                    var updateRequest = new UpdateFinOperationRequest
+                    {
+                        TypeId = _model.Type.Id,
+                        Amount = _model.Amount,
+                        Date = _model.Date,
+                        Currency = _model.Currency.Code,
+                        Note = _model.Note
+                    };
+
+                    response = await HttpService.PutAsync($"{_endpoint}/{FinancialOperationId}", updateRequest, _entityType);
+                    break;
+                case FormMode.Delete:
+                    response = await HttpService.DeleteAsync($"{_endpoint}/{FinancialOperationId}", _entityType);
+                    break;
+                default:
+                    throw new InvalidOperationException("Invalid form mode.");
+            }
+
+            if (response.IsSuccess)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Critical error occurred while submitting: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSending = false;
+        }
+    }
+
+    private string GetDialogIcon() => Mode switch
+    {
+        FormMode.Create => Icons.Material.Filled.AddCard,
+        FormMode.Update => Icons.Material.Filled.EditNote,
+        FormMode.Delete => Icons.Material.Filled.DeleteForever,
+        _ => Icons.Material.Filled.Info
+    };
+
+    private string GetDialogTitle() => Mode switch
+    {
+        FormMode.Create => "Financial operation creation",
+        FormMode.Update => "Financial operation editing",
+        FormMode.Delete => "Delete financial operation",
+        _ => "Dialog"
+    };
+
+    private string GetSubmitButtonText() => Mode switch
+    {
+        FormMode.Create => "Create",
+        FormMode.Update => "Update",
+        FormMode.Delete => "Delete",
+        _ => "OK"
+    };
+}

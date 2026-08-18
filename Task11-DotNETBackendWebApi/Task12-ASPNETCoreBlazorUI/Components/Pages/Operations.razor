@@ -2,6 +2,7 @@
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
 @using Task12_ASPNETCoreBlazorUI.Services
+@using Task12_ASPNETCoreBlazorUI.Models
 @inject DtoReadService DtoReadService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -106,9 +107,6 @@
     private FinancialOperationDto? _selectedOperation;
     private bool _isFirstRender = true;
 
-    private List<FinancialTypeDto>? _typesList;
-    private List<WalletDto>? _walletsList;
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -138,51 +136,20 @@
 
     private async Task OnCreateClick()
     {
-        var options = new DialogOptions
-        {
-            CloseOnEscapeKey = true,
-            BackdropClick = false,
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true
-        };
-
-        var dialog = await DialogService.ShowAsync<CreateOperationDialog>("", options);
-        var result = await dialog.Result;
-
-        if (result != null && !result.Canceled)
-        {
-            await RefreshListAsync();
-        }
+        await OnButtonClick(FormMode.Create);
     }
 
     private async Task OnEditClick()
     {
-        if (_selectedOperation is null)
-            return;
-
-        var options = new DialogOptions
-        {
-            CloseOnEscapeKey = true,
-            BackdropClick = false,
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true
-        };
-
-        var parameters = new DialogParameters<EditOperationDialog>
-        {
-            { x => x.FinancialOperationId, _selectedOperation.Id }
-        };
-
-        var dialog = await DialogService.ShowAsync<EditOperationDialog>("", parameters, options);
-        var result = await dialog.Result;
-
-        if (result != null && !result.Canceled)
-        {
-            await RefreshListAsync();
-        }
+        await OnButtonClick(FormMode.Update);
     }
 
     private async Task OnDeleteClick()
+    {
+        await OnButtonClick(FormMode.Delete);
+    }
+
+    private async Task OnButtonClick(FormMode mode)
     {
         if (_selectedOperation is null)
             return;
@@ -195,12 +162,13 @@
             FullWidth = true
         };
 
-        var parameters = new DialogParameters<DeleteOperationDialog>
+        var parameters = new DialogParameters<OperationDialog>
         {
-            { x => x.FinancialOperationId, _selectedOperation.Id }
+            { x => x.FinancialOperationId, _selectedOperation.Id },
+            { x => x.Mode, mode }
         };
 
-        var dialog = await DialogService.ShowAsync<DeleteOperationDialog>("", parameters, options);
+        var dialog = await DialogService.ShowAsync<OperationDialog>("", parameters, options);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)
