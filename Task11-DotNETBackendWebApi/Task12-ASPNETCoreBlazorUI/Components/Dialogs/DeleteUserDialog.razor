@@ -67,7 +67,7 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            var response = await client.DeleteAsync($"api/v1/Users/{UserId}");
+            var response = await client.DeleteAsync($"Users/{UserId}");
 
             if (response.IsSuccessStatusCode)
             {

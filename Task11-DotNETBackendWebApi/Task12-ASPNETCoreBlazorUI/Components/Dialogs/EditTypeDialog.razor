@@ -95,7 +95,7 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            var response = await client.PutAsJsonAsync($"api/v1/FinancialTypes/{FinancialTypeId}", model);
+            var response = await client.PutAsJsonAsync($"FinancialTypes/{FinancialTypeId}", model);
 
             if (response.IsSuccessStatusCode)
             {

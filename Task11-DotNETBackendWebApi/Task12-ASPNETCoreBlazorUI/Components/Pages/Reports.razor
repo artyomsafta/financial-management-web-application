@@ -220,7 +220,7 @@
 
             var dateStr = _dailyDate.Value.ToString("yyyy-MM-dd");
 
-            var response = await client.GetAsync($"api/v1/Reports/daily?date={dateStr}");
+            var response = await client.GetAsync($"Reports/daily?date={dateStr}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -268,7 +268,7 @@
             var startStr = _startDate.Value.ToString("yyyy-MM-dd");
             var endStr = _endDate.Value.ToString("yyyy-MM-dd");
 
-            var response = await client.GetAsync($"api/v1/Reports/period?startDate={startStr}&endDate={endStr}");
+            var response = await client.GetAsync($"Reports/period?startDate={startStr}&endDate={endStr}");
 
             if (response.IsSuccessStatusCode)
             {

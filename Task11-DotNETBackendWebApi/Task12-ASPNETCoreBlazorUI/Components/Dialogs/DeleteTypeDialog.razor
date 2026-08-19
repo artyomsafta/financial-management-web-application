@@ -67,7 +67,7 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            var response = await client.DeleteAsync($"api/v1/FinancialTypes/{FinancialTypeId}");
+            var response = await client.DeleteAsync($"FinancialTypes/{FinancialTypeId}");
 
             if (response.IsSuccessStatusCode)
             {

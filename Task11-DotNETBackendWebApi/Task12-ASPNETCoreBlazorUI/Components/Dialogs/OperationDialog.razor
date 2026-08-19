@@ -1,10 +1,9 @@
-﻿@using Shared.Models
-@using Shared.Models.DTOs
-@using Task12_ASPNETCoreBlazorUI.Services
+﻿@using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @using Task12_ASPNETCoreBlazorUI.Models
-@inject IHttpService HttpService
-@inject DtoReadService DtoReadService
+@inject IFinancialOperationService FinancialOperationService
+@inject IFinancialTypeService FinancialTypeService
+@inject IWalletService WalletService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -123,16 +122,14 @@
     private bool _isSending; 
 
     private FinancialOperationDto _model = new();
-    private static readonly string _endpoint = "api/v1/FinancialOperations";
-    private static readonly string _entityType = "Financial operation";
 
     protected override async Task OnInitializedAsync()
     {
-        TypesList = await DtoReadService.GetFinancialTypesListAsync();
-        WalletsList = await DtoReadService.GetWalletsListAsync();
+        TypesList = await FinancialTypeService.GetListAsync();
+        WalletsList = await WalletService.GetListAsync();
 
         if (Mode != FormMode.Create)
-            _model = await DtoReadService.GetFinancialOperationAsync(FinancialOperationId);
+            _model = await FinancialOperationService.GetByIdAsync(FinancialOperationId);
 
         StateHasChanged();
     }
@@ -151,36 +148,17 @@
         try
         {
             var response = new ApiResponseDto();
-                           
+
             switch (Mode)
             {
                 case FormMode.Create:
-                    var createRequest = new CreateFinOperationRequest
-                    {
-                        TypeId = _model.Type.Id,
-                        WalletId = _model.Wallet.Id,
-                        Amount = _model.Amount,
-                        Date = _model.Date,
-                        Currency = _model.Currency.Code,
-                        Note = _model.Note
-                    };
-
-                    response = await HttpService.PostAsync(_endpoint, createRequest, _entityType);
+                    response = await FinancialOperationService.CreateAsync(_model);
                     break;
                 case FormMode.Update:                    
-                    var updateRequest = new UpdateFinOperationRequest
-                    {
-                        TypeId = _model.Type.Id,
-                        Amount = _model.Amount,
-                        Date = _model.Date,
-                        Currency = _model.Currency.Code,
-                        Note = _model.Note
-                    };
-
-                    response = await HttpService.PutAsync($"{_endpoint}/{FinancialOperationId}", updateRequest, _entityType);
+                    response = await FinancialOperationService.UpdateAsync(FinancialOperationId, _model);
                     break;
                 case FormMode.Delete:
-                    response = await HttpService.DeleteAsync($"{_endpoint}/{FinancialOperationId}", _entityType);
+                    response = await FinancialOperationService.DeleteAsync(FinancialOperationId);
                     break;
                 default:
                     throw new InvalidOperationException("Invalid form mode.");

@@ -88,7 +88,7 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            var response = await client.PutAsJsonAsync($"api/v1/Users/{UserId}", model);
+            var response = await client.PutAsJsonAsync($"Users/{UserId}", model);
 
             if (response.IsSuccessStatusCode)
             {

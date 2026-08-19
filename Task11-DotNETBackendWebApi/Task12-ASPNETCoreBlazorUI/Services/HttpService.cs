@@ -24,33 +24,23 @@ public class HttpService : IHttpService
         return await client.GetFromJsonAsync<T>($"{requestUri}/{id}");
     }
 
-    public Task<ApiResponseDto> PostAsync<T>(string requestUri, T body, string entityType)
+    public Task<ApiResponseDto> PostAsync<T>(string requestUri, T body)
     {
-        return ExecuteHttpRequestAsync(
-            client => client.PostAsJsonAsync(requestUri, body),
-            $"{entityType} created successfully!"
-        );
+        return ExecuteHttpRequestAsync(client => client.PostAsJsonAsync(requestUri, body));
     }
 
-    public Task<ApiResponseDto> PutAsync<T>(string requestUri, T body, string entityType)
+    public Task<ApiResponseDto> PutAsync<T>(string requestUri, T body)
     {
-        return ExecuteHttpRequestAsync(
-            client => client.PutAsJsonAsync(requestUri, body),
-            $"{entityType} updated successfully!"
-        );
+        return ExecuteHttpRequestAsync(client => client.PutAsJsonAsync(requestUri, body));
     }
 
-    public Task<ApiResponseDto> DeleteAsync(string requestUri, string entityType)
+    public Task<ApiResponseDto> DeleteAsync(string requestUri)
     {
-        return ExecuteHttpRequestAsync(
-            client => client.DeleteAsync(requestUri),
-            $"{entityType} deleted successfully!"
-        );
+        return ExecuteHttpRequestAsync(client => client.DeleteAsync(requestUri));
     }
 
     private async Task<ApiResponseDto> ExecuteHttpRequestAsync(
-        Func<HttpClient, Task<HttpResponseMessage>> httpRequest,
-        string successMessage
+        Func<HttpClient, Task<HttpResponseMessage>> httpRequest
     )
     {
         var client = await _authService.CreateAuthenticatedClientAsync();
@@ -61,7 +51,7 @@ public class HttpService : IHttpService
             return new ApiResponseDto
             {
                 IsSuccess = true,
-                Message = successMessage
+                Message = "Operation completed successfully!"
             };
         }
         else

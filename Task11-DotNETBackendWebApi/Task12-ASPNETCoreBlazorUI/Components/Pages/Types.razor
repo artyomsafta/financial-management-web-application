@@ -113,7 +113,7 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            _typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("api/v1/FinancialTypes/list");
+            _typesList = await client.GetFromJsonAsync<List<FinancialTypeDto>>("FinancialTypes/list");
 
             _selectedType = null;
             StateHasChanged();

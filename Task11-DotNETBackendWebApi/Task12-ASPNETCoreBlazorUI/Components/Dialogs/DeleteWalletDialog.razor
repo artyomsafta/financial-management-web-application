@@ -70,7 +70,7 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            var response = await client.DeleteAsync($"api/v1/Wallets/{WalletId}");
+            var response = await client.DeleteAsync($"Wallets/{WalletId}");
 
             if (response.IsSuccessStatusCode)
             {

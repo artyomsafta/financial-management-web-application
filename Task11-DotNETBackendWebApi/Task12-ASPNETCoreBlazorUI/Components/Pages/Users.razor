@@ -111,7 +111,7 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            _usersList = await client.GetFromJsonAsync<List<UserDto>>("api/v1/Users/list");
+            _usersList = await client.GetFromJsonAsync<List<UserDto>>("Users/list");
 
             _selectedUser = null;
             StateHasChanged();

@@ -1,9 +1,9 @@
 ﻿@page "/operations"
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
-@using Task12_ASPNETCoreBlazorUI.Services
+@using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @using Task12_ASPNETCoreBlazorUI.Models
-@inject DtoReadService DtoReadService
+@inject IFinancialOperationService FinancialOperationService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -121,7 +121,7 @@
     {
         try
         {
-            _operationsList = await DtoReadService.GetFinancialOperationsListAsync();
+            _operationsList = await FinancialOperationService.GetListAsync();
 
             _selectedOperation = null;
             StateHasChanged();

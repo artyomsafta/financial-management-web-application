@@ -115,7 +115,7 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("api/v1/Wallets/list");
+            _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("Wallets/list");
 
             _selectedWallet = null;
             StateHasChanged();
@@ -139,7 +139,7 @@
         };
 
         var client = await AuthService.CreateAuthenticatedClientAsync();
-        _usersList = await client.GetFromJsonAsync<List<UserDto>>("api/v1/Users/list");
+        _usersList = await client.GetFromJsonAsync<List<UserDto>>("Users/list");
 
         var parameters = new DialogParameters<CreateWalletDialog>
         {
@@ -169,7 +169,7 @@
         };
 
         var client = await AuthService.CreateAuthenticatedClientAsync();
-        _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("api/v1/Wallets/list");
+        _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("Wallets/list");
 
         var parameters = new DialogParameters<EditWalletDialog>
         {

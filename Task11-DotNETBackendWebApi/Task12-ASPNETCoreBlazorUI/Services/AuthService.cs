@@ -21,7 +21,7 @@ public class AuthService : IAuthService
     {
         var client = _clientFactory.CreateClient("Api");
 
-        var response = await client.PostAsJsonAsync("api/v1/UsersAuth/login", request);
+        var response = await client.PostAsJsonAsync("UsersAuth/login", request);
 
         if (!response.IsSuccessStatusCode)
             return null;

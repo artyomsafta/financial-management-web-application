@@ -18,7 +18,10 @@ public class Program
         builder.Services.AddScoped<TokenStore>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IHttpService, HttpService>();
-        builder.Services.AddScoped<DtoReadService>();
+
+        builder.Services.AddScoped<IFinancialOperationService, FinancialOperationService>();
+        builder.Services.AddScoped<IFinancialTypeService, FinancialTypeService>();
+        builder.Services.AddScoped<IWalletService, WalletService>();
 
         builder.Services.AddHttpClient("Api", client =>
         {

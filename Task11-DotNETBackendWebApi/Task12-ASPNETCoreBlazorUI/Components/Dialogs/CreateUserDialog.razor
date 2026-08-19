@@ -73,7 +73,7 @@
         try
         {
             var client = await AuthService.CreateAuthenticatedClientAsync();
-            var response = await client.PostAsJsonAsync("api/v1/Users", model);
+            var response = await client.PostAsJsonAsync("Users", model);
 
             if (response.IsSuccessStatusCode)
             {
