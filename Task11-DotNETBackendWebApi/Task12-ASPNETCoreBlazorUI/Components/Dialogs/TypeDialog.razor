@@ -1,9 +1,7 @@
 ﻿@using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @using Task12_ASPNETCoreBlazorUI.Models
-@inject IFinancialOperationService FinancialOperationService
 @inject IFinancialTypeService FinancialTypeService
-@inject IWalletService WalletService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -17,69 +15,25 @@
     <DialogContent>
         <MudForm @ref="_form" Disabled="@(Mode == FormMode.Delete)">
             <MudStack Spacing="4">
-                <MudTextField T="DateTime"
-                              Label="Date"
-                              @bind-Value="_model.Date"
-                              Required="true"
-                              RequiredError="Date is required"
-                              Variant="Variant.Outlined" />
-
-                <MudSelect T="Guid"
-                           Label="Type"
-                           @bind-Value="_model.Type.Id"
-                           Required="true"
-                           RequiredError="Type is required"
-                           Variant="Variant.Outlined">
-                    @if (TypesList != null)
-                    {
-                        @foreach (var type in TypesList)
-                        {
-                            <MudSelectItem Value="@type.Id">
-                                @type.Name
-                            </MudSelectItem>
-                        }
-                    }
-                </MudSelect>
-
-                @if (Mode != FormMode.Update)
-                {
-                    <MudSelect T="Guid"
-                    Label="Wallet"
-                    @bind-Value="_model.Wallet.Id"
-                    Required="true"
-                    RequiredError="Wallet is required"
-                    Variant="Variant.Outlined">
-                        @if (WalletsList != null)
-                        {
-                            @foreach (var wallet in WalletsList)
-                            {
-                                <MudSelectItem Value="@wallet.Id">
-                                    @wallet.Name
-                                </MudSelectItem>
-                            }
-                        }
-                    </MudSelect>
-                }
 
                 <MudTextField T="string"
-                              Label="Currency"
-                              @bind-Value="_model.Currency.Code"
+                              Label="Name"
+                              @bind-Value="_model.Name"
                               Required="true"
-                              RequiredError="Currency is required"
-                              Variant="Variant.Outlined" />
-
-                <MudTextField T="decimal"
-                              Label="Amount"
-                              @bind-Value="_model.Amount"
-                              Required="true"
-                              RequiredError="Amount is required"
+                              RequiredError="Name is required"
                               Variant="Variant.Outlined" />
 
                 <MudTextField T="string"
-                              Label="Notes"
-                              @bind-Value="_model.Note"
-                              Required="false"
+                              Label="Description"
+                              @bind-Value="_model.Description"
+                              Lines="3"
                               Variant="Variant.Outlined" />
+
+                <MudSwitch T="bool"
+                           @bind-Value="_model.IsIncome"
+                           Color="Color.Success"
+                           UncheckedColor="Color.Error"
+                           Label="@(_model.IsIncome ? "This is Income" : "This is Expense")" />
 
             </MudStack>
         </MudForm>
@@ -112,34 +66,28 @@
     public FormMode Mode { get; set; }
 
     [Parameter]
-    public Guid FinancialOperationId { get; set; }
-
-    public List<FinancialTypeDto>? TypesList { get; set; }
-    public List<WalletDto>? WalletsList { get; set; }
+    public Guid FinancialTypeId { get; set; }
 
     private MudForm _form = default!;
-    private bool _isSending; 
+    private bool _isSending;
 
-    private FinancialOperationDto _model = new();
+    private FinancialTypeDto _model = new();
 
     protected override async Task OnInitializedAsync()
     {
-        TypesList = await FinancialTypeService.GetListAsync();
-        WalletsList = await WalletService.GetListAsync();
-
         if (Mode != FormMode.Create)
-            _model = await FinancialOperationService.GetByIdAsync(FinancialOperationId);
+            _model = await FinancialTypeService.GetByIdAsync(FinancialTypeId);
 
         StateHasChanged();
     }
 
     private void Cancel() => MudDialog.Cancel();
-
+    
     private async Task Submit()
     {
 
         await _form.ValidateAsync();
-        if (!_form.IsValid) 
+        if (!_form.IsValid)
             return;
 
         _isSending = true;
@@ -151,13 +99,13 @@
             switch (Mode)
             {
                 case FormMode.Create:
-                    response = await FinancialOperationService.CreateAsync(_model);
+                    response = await FinancialTypeService.CreateAsync(_model);
                     break;
-                case FormMode.Update:                    
-                    response = await FinancialOperationService.UpdateAsync(FinancialOperationId, _model);
+                case FormMode.Update:
+                    response = await FinancialTypeService.UpdateAsync(FinancialTypeId, _model);
                     break;
                 case FormMode.Delete:
-                    response = await FinancialOperationService.DeleteAsync(FinancialOperationId);
+                    response = await FinancialTypeService.DeleteAsync(FinancialTypeId);
                     break;
                 default:
                     throw new InvalidOperationException("Invalid form mode.");
@@ -193,9 +141,9 @@
 
     private string GetDialogTitle() => Mode switch
     {
-        FormMode.Create => "Financial operation creation",
-        FormMode.Update => "Financial operation editing",
-        FormMode.Delete => "Delete financial operation",
+        FormMode.Create => "Financial type creation",
+        FormMode.Update => "Financial type editing",
+        FormMode.Delete => "Delete financial type",
         _ => "Dialog"
     };
 

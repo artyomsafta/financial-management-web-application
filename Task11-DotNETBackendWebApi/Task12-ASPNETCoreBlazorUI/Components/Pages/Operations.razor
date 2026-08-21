@@ -102,7 +102,7 @@
     }
 </MudContainer>
 
-    @code {
+@code {
     private List<FinancialOperationDto>? _operationsList;
     private FinancialOperationDto? _selectedOperation;
     private bool _isFirstRender = true;
@@ -151,9 +151,6 @@
 
     private async Task OnButtonClick(FormMode mode)
     {
-        if (_selectedOperation is null)
-            return;
-
         var options = new DialogOptions
         {
             CloseOnEscapeKey = true,
@@ -164,7 +161,7 @@
 
         var parameters = new DialogParameters<OperationDialog>
         {
-            { x => x.FinancialOperationId, _selectedOperation.Id },
+            { x => x.FinancialOperationId, _selectedOperation?.Id ?? Guid.Empty },
             { x => x.Mode, mode }
         };
 
