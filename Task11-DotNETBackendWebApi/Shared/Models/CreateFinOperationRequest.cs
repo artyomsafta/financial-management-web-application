@@ -11,7 +11,7 @@ public class CreateFinOperationRequest
     public Guid WalletId { get; set; }
 
     [Required]
-    [Range(0.00, double.MaxValue, ErrorMessage = "The amount must be greater than zero.")]
+    [Range(0.01, double.MaxValue, ErrorMessage = "The amount must be greater than zero.")]
     public decimal Amount { get; set; }
 
     [Required]

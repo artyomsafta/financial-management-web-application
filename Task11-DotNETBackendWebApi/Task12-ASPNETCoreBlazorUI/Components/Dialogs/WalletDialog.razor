@@ -1,7 +1,8 @@
 ﻿@using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @using Task12_ASPNETCoreBlazorUI.Models
-@inject IFinancialTypeService FinancialTypeService
+@inject IWalletService WalletService
+@inject IUserService UserService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -16,25 +17,38 @@
         <MudForm @ref="_form" Disabled="@(Mode == FormMode.Delete)">
             <MudStack Spacing="4">
 
+                @if (Mode != FormMode.Update)
+                {
+                    <MudSelect T="Guid"
+                               Label="User"
+                               @bind-Value="_model.User.Id"
+                               Required="true"
+                               RequiredError="User is required"
+                               Variant="Variant.Outlined">
+                        @if (UsersList != null)
+                        {
+                            @foreach (var user in UsersList)
+                            {
+                                <MudSelectItem Value="@user.Id">
+                                    @user.Username
+                                </MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                }
+
                 <MudTextField T="string"
-                              Label="Name"
+                              Label="Wallet Name"
                               @bind-Value="_model.Name"
                               Required="true"
-                              RequiredError="Name is required"
+                              RequiredError="Wallet name is required"
                               Variant="Variant.Outlined" />
 
                 <MudTextField T="string"
-                              Label="Description"
-                              @bind-Value="_model.Description"
-                              Lines="3"
+                              Label="Wallet currency"
+                              @bind-Value="_model.BaseCurrency.Code"
+                              Required="false"
                               Variant="Variant.Outlined" />
-
-                <MudSwitch T="bool"
-                           @bind-Value="_model.IsIncome"
-                           Color="Color.Success"
-                           UncheckedColor="Color.Error"
-                           Label="@(_model.IsIncome ? "This is Income" : "This is Expense")" />
-
             </MudStack>
         </MudForm>
     </DialogContent>
@@ -66,17 +80,22 @@
     public FormMode Mode { get; set; }
 
     [Parameter]
-    public Guid FinancialTypeId { get; set; }
+    public Guid WalletId { get; set; }
+
+    [Parameter]
+    public List<UserDto>? UsersList { get; set; }
 
     private MudForm _form = default!;
     private bool _isSending;
 
-    private FinancialTypeDto _model = new();
+    private WalletDto _model = new();
 
     protected override async Task OnInitializedAsync()
     {
+        UsersList = await UserService.GetListAsync();
+        
         if (Mode != FormMode.Create)
-            _model = await FinancialTypeService.GetByIdAsync(FinancialTypeId);
+            _model = await WalletService.GetByIdAsync(WalletId);
 
         StateHasChanged();
     }
@@ -98,13 +117,13 @@
             switch (Mode)
             {
                 case FormMode.Create:
-                    response = await FinancialTypeService.CreateAsync(_model);
+                    response = await WalletService.CreateAsync(_model);
                     break;
                 case FormMode.Update:
-                    response = await FinancialTypeService.UpdateAsync(FinancialTypeId, _model);
+                    response = await WalletService.UpdateAsync(WalletId, _model);
                     break;
                 case FormMode.Delete:
-                    response = await FinancialTypeService.DeleteAsync(FinancialTypeId);
+                    response = await WalletService.DeleteAsync(WalletId);
                     break;
                 default:
                     throw new InvalidOperationException("Invalid form mode.");
@@ -140,9 +159,9 @@
 
     private string GetDialogTitle() => Mode switch
     {
-        FormMode.Create => "Financial type creation",
-        FormMode.Update => "Financial type editing",
-        FormMode.Delete => "Delete financial type",
+        FormMode.Create => "Wallet creation",
+        FormMode.Update => "Wallet editing",
+        FormMode.Delete => "Delete wallet",
         _ => "Dialog"
     };
 

@@ -2,7 +2,8 @@
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
-@inject IAuthService AuthService
+@using Task12_ASPNETCoreBlazorUI.Models
+@inject IWalletService WalletService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -98,8 +99,6 @@
     private WalletDto? _selectedWallet;
     private bool _isFirstRender = true;
 
-    private List<UserDto>? _usersList;
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -114,8 +113,7 @@
     {
         try
         {
-            var client = await AuthService.CreateAuthenticatedClientAsync();
-            _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("Wallets/list");
+            _walletsList = await WalletService.GetListAsync();
 
             _selectedWallet = null;
             StateHasChanged();
@@ -127,70 +125,24 @@
             StateHasChanged();
         }
     }
-
+    
     private async Task OnCreateClick()
     {
-        var options = new DialogOptions
-        {
-            CloseOnEscapeKey = true,
-            BackdropClick = false,
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true
-        };
-
-        var client = await AuthService.CreateAuthenticatedClientAsync();
-        _usersList = await client.GetFromJsonAsync<List<UserDto>>("Users/list");
-
-        var parameters = new DialogParameters<CreateWalletDialog>
-        {
-            { x => x.UsersList, _usersList }
-        };
-
-        var dialog = await DialogService.ShowAsync<CreateWalletDialog>("", parameters, options);
-        var result = await dialog.Result;
-
-        if (result != null && !result.Canceled)
-        {
-            await RefreshListAsync();
-        }
+        await OnButtonClick(FormMode.Create);
     }
 
     private async Task OnEditClick()
     {
-        if (_selectedWallet is null)
-            return;
-
-        var options = new DialogOptions
-        {
-            CloseOnEscapeKey = true,
-            BackdropClick = false,
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true
-        };
-
-        var client = await AuthService.CreateAuthenticatedClientAsync();
-        _walletsList = await client.GetFromJsonAsync<List<WalletDto>>("Wallets/list");
-
-        var parameters = new DialogParameters<EditWalletDialog>
-        {
-            { x => x.WalletId, _selectedWallet.Id },
-            { x => x.InitialData, _selectedWallet }
-        };
-
-        var dialog = await DialogService.ShowAsync<EditWalletDialog>("", parameters, options);
-        var result = await dialog.Result;
-
-        if (result != null && !result.Canceled)
-        {
-            await RefreshListAsync();
-        }
+        await OnButtonClick(FormMode.Update);
     }
 
     private async Task OnDeleteClick()
     {
-        if (_selectedWallet is null)
-            return;
+        await OnButtonClick(FormMode.Delete);
+    }
 
+    private async Task OnButtonClick(FormMode mode)
+    {
         var options = new DialogOptions
         {
             CloseOnEscapeKey = true,
@@ -199,13 +151,13 @@
             FullWidth = true
         };
 
-        var parameters = new DialogParameters<DeleteWalletDialog>
+        var parameters = new DialogParameters<WalletDialog>
         {
-            { x => x.WalletId, _selectedWallet.Id },
-            { x => x.InitialData, _selectedWallet }
+            { x => x.WalletId, _selectedWallet?.Id ?? Guid.Empty },
+            { x => x.Mode, mode }
         };
 
-        var dialog = await DialogService.ShowAsync<DeleteWalletDialog>("", parameters, options);
+        var dialog = await DialogService.ShowAsync<WalletDialog>("", parameters, options);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)
