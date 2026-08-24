@@ -18,10 +18,10 @@ public class HttpService : IHttpService
         return await client.GetFromJsonAsync<List<T>>(requestUri) ?? new List<T>();
     }
 
-    public async Task<T?> GetByIdAsync<T>(string requestUri, Guid id)
+    public async Task<T?> GetByIdAsync<T>(string requestUri)
     {
         var client = await _authService.CreateAuthenticatedClientAsync();
-        return await client.GetFromJsonAsync<T>($"{requestUri}/{id}");
+        return await client.GetFromJsonAsync<T>($"{requestUri}");
     }
 
     public Task<ApiResponseDto> PostAsync<T>(string requestUri, T body)

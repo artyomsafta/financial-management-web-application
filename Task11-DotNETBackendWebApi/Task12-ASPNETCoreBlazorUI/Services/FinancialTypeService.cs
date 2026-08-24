@@ -23,7 +23,7 @@ public class FinancialTypeService : IFinancialTypeService
 
     public async Task<FinancialTypeDto> GetByIdAsync(Guid id)
     {
-        return await _httpService.GetByIdAsync<FinancialTypeDto>($"{_finTypesUri}", id);
+        return await _httpService.GetByIdAsync<FinancialTypeDto>($"{_finTypesUri}/{id}");
     }
 
     public async Task<ApiResponseDto> CreateAsync(FinancialTypeDto model)
