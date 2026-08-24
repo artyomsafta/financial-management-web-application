@@ -14,18 +14,18 @@
         </MudCardHeader>
 
         <MudCardContent>
-            <MudForm @ref="form" @bind-IsValid="@success">
+            <MudForm @ref="_form">
                 <MudStack Spacing="4">
 
                     <MudTextField T="string"
                                   Label="Login:"
-                                  @bind-Value="model.Username"
+                                  @bind-Value="_model.Username"
                                   Required="true"
                                   Variant="Variant.Outlined" />
 
                     <MudTextField T="string"
                                   Label="Password:"
-                                  @bind-Value="model.Password"
+                                  @bind-Value="_model.Password"
                                   Required="true"
                                   InputType="InputType.Password"
                                   Variant="Variant.Outlined" />
@@ -38,9 +38,9 @@
             <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"
                        Size="Size.Large"
-                       Disabled="@(!success || isProcessing)"
+                       Disabled="@_isProcessing"
                        OnClick="HandleSignInAsync">
-                @if (isProcessing)
+                @if (_isProcessing)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                 }
@@ -51,7 +51,7 @@
                        Color="Color.Secondary"
                        Size="Size.Large"
                        OnClick="HandleSignUpAsync"
-                       Disabled="@isProcessing">
+                       Disabled="@_isProcessing">
                 Sign Up
             </MudButton>
         </MudCardActions>
@@ -59,23 +59,22 @@
 </MudContainer>
 
 @code {
-    private MudForm form = default!;
-    private bool success;                   // This variable is unused.
-    private bool isProcessing;
+    private MudForm _form = default!;
+    private bool _isProcessing;
 
-    private UserLoginRequest model = new();
+    private UserLoginRequest _model = new();
 
     private async Task HandleSignInAsync()
     {
-        await form.ValidateAsync();
-        if (!form.IsValid)
+        await _form.ValidateAsync();
+        if (!_form.IsValid)
             return;
 
-        isProcessing = true;
+        _isProcessing = true;
 
         try
         {
-            var loginResponse = await AuthService.LoginAsync(model);
+            var loginResponse = await AuthService.LoginAsync(_model);
 
             if (loginResponse is null)
             {
@@ -93,7 +92,7 @@
         }
         finally
         {
-            isProcessing = false;
+            _isProcessing = false;
         } 
     }   
 

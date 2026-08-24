@@ -2,7 +2,8 @@
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
-@inject IAuthService AuthService
+@using Task12_ASPNETCoreBlazorUI.Models
+@inject IUserService UserService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -110,8 +111,7 @@
     {
         try
         {
-            var client = await AuthService.CreateAuthenticatedClientAsync();
-            _usersList = await client.GetFromJsonAsync<List<UserDto>>("Users/list");
+            _usersList = await UserService.GetListAsync();
 
             _selectedUser = null;
             StateHasChanged();
@@ -123,59 +123,24 @@
             StateHasChanged();
         }
     }
-
+    
     private async Task OnCreateClick()
     {
-        var options = new DialogOptions
-        {
-            CloseOnEscapeKey = true,
-            BackdropClick = false,
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true
-        };
-
-        var dialog = await DialogService.ShowAsync<CreateUserDialog>("", options);
-        var result = await dialog.Result;
-
-        if (result != null && !result.Canceled)
-        {
-            await RefreshListAsync();
-        }
+        await OnButtonClick(FormMode.Create);
     }
 
     private async Task OnEditClick()
     {
-        if (_selectedUser is null)
-            return;
-
-        var options = new DialogOptions
-        {
-            CloseOnEscapeKey = true,
-            BackdropClick = false,
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true
-        };
-
-        var parameters = new DialogParameters<EditUserDialog>
-        {
-            { x => x.UserId, _selectedUser.Id },
-            { x => x.InitialData, _selectedUser }
-        };
-
-        var dialog = await DialogService.ShowAsync<EditUserDialog>("", parameters, options);
-        var result = await dialog.Result;
-
-        if (result != null && !result.Canceled)
-        {
-            await RefreshListAsync();
-        }
+        await OnButtonClick(FormMode.Update);
     }
 
     private async Task OnDeleteClick()
     {
-        if (_selectedUser is null)
-            return;
+        await OnButtonClick(FormMode.Delete);
+    }
 
+    private async Task OnButtonClick(FormMode mode)
+    {
         var options = new DialogOptions
         {
             CloseOnEscapeKey = true,
@@ -184,13 +149,13 @@
             FullWidth = true
         };
 
-        var parameters = new DialogParameters<DeleteUserDialog>
+        var parameters = new DialogParameters<UserDialog>
         {
-            { x => x.UserId, _selectedUser.Id },
-            { x => x.UserName, _selectedUser.Username }
+            { x => x.UserId, _selectedUser?.Id ?? Guid.Empty },
+            { x => x.Mode, mode }
         };
 
-        var dialog = await DialogService.ShowAsync<DeleteUserDialog>("", parameters, options);
+        var dialog = await DialogService.ShowAsync<UserDialog>("", parameters, options);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)
