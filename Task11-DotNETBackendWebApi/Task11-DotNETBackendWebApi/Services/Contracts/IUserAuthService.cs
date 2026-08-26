@@ -1,4 +1,4 @@
-﻿using Task11_DotNETBackendWebApi.Models;
+﻿using Shared.Models;
 
 namespace Task11_DotNETBackendWebApi.Services.Contracts;
 

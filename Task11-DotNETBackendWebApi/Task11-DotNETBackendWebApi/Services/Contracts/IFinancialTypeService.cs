@@ -1,5 +1,5 @@
-﻿using Task11_DotNETBackendWebApi.Models;
-using Task11_DotNETBackendWebApi.Models.DTOs;
+﻿using Shared.Models;
+using Shared.Models.DTOs;
 
 namespace Task11_DotNETBackendWebApi.Services.Contracts;
 

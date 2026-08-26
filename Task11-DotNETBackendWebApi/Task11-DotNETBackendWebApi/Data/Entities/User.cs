@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Shared.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace Task11_DotNETBackendWebApi.Data.Entities;

@@ -1,0 +1,175 @@
+﻿@using Shared.Models.DTOs
+@using Task12_ASPNETCoreBlazorUI.Services.Contracts
+@using Task12_ASPNETCoreBlazorUI.Models
+@inject IWalletService WalletService
+@inject IUserService UserService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@GetDialogIcon()" Class="mr-3" />
+            @GetDialogTitle()
+        </MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudForm @ref="_form" Disabled="@(Mode == FormMode.Delete)">
+            <MudStack Spacing="4">
+
+                @if (Mode != FormMode.Update)
+                {
+                    <MudSelect T="Guid"
+                               Label="User"
+                               @bind-Value="_model.User.Id"
+                               Required="true"
+                               RequiredError="User is required"
+                               Variant="Variant.Outlined">
+                        @if (UsersList != null)
+                        {
+                            @foreach (var user in UsersList)
+                            {
+                                <MudSelectItem Value="@user.Id">
+                                    @user.Username
+                                </MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                }
+
+                <MudTextField T="string"
+                              Label="Wallet Name"
+                              @bind-Value="_model.Name"
+                              Required="true"
+                              RequiredError="Wallet name is required"
+                              Variant="Variant.Outlined" />
+
+                <MudTextField T="string"
+                              Label="Wallet currency"
+                              @bind-Value="_model.BaseCurrency.Code"
+                              Required="false"
+                              Variant="Variant.Outlined" />
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton Color="@(Mode != FormMode.Delete ? Color.Primary : Color.Error)"
+                   Variant="Variant.Filled"
+                   Disabled="@_isSending"
+                   OnClick="Submit">
+            @if (_isSending)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Saving...</MudText>
+            }
+            else
+            {
+                <MudText>@GetSubmitButtonText()</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public FormMode Mode { get; set; }
+
+    [Parameter]
+    public Guid WalletId { get; set; }
+
+    [Parameter]
+    public List<UserDto>? UsersList { get; set; }
+
+    private MudForm _form = default!;
+    private bool _isSending;
+
+    private WalletDto _model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UsersList = await UserService.GetListAsync();
+        
+        if (Mode != FormMode.Create)
+            _model = await WalletService.GetByIdAsync(WalletId);
+
+        StateHasChanged();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+    
+    private async Task Submit()
+    {
+        await _form.ValidateAsync();
+        if (!_form.IsValid)
+            return;
+
+        _isSending = true;
+
+        try
+        {
+            var response = new ApiResponseDto();
+
+            switch (Mode)
+            {
+                case FormMode.Create:
+                    response = await WalletService.CreateAsync(_model);
+                    break;
+                case FormMode.Update:
+                    response = await WalletService.UpdateAsync(WalletId, _model);
+                    break;
+                case FormMode.Delete:
+                    response = await WalletService.DeleteAsync(WalletId);
+                    break;
+                default:
+                    throw new InvalidOperationException("Invalid form mode.");
+            }
+
+            if (response.IsSuccess)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Critical error occurred while submitting: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSending = false;
+        }
+    }
+
+    private string GetDialogIcon() => Mode switch
+    {
+        FormMode.Create => Icons.Material.Filled.AddCard,
+        FormMode.Update => Icons.Material.Filled.EditNote,
+        FormMode.Delete => Icons.Material.Filled.DeleteForever,
+        _ => Icons.Material.Filled.Info
+    };
+
+    private string GetDialogTitle() => Mode switch
+    {
+        FormMode.Create => "Wallet creation",
+        FormMode.Update => "Wallet editing",
+        FormMode.Delete => "Delete wallet",
+        _ => "Dialog"
+    };
+
+    private string GetSubmitButtonText() => Mode switch
+    {
+        FormMode.Create => "Create",
+        FormMode.Update => "Update",
+        FormMode.Delete => "Delete",
+        _ => "OK"
+    };
+}

@@ -1,0 +1,21 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Shared.Models;
+
+public class UpdateFinOperationRequest
+{
+    [Required]
+    public Guid TypeId { get; set; }
+
+    [Required]
+    [Range(0.01, double.MaxValue, ErrorMessage = "The amount must be greater than zero.")]
+    public decimal Amount { get; set; }
+
+    [Required]
+    public DateTime Date { get; set; }
+
+    [Required]
+    public string Currency { get; set; }
+
+    public string Note { get; set; } = "";
+}

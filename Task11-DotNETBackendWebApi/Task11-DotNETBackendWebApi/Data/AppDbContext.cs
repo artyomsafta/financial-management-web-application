@@ -95,5 +95,4 @@ public class AppDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.LogTo(message => Debug.WriteLine(message));
-
 }

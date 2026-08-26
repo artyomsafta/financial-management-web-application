@@ -1,4 +1,6 @@
 <Solution>
+  <Project Path="Shared/Shared.csproj" Id="ed2c835c-6be5-45ee-834f-6c775571e536" />
   <Project Path="Task11-DotNETBackendWebApi/Task11-DotNETBackendWebApi.csproj" />
   <Project Path="Task11-DotNETBackendWebApiUnitTests/Task11-DotNETBackendWebApiUnitTests.csproj" Id="dcb4839d-656c-4dd2-a6ec-d98ab330991b" />
+  <Project Path="Task12-ASPNETCoreBlazorUI/Task12-ASPNETCoreBlazorUI.csproj" Id="4ec4669d-a6bf-4f23-927f-253a2dd132cb" />
 </Solution>

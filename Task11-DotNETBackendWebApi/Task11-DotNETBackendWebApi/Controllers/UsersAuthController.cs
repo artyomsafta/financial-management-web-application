@@ -1,7 +1,7 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Task11_DotNETBackendWebApi.Models;
+using Shared.Models;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
 namespace Task11_DotNETBackendWebApi.Controllers;
@@ -21,7 +21,7 @@ public class UsersAuthController : ControllerBase
 
     [HttpPost("login")]
     [AllowAnonymous]
-    public async Task<ActionResult<UserLoginResponse>> Login([FromBody] UserLoginRequest request)
+    public async Task<ActionResult<UserLoginResponse>> LoginAsync([FromBody] UserLoginRequest request)
     {
         var response = await _userAuthService.LoginAsync(request);
 

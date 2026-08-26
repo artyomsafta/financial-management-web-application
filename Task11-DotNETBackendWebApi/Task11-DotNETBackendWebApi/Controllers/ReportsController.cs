@@ -19,14 +19,14 @@ public class ReportsController : ControllerBase
     }
 
     [HttpGet("daily")]
-    public async Task<ActionResult> GetDailyReport([FromQuery] DateTime date)
+    public async Task<ActionResult> GetDailyReportAsync([FromQuery] DateTime date)
     {
         var result = await _reportService.GetDailyReportAsync(date);
         return Ok(result);      
     }
 
     [HttpGet("period")]
-    public async Task<ActionResult> GetPeriodReport([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+    public async Task<ActionResult> GetPeriodReportAsync([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
     {
         var result = await _reportService.GetPeriodReportAsync(startDate, endDate);
         return Ok(result);

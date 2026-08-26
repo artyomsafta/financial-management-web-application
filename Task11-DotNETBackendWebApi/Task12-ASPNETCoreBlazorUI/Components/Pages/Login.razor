@@ -1,0 +1,103 @@
+﻿@page "/login"
+@using Shared.Models
+@using Services.Contracts
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudCard Elevation="4" Class="pa-6 rounded-lg">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5" Align="Align.Center"><b>Authorization</b></MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+
+        <MudCardContent>
+            <MudForm @ref="_form">
+                <MudStack Spacing="4">
+
+                    <MudTextField T="string"
+                                  Label="Login:"
+                                  @bind-Value="_model.Username"
+                                  Required="true"
+                                  Variant="Variant.Outlined" />
+
+                    <MudTextField T="string"
+                                  Label="Password:"
+                                  @bind-Value="_model.Password"
+                                  Required="true"
+                                  InputType="InputType.Password"
+                                  Variant="Variant.Outlined" />
+
+                </MudStack>
+            </MudForm>
+        </MudCardContent>
+
+        <MudCardActions Class="d-flex justify-space-between px-4 mt-4">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Size="Size.Large"
+                       Disabled="@_isProcessing"
+                       OnClick="HandleSignInAsync">
+                @if (_isProcessing)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Sign in
+            </MudButton>
+
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       Size="Size.Large"
+                       OnClick="HandleSignUpAsync"
+                       Disabled="@_isProcessing">
+                Sign Up
+            </MudButton>
+        </MudCardActions>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private MudForm _form = default!;
+    private bool _isProcessing;
+
+    private UserLoginRequest _model = new();
+
+    private async Task HandleSignInAsync()
+    {
+        await _form.ValidateAsync();
+        if (!_form.IsValid)
+            return;
+
+        _isProcessing = true;
+
+        try
+        {
+            var loginResponse = await AuthService.LoginAsync(_model);
+
+            if (loginResponse is null)
+            {
+                Snackbar.Add("Invalid username or password.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add($"Welcome, {loginResponse.Username}", Severity.Success);
+
+            NavigationManager.NavigateTo("/types");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error connecting to server: {ex.Message}",Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
+        } 
+    }   
+
+    private async Task HandleSignUpAsync()
+    {
+        NavigationManager.NavigateTo("/register");
+    }
+}

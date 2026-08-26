@@ -1,8 +1,7 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Models;
+using Shared.Models;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
 namespace Task11_DotNETBackendWebApi.Controllers;
@@ -21,14 +20,14 @@ public class FinancialTypesController : ControllerBase
     }
 
     [HttpGet("list")]
-    public async Task<ActionResult> GetList()
+    public async Task<ActionResult> GetListAsync()
     {
         var result = await _typeService.GetListAsync();
         return Ok(result);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult> GetById([FromRoute] Guid id)
+    public async Task<ActionResult> GetByIdAsync([FromRoute] Guid id)
     {
         var result = await _typeService.GetByIdAsync(id);
         return Ok(result);
@@ -36,7 +35,7 @@ public class FinancialTypesController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = nameof(UserRoles.Admin))]
-    public async Task<ActionResult> Create([FromBody] FinancialTypeRequest request)
+    public async Task<ActionResult> CreateAsync([FromBody] FinancialTypeRequest request)
     {
         var result = await _typeService.CreateAsync(request);
         return Ok(result);
@@ -44,7 +43,7 @@ public class FinancialTypesController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize(Roles = nameof(UserRoles.Admin))]
-    public async Task<ActionResult> Update([FromRoute] Guid id, [FromBody] FinancialTypeRequest request)
+    public async Task<ActionResult> UpdateAsync([FromRoute] Guid id, [FromBody] FinancialTypeRequest request)
     {
         var result = await _typeService.UpdateAsync(id, request);
         return NoContent();
@@ -52,7 +51,7 @@ public class FinancialTypesController : ControllerBase
 
     [HttpDelete("{id}")]
     [Authorize(Roles = nameof(UserRoles.Admin))]
-    public async Task<ActionResult> Delete([FromRoute] Guid id)
+    public async Task<ActionResult> DeleteAsync([FromRoute] Guid id)
     {
         var result = await _typeService.DeleteAsync(id);
         return NoContent();
