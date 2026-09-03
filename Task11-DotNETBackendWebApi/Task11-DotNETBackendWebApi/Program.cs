@@ -23,7 +23,13 @@ public class Program
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         builder.Services.AddDbContext<AppDbContext>(options =>
         {
-            options.UseSqlServer(connectionString);
+            options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(10),
+                    errorNumbersToAdd: null);
+            });
         });
 
         builder.Services.AddScoped<DbSeeder>();
@@ -110,12 +116,26 @@ public class Program
                 };
             });
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowBlazorOrigin", policy =>
+            {
+                policy.WithOrigins(
+                    "https://localhost:7072",
+                    "http://localhost:5045",
+                    "https://<YOUR_BLAZOR_APP>.azurewebsites.net" // TODO: add Blazor app URL in Azure
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+            });
+        });
+
         builder.AddSerilogLogging();
 
         var app = builder.Build();
         app.InitDatabase();
 
-        if (app.Environment.IsDevelopment())
+        if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
         {
             app.UseSwagger();
             app.UseSwaggerUI(options =>
@@ -126,6 +146,9 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+
+        app.UseCors("AllowBlazorOrigin");
+
         app.UseAuthentication();
         app.UseAuthorization();
 

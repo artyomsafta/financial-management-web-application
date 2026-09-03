@@ -27,6 +27,7 @@ public class Program
         builder.Services.AddHttpClient("Api", client =>
         {
             client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]!);
+            client.Timeout = TimeSpan.FromMinutes(2);
         });
 
         builder.Services.AddAuthorizationCore();
