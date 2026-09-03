@@ -116,20 +116,6 @@ public class Program
                 };
             });
 
-        builder.Services.AddCors(options =>
-        {
-            options.AddPolicy("AllowBlazorOrigin", policy =>
-            {
-                policy.WithOrigins(
-                    "https://localhost:7072",
-                    "http://localhost:5045",
-                    "https://<YOUR_BLAZOR_APP>.azurewebsites.net" // TODO: add Blazor app URL in Azure
-                )
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-            });
-        });
-
         builder.AddSerilogLogging();
 
         var app = builder.Build();
