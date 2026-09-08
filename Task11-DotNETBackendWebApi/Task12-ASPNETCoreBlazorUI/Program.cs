@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor.Services;
 using Task12_ASPNETCoreBlazorUI.Components;
 using Task12_ASPNETCoreBlazorUI.Services;
@@ -31,6 +32,11 @@ public class Program
         });
 
         builder.Services.AddAuthorizationCore();
+        builder.Services.AddCascadingAuthenticationState();
+
+        builder.Services.AddScoped<CustomAuthenticationStateProvider>();
+        builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
+            sp.GetRequiredService<CustomAuthenticationStateProvider>());
 
         var app = builder.Build();
 

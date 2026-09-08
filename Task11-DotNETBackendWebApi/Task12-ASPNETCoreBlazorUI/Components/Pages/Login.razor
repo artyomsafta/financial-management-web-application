@@ -1,6 +1,8 @@
 ﻿@page "/login"
 @using Shared.Models
 @using Services.Contracts
+@using Task12_ASPNETCoreBlazorUI.Services
+@inject CustomAuthenticationStateProvider AuthStateProvider
 @inject IAuthService AuthService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
@@ -35,6 +37,14 @@
         </MudCardContent>
 
         <MudCardActions Class="d-flex justify-space-between px-4 mt-4">
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       Size="Size.Large"
+                       OnClick="HandleSignUpAsync"
+                       Disabled="@_isProcessing">
+                Sign Up
+            </MudButton>
+
             <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"
                        Size="Size.Large"
@@ -45,14 +55,6 @@
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                 }
                 Sign in
-            </MudButton>
-
-            <MudButton Variant="Variant.Outlined"
-                       Color="Color.Secondary"
-                       Size="Size.Large"
-                       OnClick="HandleSignUpAsync"
-                       Disabled="@_isProcessing">
-                Sign Up
             </MudButton>
         </MudCardActions>
     </MudCard>
@@ -84,6 +86,7 @@
 
             Snackbar.Add($"Welcome, {loginResponse.Username}", Severity.Success);
 
+            await AuthStateProvider.MarkUserAsAuthenticated(_model.Username);
             NavigationManager.NavigateTo("/types");
         }
         catch (Exception ex)
