@@ -1,5 +1,5 @@
 ﻿@page "/"
-@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
 
 <PageTitle>Self finance - Home</PageTitle>
 
@@ -65,7 +65,7 @@
                            Color="Color.Primary"
                            Size="Size.Large"
                            StartIcon="@Icons.Material.Filled.Login"
-                           OnClick="@(() => Navigation.NavigateTo("/login"))">
+                           OnClick="@(() => NavigationManager.NavigateTo("/login"))">
                     Go to Login
                 </MudButton>
             </MudItem>

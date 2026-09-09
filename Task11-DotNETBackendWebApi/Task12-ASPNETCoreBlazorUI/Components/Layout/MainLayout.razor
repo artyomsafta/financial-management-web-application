@@ -1,4 +1,9 @@
 ﻿@inherits LayoutComponentBase
+@using Services.Contracts
+@using Task12_ASPNETCoreBlazorUI.Services
+@inject CustomAuthenticationStateProvider AuthStateProvider
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
 
 <MudThemeProvider />
 <MudPopoverProvider />
@@ -6,25 +11,59 @@
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar>
+    <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        Task12 - ASP.NET Core Blazor UI project
+        <MudText Typo="Typo.h6" Class="ml-3">Task12 - ASP.NET Core Blazor UI project</MudText>
+        
+        <MudSpacer />
+
+        <AuthorizeView>
+            <Authorized>
+                <MudMenu Icon="@Icons.Material.Filled.AccountCircle"
+                         Color="Color.Inherit"
+                         AnchorOrigin="Origin.BottomRight"
+                         TransformOrigin="Origin.TopRight">
+                    
+                    <div class="pa-4 d-flex flex-column align-center">
+                        <MudText Typo="Typo.body1" Class="mb-3 font-weight-bold">
+                            @context.User.Identity?.Name
+                        </MudText>
+                        
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   EndIcon="@Icons.Material.Filled.Logout"
+                                   OnClick="HandleLogout">
+                            LOGOUT
+                        </MudButton>
+                    </div>
+
+                </MudMenu>
+            </Authorized>
+        </AuthorizeView>
     </MudAppBar>
-    <MudDrawer @bind-Open="@_drawerOpen">
-        <MyNavMenu/>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+        <MyNavMenu />
     </MudDrawer>
+
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Medium">
-            @Body
-        </MudContainer>
+        @Body
     </MudMainContent>
 </MudLayout>
 
 @code {
-    bool _drawerOpen = true;
+    private bool _drawerOpen = true;
 
-    void DrawerToggle()
+    private void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthService.LogoutAsync();
+        await AuthStateProvider.MarkUserAsLoggedOut();
+
+        NavigationManager.NavigateTo("/");
     }
 }
