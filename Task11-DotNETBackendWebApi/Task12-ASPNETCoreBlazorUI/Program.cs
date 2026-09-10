@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Localization;
 using MudBlazor.Services;
+using System.Globalization;
 using Task12_ASPNETCoreBlazorUI.Components;
 using Task12_ASPNETCoreBlazorUI.Services;
 using Task12_ASPNETCoreBlazorUI.Services.Contracts;
@@ -38,6 +40,8 @@ public class Program
         builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
             sp.GetRequiredService<CustomAuthenticationStateProvider>());
 
+        builder.Services.AddLocalization();
+
         var app = builder.Build();
 
         if (!app.Environment.IsDevelopment())
@@ -45,6 +49,23 @@ public class Program
             app.UseExceptionHandler("/Error");
             app.UseHsts();
         }
+
+        var supportedCultures = new[]
+        {
+            new CultureInfo("uk-UA"),
+            new CultureInfo("uk"),
+            new CultureInfo("ru-RU"),
+            new CultureInfo("ru"),
+            new CultureInfo("en-US"),
+            new CultureInfo("en")
+        };
+
+        app.UseRequestLocalization(new RequestLocalizationOptions
+        {
+            DefaultRequestCulture = new RequestCulture("uk-UA"),
+            SupportedCultures = supportedCultures,
+            SupportedUICultures = supportedCultures
+        });
 
         app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
         app.UseHttpsRedirection();
