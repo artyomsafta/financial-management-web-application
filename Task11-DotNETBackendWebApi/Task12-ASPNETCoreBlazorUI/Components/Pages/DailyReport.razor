@@ -1,0 +1,148 @@
+﻿@page "/daily-report"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Sections
+@using Shared.Models.DTOs
+@using Task12_ASPNETCoreBlazorUI.Services.Contracts
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IAuthService AuthService
+
+<SectionContent SectionName="top-appbar-title">Daily Report</SectionContent>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-8">
+    <MudStack Spacing="6">
+        <MudPaper Class="pa-6" Elevation="3">
+
+            <MudGrid Spacing="4">
+                <MudItem xs="12" md="3">
+                    <MudStack Spacing="3">
+
+                        <MudDatePicker Label="Select a date:"
+                                       Date="_dailyDate"
+                                       DateChanged="OnDailyDateChanged"
+                                       Disabled="_isDailyLoading"
+                                       Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       IconSize="Size.Small"
+                                       Margin="Margin.Dense" />
+
+                        <MudPaper Class="pa-3" Style="background-color: var(--mud-palette-background-grey);" Elevation="0">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Total Income
+                            </MudText>
+                            <MudText Typo="Typo.h6" Color="Color.Success">
+                                @(_dailyReport?.TotalIncome.ToString("N2") ?? "0.00")
+                            </MudText>
+                        </MudPaper>
+
+                        <MudPaper Class="pa-3" Style="background-color: var(--mud-palette-background-grey);" Elevation="0">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Total Expenses
+                            </MudText>
+                            <MudText Typo="Typo.h6" Color="Color.Error">
+                                @(_dailyReport?.TotalExpenses.ToString("N2") ?? "0.00")
+                            </MudText>
+                        </MudPaper>
+
+                        <MudPaper Class="pa-3" Style="background-color: var(--mud-palette-background-grey);" Elevation="0">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Net Result (Income - Expenses)
+                            </MudText>
+                            <MudText Typo="Typo.h6" Color="@((_dailyReport?.NetResult ?? 0) >= 0 ? Color.Info : Color.Error)">
+                                @(_dailyReport?.NetResult.ToString("N2") ?? "0.00")
+                            </MudText>
+                        </MudPaper>
+                    </MudStack>
+                </MudItem>
+
+                <MudItem xs="12" md="9">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2" Style="font-weight: 500;">
+                        List of operations for the date:
+                    </MudText>
+
+                    <MudTable Items="_dailyReport?.Operations"
+                              Loading="_isDailyLoading"
+                              Dense="true" Hover="true" Striped="true" Elevation="1">
+                        <HeaderContent>
+                            <MudTh>Time</MudTh>
+                            <MudTh>Type</MudTh>
+                            <MudTh>Wallet</MudTh>
+                            <MudTh>Amount</MudTh>
+                        </HeaderContent>
+
+                        <RowTemplate>
+                            <MudTd DataLabel="Time">@context.Date.ToString("HH:mm")</MudTd>
+                            <MudTd DataLabel="Type">@context.Type?.Name</MudTd>
+                            <MudTd DataLabel="Wallet">@context.Wallet?.Name</MudTd>
+                            <MudTd DataLabel="Amount">
+                                <MudText Color="@(context.Amount >= 0 ? Color.Success : Color.Error)">
+                                    @context.Amount.ToString("N2")
+                                </MudText>
+                            </MudTd>
+                        </RowTemplate>
+
+                        <PagerContent>
+                            <MudTablePager PageSizeOptions="new int[] { 5, 10 }" />
+                        </PagerContent>
+                    </MudTable>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>        
+    </MudStack>
+</MudContainer>
+
+@code {
+    private DateTime? _dailyDate = DateTime.Today;
+    private ReportDto? _dailyReport;
+    private bool _isDailyLoading;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadDailyReportAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnDailyDateChanged(DateTime? newDate)
+    {
+        _dailyDate = newDate;
+        await LoadDailyReportAsync();
+    }
+
+    private async Task LoadDailyReportAsync()
+    {
+        if (!_dailyDate.HasValue)
+            return;
+
+        _isDailyLoading = true;
+
+        try
+        {
+            var client = await AuthService.CreateAuthenticatedClientAsync();
+
+            var dateStr = _dailyDate.Value.ToString("yyyy-MM-dd");
+
+            var response = await client.GetAsync($"Reports/daily?date={dateStr}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                _dailyReport = await response.Content.ReadFromJsonAsync<ReportDto>();
+            }
+            else
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                Snackbar.Add(!string.IsNullOrWhiteSpace(errorText) ? errorText : "Server error", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading daily report: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isDailyLoading = false;
+        }
+    }    
+}

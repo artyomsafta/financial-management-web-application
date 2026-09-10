@@ -9,9 +9,11 @@
                 <MudNavLink Href="/types" Match="NavLinkMatch.Prefix">Financial Types</MudNavLink>
                 <MudNavLink Href="/wallets" Match="NavLinkMatch.Prefix">Wallets</MudNavLink>
                 <MudNavLink Href="/operations" Match="NavLinkMatch.Prefix">Financial Operations</MudNavLink>
-                <MudNavLink Href="/reports" Match="NavLinkMatch.Prefix">Reports</MudNavLink>
+            </MudNavGroup>
+            <MudNavGroup Title="Reports" Expanded="true">
+                <MudNavLink Href="/daily-report" Match="NavLinkMatch.Prefix">Daily</MudNavLink>
+                <MudNavLink Href="/period-report" Match="NavLinkMatch.Prefix">Period</MudNavLink>
             </MudNavGroup>
         </Authorized>
     </AuthorizeView>
 </MudNavMenu>
-

@@ -1,9 +1,12 @@
 ﻿@page "/register"
+@using Microsoft.AspNetCore.Components.Sections
 @using Shared.Models
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @inject NavigationManager NavigationManager
 @inject IUserService UserService
 @inject ISnackbar Snackbar
+
+<SectionContent SectionName="top-appbar-title">Register</SectionContent>
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
     <MudCard Elevation="4" Class="pa-6 rounded-lg">

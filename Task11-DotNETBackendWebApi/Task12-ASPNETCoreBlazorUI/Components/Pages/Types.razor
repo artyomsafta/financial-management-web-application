@@ -1,5 +1,6 @@
 ﻿@page "/types"
 @attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Sections
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
@@ -7,6 +8,8 @@
 @inject IFinancialTypeService FinancialTypeService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+
+<SectionContent SectionName="top-appbar-title">Financial Types</SectionContent>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
     <MudText Typo="Typo.h4" Class="mb-4">Financial types</MudText>
