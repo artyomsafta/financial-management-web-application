@@ -4,8 +4,7 @@
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @inject ISnackbar Snackbar
-@inject IDialogService DialogService
-@inject IAuthService AuthService
+@inject IReportService ReportService
 
 <SectionContent SectionName="top-appbar-title">Period Report</SectionContent>
 
@@ -136,22 +135,7 @@
 
         try
         {
-            var client = await AuthService.CreateAuthenticatedClientAsync();
-
-            var startStr = _startDate.Value.ToString("yyyy-MM-dd");
-            var endStr = _endDate.Value.ToString("yyyy-MM-dd");
-
-            var response = await client.GetAsync($"Reports/period?startDate={startStr}&endDate={endStr}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                _periodReport = await response.Content.ReadFromJsonAsync<ReportDto>();
-            }
-            else
-            {
-                var errorText = await response.Content.ReadAsStringAsync();
-                Snackbar.Add(!string.IsNullOrWhiteSpace(errorText) ? errorText : "Server error", Severity.Error);
-            }
+            _periodReport = await ReportService.GetPeriodReportAsync(_startDate.Value, _endDate.Value);
         }
         catch (Exception ex)
         {

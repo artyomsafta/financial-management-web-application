@@ -23,7 +23,7 @@ public class UserService : IUserService
 
     public async Task<UserDto> GetByIdAsync(Guid id)
     {
-        return await _httpService.GetByIdAsync<UserDto>($"{_usersUri}/{id}");
+        return await _httpService.GetAsync<UserDto>($"{_usersUri}/{id}");
     }
 
     public async Task<ApiResponseDto> CreateAsync(UserRegisterRequest request)

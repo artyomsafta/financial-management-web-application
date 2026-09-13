@@ -4,8 +4,7 @@
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @inject ISnackbar Snackbar
-@inject IDialogService DialogService
-@inject IAuthService AuthService
+@inject IReportService ReportService
 
 <SectionContent SectionName="top-appbar-title">Daily Report</SectionContent>
 
@@ -120,21 +119,7 @@
 
         try
         {
-            var client = await AuthService.CreateAuthenticatedClientAsync();
-
-            var dateStr = _dailyDate.Value.ToString("yyyy-MM-dd");
-
-            var response = await client.GetAsync($"Reports/daily?date={dateStr}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                _dailyReport = await response.Content.ReadFromJsonAsync<ReportDto>();
-            }
-            else
-            {
-                var errorText = await response.Content.ReadAsStringAsync();
-                Snackbar.Add(!string.IsNullOrWhiteSpace(errorText) ? errorText : "Server error", Severity.Error);
-            }
+            _dailyReport = await ReportService.GetDailyReportAsync(_dailyDate.Value);
         }
         catch (Exception ex)
         {

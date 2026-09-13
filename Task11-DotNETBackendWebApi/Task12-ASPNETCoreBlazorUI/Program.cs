@@ -26,6 +26,7 @@ public class Program
         builder.Services.AddScoped<IFinancialTypeService, FinancialTypeService>();
         builder.Services.AddScoped<IWalletService, WalletService>();
         builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IReportService, ReportService>();
 
         builder.Services.AddHttpClient("Api", client =>
         {
