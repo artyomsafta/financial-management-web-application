@@ -5,6 +5,7 @@ using System.Globalization;
 using Task12_ASPNETCoreBlazorUI.Components;
 using Task12_ASPNETCoreBlazorUI.Services;
 using Task12_ASPNETCoreBlazorUI.Services.Contracts;
+using Task12_ASPNETCoreBlazorUI.Services.MockServices;
 
 namespace Task12_ASPNETCoreBlazorUI;
 
@@ -26,7 +27,10 @@ public class Program
         builder.Services.AddScoped<IFinancialTypeService, FinancialTypeService>();
         builder.Services.AddScoped<IWalletService, WalletService>();
         builder.Services.AddScoped<IUserService, UserService>();
-        builder.Services.AddScoped<IReportService, ReportService>();
+        //builder.Services.AddScoped<IReportService, ReportService>();
+
+        //builder.Services.AddScoped<IUserService, MockUserService>();
+        builder.Services.AddScoped<IReportService, MockReportService>();
 
         builder.Services.AddHttpClient("Api", client =>
         {

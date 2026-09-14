@@ -14,15 +14,15 @@ public class ReportService : IReportService
         _authService = authService;
     }
 
-    public Task<ReportDto> GetPeriodReportAsync(DateTime startDate, DateTime endDate)
-    {
-        var uri = $"{_periodReportsUri}?startDate={DateToString(startDate)}&endDate={DateToString(endDate)}";
-        return GetReportAsync(uri);
-    }
-
     public Task<ReportDto> GetDailyReportAsync(DateTime date)
     {
         var uri = $"{_dailyReportsUri}?date={DateToString(date)}";
+        return GetReportAsync(uri);
+    }
+
+    public Task<ReportDto> GetPeriodReportAsync(DateTime startDate, DateTime endDate)
+    {
+        var uri = $"{_periodReportsUri}?startDate={DateToString(startDate)}&endDate={DateToString(endDate)}";
         return GetReportAsync(uri);
     }
 

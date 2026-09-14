@@ -5,108 +5,38 @@
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @using Task12_ASPNETCoreBlazorUI.Models
+@using Task12_ASPNETCoreBlazorUI.Components.Common
 @inject IUserService UserService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
 <SectionContent SectionName="top-appbar-title">Users</SectionContent>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
-    <MudText Typo="Typo.h4" Class="mb-4">Users</MudText>
-    <MudText Typo="Typo.body1" Class="mb-6" Color="Color.Secondary">
-        CRUD for users.
-    </MudText>
-
-    @if (_usersList == null)
-    {
-        <MudStack Spacing="4">
-            <MudSkeleton Width="40%" Height="20px" />
-            <MudSkeleton Width="100%" Height="56px" SkeletonType="SkeletonType.Rectangle" Class="rounded" />
-
-            <MudGrid Spacing="2" Class="mt-2">
-                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
-                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
-                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
-            </MudGrid>
-        </MudStack>
-    }
-    else
-    {
-        <MudStack Spacing="6">
-
-            <MudSelect T="UserDto"
-                       Label="Select a user:"
-                       Variant="Variant.Outlined"
-                       @bind-Value="_selectedUser"
-                       ToStringFunc="@(u => u == null ? "" : $"{u.Username}")">
-
-                @foreach (var user in _usersList)
-                {
-                    <MudSelectItem Value="@user" />
-                }
-            </MudSelect>
-
-            <MudGrid Spacing="2" Justify="Justify.Center">
-
-                <MudItem xs="4">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Add"
-                               OnClick="OnCreateClick">
-                        Create
-                    </MudButton>
-                </MudItem>
-
-                <MudItem xs="4">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Warning"
-                               FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Edit"
-                               Disabled="@(_selectedUser == null)"
-                               OnClick="OnEditClick">
-                        Edit
-                    </MudButton>
-                </MudItem>
-
-                <MudItem xs="4">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Error"
-                               FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Delete"
-                               Disabled="@(_selectedUser == null)"
-                               OnClick="OnDeleteClick">
-                        Delete
-                    </MudButton>
-                </MudItem>
-
-            </MudGrid>
-
-            @if (_selectedUser != null)
-            {
-                <MudPaper Class="pa-4 mt-4" Elevation="1">
-                    <MudText Typo="Typo.subtitle2">Username:</MudText>
-                    <MudText Typo="Typo.caption" Class="mt-2">@_selectedUser.Username</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Role:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedUser.Role</MudText>
-                </MudPaper>
-            }
-
-        </MudStack>
-    }
-</MudContainer>
+<GenericPageLayout TItem="UserDto"
+                IsLoading="@(_usersList == null)"
+                Items="@_usersList"
+                @bind-SelectedItem="_selectedUser"
+                OnCreate="OnCreateClick"
+                OnEdit="OnEditClick"
+                OnDelete="OnDeleteClick">
+    <HeaderContent>
+        <MudTh>Username</MudTh>
+        <MudTh>Role</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Username">@context.Username</MudTd>
+        <MudTd DataLabel="Role">@context.Role</MudTd>
+    </RowTemplate>
+</GenericPageLayout>
 
 @code {
     private List<UserDto>? _usersList;
     private UserDto? _selectedUser;
-    private bool _isFirstRender = true;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            _isFirstRender = false;
-
             await RefreshListAsync();
         }
     }
@@ -116,8 +46,8 @@
         try
         {
             _usersList = await UserService.GetListAsync();
-
             _selectedUser = null;
+
             StateHasChanged();
         }
         catch (Exception ex)
