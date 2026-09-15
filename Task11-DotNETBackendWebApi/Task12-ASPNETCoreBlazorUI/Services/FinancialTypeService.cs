@@ -18,7 +18,9 @@ public class FinancialTypeService : IFinancialTypeService
 
     public async Task<List<FinancialTypeDto>> GetListAsync()
     {
-        return await _httpService.GetListAsync<FinancialTypeDto>($"{_finTypesListUri}");
+        return (await _httpService.GetListAsync<FinancialTypeDto>($"{_finTypesListUri}"))
+            .OrderBy(t => t.Name)
+            .ToList();
     }
 
     public async Task<FinancialTypeDto> GetByIdAsync(Guid id)

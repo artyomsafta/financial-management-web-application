@@ -18,7 +18,9 @@ public class WalletService : IWalletService
 
     public async Task<List<WalletDto>> GetListAsync()
     {
-        return await _httpService.GetListAsync<WalletDto>($"{_walletsListUri}");
+        return (await _httpService.GetListAsync<WalletDto>($"{_walletsListUri}"))
+            .OrderBy(w => w.User.Username)
+            .ToList();
     }
 
     public async Task<WalletDto> GetByIdAsync(Guid id)

@@ -18,7 +18,9 @@ public class UserService : IUserService
 
     public async Task<List<UserDto>> GetListAsync()
     {
-        return await _httpService.GetListAsync<UserDto>($"{_usersListUri}");
+        return (await _httpService.GetListAsync<UserDto>($"{_usersListUri}"))
+            .OrderBy(u => u.Username)
+            .ToList();
     }
 
     public async Task<UserDto> GetByIdAsync(Guid id)

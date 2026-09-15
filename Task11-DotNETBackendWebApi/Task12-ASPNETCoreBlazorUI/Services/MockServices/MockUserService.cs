@@ -22,7 +22,9 @@ public class MockUserService : IUserService
 
     public Task<List<UserDto>> GetListAsync()
     {
-        return Task.FromResult(_users.ToList());
+        return Task.FromResult(_users
+            .OrderBy(u => u.Username)
+            .ToList());
     }
 
     public Task<UserDto> GetByIdAsync(Guid id)

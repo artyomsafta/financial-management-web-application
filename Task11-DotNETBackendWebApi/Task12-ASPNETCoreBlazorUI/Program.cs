@@ -23,14 +23,23 @@ public class Program
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IHttpService, HttpService>();
 
+        //=== Real services for actual API calls (uncomment for actual API usage)
+        /*
         builder.Services.AddScoped<IFinancialOperationService, FinancialOperationService>();
         builder.Services.AddScoped<IFinancialTypeService, FinancialTypeService>();
         builder.Services.AddScoped<IWalletService, WalletService>();
         builder.Services.AddScoped<IUserService, UserService>();
-        //builder.Services.AddScoped<IReportService, ReportService>();
+        builder.Services.AddScoped<IReportService, ReportService>();
+        */
 
-        //builder.Services.AddScoped<IUserService, MockUserService>();
+        //=== Mock services for testing purposes
+        ///*
+        builder.Services.AddScoped<IFinancialOperationService, MockFinancialOperationService>();
+        builder.Services.AddScoped<IFinancialTypeService, MockFinancialTypeService>();
+        builder.Services.AddScoped<IWalletService, MockWalletService>();
+        builder.Services.AddScoped<IUserService, MockUserService>();
         builder.Services.AddScoped<IReportService, MockReportService>();
+        //*/
 
         builder.Services.AddHttpClient("Api", client =>
         {
