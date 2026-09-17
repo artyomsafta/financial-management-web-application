@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Localization;
 using MudBlazor.Services;
+using QuestPDF.Infrastructure;
 using System.Globalization;
 using Task12_ASPNETCoreBlazorUI.Components;
 using Task12_ASPNETCoreBlazorUI.Services;
@@ -13,6 +14,8 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        QuestPDF.Settings.License = LicenseType.Community;
+
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddRazorComponents()
@@ -22,24 +25,26 @@ public class Program
         builder.Services.AddScoped<TokenStore>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IHttpService, HttpService>();
+        builder.Services.AddTransient<PdfReportService>();
+        builder.Services.AddTransient<CsvExportService>();
 
-        //=== Real services for actual API calls (uncomment for actual API usage)
-        /*
+        //=== Real services for actual API calls
+        ///*
         builder.Services.AddScoped<IFinancialOperationService, FinancialOperationService>();
         builder.Services.AddScoped<IFinancialTypeService, FinancialTypeService>();
         builder.Services.AddScoped<IWalletService, WalletService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IReportService, ReportService>();
-        */
+        //*/
 
         //=== Mock services for testing purposes
-        ///*
+        /*
         builder.Services.AddScoped<IFinancialOperationService, MockFinancialOperationService>();
         builder.Services.AddScoped<IFinancialTypeService, MockFinancialTypeService>();
         builder.Services.AddScoped<IWalletService, MockWalletService>();
         builder.Services.AddScoped<IUserService, MockUserService>();
         builder.Services.AddScoped<IReportService, MockReportService>();
-        //*/
+        */
 
         builder.Services.AddHttpClient("Api", client =>
         {

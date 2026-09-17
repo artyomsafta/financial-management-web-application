@@ -2,9 +2,12 @@
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Components.Sections
 @using Shared.Models.DTOs
+@using Task12_ASPNETCoreBlazorUI.Services
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @inject ISnackbar Snackbar
 @inject IReportService ReportService
+@inject PdfReportService PdfService
+@inject IJSRuntime JS
 
 <SectionContent SectionName="top-appbar-title">Period Report</SectionContent>
 
@@ -60,6 +63,16 @@
                                 @(_periodReport?.NetResult.ToString("N2") ?? "0.00")
                             </MudText>
                         </MudPaper>
+
+                        <MudItem>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Success"
+                                       FullWidth="true"
+                                       StartIcon="@Icons.Material.Filled.Download"
+                                       OnClick="ExportToPdfAsync">
+                                Export to pdf
+                            </MudButton>
+                        </MudItem>
                     </MudStack>
                 </MudItem>
 
@@ -145,5 +158,16 @@
         {
             _isPeriodLoading = false;
         }
+    }
+
+    private async Task ExportToPdfAsync()
+    {    
+        byte[] pdfBytes = PdfService.GeneratePeriodReport(_periodReport);
+
+        using var stream = new MemoryStream(pdfBytes);
+        using var streamRef = new DotNetStreamReference(stream);
+
+        var fileName = $"Period_Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+        await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
     }
 }

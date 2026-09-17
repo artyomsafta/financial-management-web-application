@@ -3,22 +3,49 @@
 @using Microsoft.AspNetCore.Components.Sections
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
+@using Task12_ASPNETCoreBlazorUI.Services
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @using Task12_ASPNETCoreBlazorUI.Models
 @using Task12_ASPNETCoreBlazorUI.Components.Common
 @inject IFinancialOperationService FinancialOperationService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject CsvExportService CsvService
+@inject IJSRuntime JS
 
 <SectionContent SectionName="top-appbar-title">Financial operations</SectionContent>
 
 <GenericPageLayout TItem="FinancialOperationDto"
                 IsLoading="@(_operationsList == null)"
-                Items="@_operationsList"
+                Items="@_filteredOpList"
                 @bind-SelectedItem="_selectedOperation"
                 OnCreate="OnCreateClick"
                 OnEdit="OnEditClick"
                 OnDelete="OnDeleteClick">
+
+    <ExtraToolbarContent>
+        <MudItem xs="12" md="6">
+            <MudDateRangePicker Label="Select a period:"
+                                Variant="Variant.Outlined"
+                                Color="Color.Primary"
+                                IconSize="Size.Small"
+                                Margin="Margin.Dense"
+                                Clearable="true"
+                                DateRange="_dateRange"
+                                DateRangeChanged="OnDateRangeChanged" />
+        </MudItem>
+
+        <MudItem xs="12" md="6" Class="d-flex align-center">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Success"
+                       FullWidth="true"
+                       StartIcon="@Icons.Material.Filled.Download"
+                       OnClick="ExportToCsvAsync">
+                Export to CSV
+            </MudButton>
+        </MudItem>
+    </ExtraToolbarContent>
+
     <HeaderContent>
         <MudTh>Operation date</MudTh>
         <MudTh>Wallet</MudTh>
@@ -27,7 +54,7 @@
         <MudTh>Amount</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Operation date">@context.Date</MudTd>
+        <MudTd DataLabel="Operation date">@context.Date.ToString("dd.MM.yyyy HH:mm:ss")</MudTd>
         <MudTd DataLabel="Wallet">@context.Wallet.Name</MudTd>
         <MudTd DataLabel="Type">@context.Type.Name</MudTd>
         <MudTd DataLabel="Currency">@context.Currency.Code</MudTd>
@@ -41,7 +68,9 @@
 
 @code {
     private List<FinancialOperationDto>? _operationsList;
+    private List<FinancialOperationDto> _filteredOpList = new();
     private FinancialOperationDto? _selectedOperation;
+    private DateRange? _dateRange;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -57,6 +86,7 @@
         {
             _operationsList = await FinancialOperationService.GetListAsync();
             _selectedOperation = null;
+            ApplyFilter();
 
             StateHasChanged();
         }
@@ -64,7 +94,35 @@
         {
             Snackbar.Add($"List update error: {ex.Message}", Severity.Error);
             _operationsList = new List<FinancialOperationDto>();
+            _filteredOpList = new List<FinancialOperationDto>();
+
             StateHasChanged();
+        }
+    }
+
+    private void OnDateRangeChanged(DateRange? newRange)
+    {
+        _dateRange = newRange;
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        if (_operationsList is null) 
+            return;
+
+        if (_dateRange?.Start != null && _dateRange?.End != null)
+        {
+            var startDate = _dateRange.Start.Value.Date;
+            var endDate = _dateRange.End.Value.Date.AddDays(1).AddTicks(-1);
+
+            _filteredOpList = _operationsList
+                .Where(op => op.Date >= startDate && op.Date <= endDate)
+                .ToList();
+        }
+        else
+        {
+            _filteredOpList = _operationsList.ToList();
         }
     }
 
@@ -106,5 +164,22 @@
         {
             await RefreshListAsync();
         }
+    }
+
+    private async Task ExportToCsvAsync()
+    {
+        if (_filteredOpList is null || !_filteredOpList.Any())
+        {
+            Snackbar.Add("No data available to export", Severity.Warning);
+            return;
+        }
+
+        byte[] csvBytes = CsvService.GenerateOperationsCsv(_filteredOpList);
+
+        using var stream = new MemoryStream(csvBytes);
+        using var streamRef = new DotNetStreamReference(stream);
+
+        var fileName = $"Operations_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
     }
 }

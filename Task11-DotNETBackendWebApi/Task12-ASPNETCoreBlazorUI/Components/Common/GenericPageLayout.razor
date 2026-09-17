@@ -47,6 +47,13 @@
                 </MudItem>
             </MudGrid>
 
+            @if (ExtraToolbarContent != null)
+            {
+                <MudGrid Spacing="2" Class="align-center">
+                    @ExtraToolbarContent
+                </MudGrid>
+            }
+
             <MudTable Items="@Items"
                       Dense="true"
                       Hover="true"
@@ -92,6 +99,9 @@
     public RenderFragment HeaderContent { get; set; } = null!;
     [Parameter] 
     public RenderFragment<TItem> RowTemplate { get; set; } = null!;
+
+    [Parameter]
+    public RenderFragment? ExtraToolbarContent { get; set; }
 
     private string GetRowClass(TItem item, int _)
     {
