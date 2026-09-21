@@ -18,7 +18,7 @@ public class HttpService : IHttpService
         return await client.GetFromJsonAsync<List<T>>(requestUri) ?? new List<T>();
     }
 
-    public async Task<T?> GetByIdAsync<T>(string requestUri)
+    public async Task<T?> GetAsync<T>(string requestUri)
     {
         var client = await _authService.CreateAuthenticatedClientAsync();
         return await client.GetFromJsonAsync<T>($"{requestUri}");

@@ -1,0 +1,173 @@
+﻿@page "/period-report"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Sections
+@using Shared.Models.DTOs
+@using Task12_ASPNETCoreBlazorUI.Services
+@using Task12_ASPNETCoreBlazorUI.Services.Contracts
+@inject ISnackbar Snackbar
+@inject IReportService ReportService
+@inject PdfReportService PdfService
+@inject IJSRuntime JS
+
+<SectionContent SectionName="top-appbar-title">Period Report</SectionContent>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-8">
+    <MudStack Spacing="6">
+        <MudPaper Class="pa-6" Elevation="3">
+            <MudGrid Spacing="4">
+                <MudItem xs="12" md="3">
+                    <MudStack Spacing="3">
+                        <MudStack Row="true" Spacing="1" Class="align-center">
+                            <MudDatePicker Label="Start date:"
+                                           Date="_startDate"
+                                           DateChanged="OnStartDateChanged"
+                                           Disabled="_isPeriodLoading"
+                                           Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           IconSize="Size.Small"
+                                           Margin="Margin.Dense" />
+
+                            <MudDatePicker Label="End date:"
+                                           Date="_endDate"
+                                           DateChanged="OnEndDateChanged"
+                                           Disabled="_isPeriodLoading"
+                                           Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           IconSize="Size.Small"
+                                           Margin="Margin.Dense" />
+                        </MudStack>
+
+                        <MudPaper Class="pa-3" Style="background-color: var(--mud-palette-background-grey);" Elevation="0">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Total Income
+                            </MudText>
+                            <MudText Typo="Typo.h6" Color="Color.Success">
+                                @(_periodReport?.TotalIncome.ToString("N2") ?? "0.00")
+                            </MudText>
+                        </MudPaper>
+
+                        <MudPaper Class="pa-3" Style="background-color: var(--mud-palette-background-grey);" Elevation="0">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Total Expenses
+                            </MudText>
+                            <MudText Typo="Typo.h6" Color="Color.Error">
+                                @(_periodReport?.TotalExpenses.ToString("N2") ?? "0.00")
+                            </MudText>
+                        </MudPaper>
+
+                        <MudPaper Class="pa-3" Style="background-color: var(--mud-palette-background-grey);" Elevation="0">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Net Result (Income - Expenses)
+                            </MudText>
+                            <MudText Typo="Typo.h6" Color="@((_periodReport?.NetResult ?? 0) >= 0 ? Color.Info : Color.Error)">
+                                @(_periodReport?.NetResult.ToString("N2") ?? "0.00")
+                            </MudText>
+                        </MudPaper>
+
+                        <MudItem>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Success"
+                                       FullWidth="true"
+                                       StartIcon="@Icons.Material.Filled.Download"
+                                       OnClick="ExportToPdfAsync">
+                                Export to pdf
+                            </MudButton>
+                        </MudItem>
+                    </MudStack>
+                </MudItem>
+
+                <MudItem xs="12" md="9">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2" Style="font-weight: 500;">
+                        List of operations in the period:
+                    </MudText>
+
+                    <MudTable Items="_periodReport?.Operations"
+                              Loading="_isPeriodLoading"
+                              Dense="true" Hover="true" Striped="true" Elevation="1">
+                        <HeaderContent>
+                            <MudTh>Date</MudTh>
+                            <MudTh>Type</MudTh>
+                            <MudTh>Wallet</MudTh>
+                            <MudTh>Amount</MudTh>
+                        </HeaderContent>
+
+                        <RowTemplate>
+                            <MudTd DataLabel="Date">@context.Date.ToString("dd.MM.yyyy HH:mm")</MudTd>
+                            <MudTd DataLabel="Type">@context.Type?.Name</MudTd>
+                            <MudTd DataLabel="Wallet">@context.Wallet?.Name</MudTd>
+                            <MudTd DataLabel="Amount">
+                                <MudText Color="@(context.Amount >= 0 ? Color.Success : Color.Error)">
+                                    @context.Amount.ToString("N2")
+                                </MudText>
+                            </MudTd>
+                        </RowTemplate>
+
+                        <PagerContent>
+                            <MudTablePager PageSizeOptions="new int[] { 15, 10, 5 }" />
+                        </PagerContent>
+                    </MudTable>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </MudStack>
+</MudContainer>
+
+@code {
+    private DateTime? _startDate = DateTime.Today.AddDays(-30);
+    private DateTime? _endDate = DateTime.Today;
+    private ReportDto? _periodReport;
+    private bool _isPeriodLoading;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadPeriodReportAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnStartDateChanged(DateTime? newDate)
+    {
+        _startDate = newDate;
+        await LoadPeriodReportAsync();
+    }
+
+    private async Task OnEndDateChanged(DateTime? newDate)
+    {
+        _endDate = newDate;
+        await LoadPeriodReportAsync();
+    }
+
+    private async Task LoadPeriodReportAsync()
+    {
+        if (!_startDate.HasValue || !_endDate.HasValue)
+            return;
+
+        _isPeriodLoading = true;
+
+        try
+        {
+            _periodReport = await ReportService.GetPeriodReportAsync(_startDate.Value, _endDate.Value);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading period report: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isPeriodLoading = false;
+        }
+    }
+
+    private async Task ExportToPdfAsync()
+    {    
+        byte[] pdfBytes = PdfService.GeneratePeriodReport(_periodReport);
+
+        using var stream = new MemoryStream(pdfBytes);
+        using var streamRef = new DotNetStreamReference(stream);
+
+        var fileName = $"Period_Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+        await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+    }
+}

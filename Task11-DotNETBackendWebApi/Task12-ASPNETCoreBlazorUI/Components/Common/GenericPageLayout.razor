@@ -1,0 +1,110 @@
+﻿@typeparam TItem
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    @if (IsLoading)
+    {
+        <MudStack Spacing="4">
+            <MudGrid Spacing="2">
+                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
+                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
+                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
+            </MudGrid>
+            <MudSkeleton Width="100%" Height="300px" SkeletonType="SkeletonType.Rectangle" Class="rounded" />
+        </MudStack>
+    }
+    else
+    {
+        <MudStack Spacing="4">
+            @if (ExtraToolbarContent != null)
+            {
+                <MudGrid Spacing="2" Class="align-center">
+                    @ExtraToolbarContent
+                </MudGrid>
+            }
+
+            <MudGrid Spacing="2" Justify="Justify.Center">
+                <MudItem xs="4">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="OnCreate">
+                        Create
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Edit"
+                               Disabled="@(SelectedItem == null)"
+                               OnClick="OnEdit">
+                        Edit
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Error"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Delete"
+                               Disabled="@(SelectedItem == null)"
+                               OnClick="OnDelete">
+                        Delete
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+
+            <MudTable Items="@Items"
+                      Dense="true"
+                      Hover="true"
+                      Striped="true"
+                      Elevation="1"
+                      SelectOnRowClick="true"
+                      RowClassFunc="GetRowClass"
+                      SelectedItem="@SelectedItem"
+                      SelectedItemChanged="SelectedItemChanged">
+                <HeaderContent>
+                    @HeaderContent
+                </HeaderContent>
+                <RowTemplate>
+                    @RowTemplate(context)
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 15, 10, 5 }" />
+                </PagerContent>
+            </MudTable>
+        </MudStack>
+    }
+</MudContainer>
+
+@code {
+    [Parameter] 
+    public bool IsLoading { get; set; }
+    [Parameter] 
+    public IEnumerable<TItem>? Items { get; set; }
+
+    [Parameter] 
+    public TItem? SelectedItem { get; set; }
+    [Parameter] 
+    public EventCallback<TItem?> SelectedItemChanged { get; set; }
+
+    [Parameter] 
+    public EventCallback OnCreate { get; set; }
+    [Parameter] 
+    public EventCallback OnEdit { get; set; }
+    [Parameter] 
+    public EventCallback OnDelete { get; set; }
+
+    [Parameter] 
+    public RenderFragment HeaderContent { get; set; } = null!;
+    [Parameter] 
+    public RenderFragment<TItem> RowTemplate { get; set; } = null!;
+
+    [Parameter]
+    public RenderFragment? ExtraToolbarContent { get; set; }
+
+    private string GetRowClass(TItem item, int _)
+    {
+        return EqualityComparer<TItem>.Default.Equals(item, SelectedItem) ? "selected-row" : string.Empty;
+    }
+}

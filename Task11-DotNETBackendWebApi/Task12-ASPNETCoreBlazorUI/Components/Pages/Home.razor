@@ -1,7 +1,9 @@
 ﻿@page "/"
-@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Sections
+@inject NavigationManager NavigationManager
 
 <PageTitle>Self finance - Home</PageTitle>
+<SectionContent SectionName="top-appbar-title">Homepage</SectionContent>
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-12 mb-12">
     <MudPaper Class="pa-8 pa-md-12 rounded-xl" Elevation="4">
@@ -13,21 +15,18 @@
                         <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet"
                                  Color="Color.Primary"
                                  Size="Size.Large" />
-                        <MudText Typo="Typo.h3" Style="font-weight: 700;">
-                            Financial application
+                        <MudText Typo="Typo.h4" Style="font-weight: 700;">
+                            Smart Cash Flow & Expenses Tracking
                         </MudText>
                     </div>
-
-                    <MudText Typo="Typo.h6" Color="Color.Secondary" Style="font-weight: 400;">
-                        Blazor UI Frontend for .NET Web API
-                    </MudText>
 
                     <MudDivider Class="my-3" />
 
                     <MudText Typo="Typo.body1" Class="text-secondary" Style="line-height: 1.6;">
-                        Welcome to the application of managing self finance. This frontend is built with
-                        <b>Blazor</b> and <b>MudBlazor</b> to provide a fast, responsive, and secure UI
-                        for tracking your income, expenses, and analytics.
+                        Take full control of your finances with a centralized workspace built for clarity and speed. 
+                        Easily track daily transactions, manage multiple wallets across currencies, and categorize every cash flow. 
+                        Analyze your financial health using interactive reports and instantly export comprehensive summaries for 
+                        accurate record-keeping.
                     </MudText>
                 </MudStack>
             </MudItem>
@@ -38,7 +37,7 @@
                         <MudPaper Class="pa-4 d-flex flex-column align-center text-center rounded-lg" Elevation="0" Style="background-color: var(--mud-palette-background-grey);">
                             <MudIcon Icon="@Icons.Material.Filled.Category" Color="Color.Primary" Class="mb-2" />
                             <MudText Typo="Typo.subtitle2">Financial Types</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Manage categories for income and expenses</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Categorize income streams and expense categories for complete visibility.</MudText>
                         </MudPaper>
                     </MudItem>
 
@@ -46,7 +45,7 @@
                         <MudPaper Class="pa-4 d-flex flex-column align-center text-center rounded-lg" Elevation="0" Style="background-color: var(--mud-palette-background-grey);">
                             <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Color="Color.Success" Class="mb-2" />
                             <MudText Typo="Typo.subtitle2">Operations</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Track transactions in real-time</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Record, filter, and review transactions with multi-currency support.</MudText>
                         </MudPaper>
                     </MudItem>
 
@@ -54,7 +53,7 @@
                         <MudPaper Class="pa-4 d-flex flex-column align-center text-center rounded-lg" Elevation="0" Style="background-color: var(--mud-palette-background-grey);">
                             <MudIcon Icon="@Icons.Material.Filled.Assessment" Color="Color.Info" Class="mb-2" />
                             <MudText Typo="Typo.subtitle2">Reports</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Daily & period analytics with pagination</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Analyze financial metrics with custom date ranges and instant PDF/CSV exports.</MudText>
                         </MudPaper>
                     </MudItem>
                 </MudGrid>
@@ -65,7 +64,7 @@
                            Color="Color.Primary"
                            Size="Size.Large"
                            StartIcon="@Icons.Material.Filled.Login"
-                           OnClick="@(() => Navigation.NavigateTo("/login"))">
+                           OnClick="@(() => NavigationManager.NavigateTo("/login"))">
                     Go to Login
                 </MudButton>
             </MudItem>

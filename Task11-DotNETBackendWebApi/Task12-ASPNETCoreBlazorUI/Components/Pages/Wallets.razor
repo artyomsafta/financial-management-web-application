@@ -1,110 +1,44 @@
 ﻿@page "/wallets"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Sections
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @using Task12_ASPNETCoreBlazorUI.Models
+@using Task12_ASPNETCoreBlazorUI.Components.Common
 @inject IWalletService WalletService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
-    <MudText Typo="Typo.h4" Class="mb-4">Wallets</MudText>
-    <MudText Typo="Typo.body1" Class="mb-6" Color="Color.Secondary">
-        CRUD for wallets.
-    </MudText>
+<SectionContent SectionName="top-appbar-title">Wallets</SectionContent>
 
-    @if (_walletsList == null)
-    {
-        <MudStack Spacing="4">
-            <MudSkeleton Width="40%" Height="20px" />
-            <MudSkeleton Width="100%" Height="56px" SkeletonType="SkeletonType.Rectangle" Class="rounded" />
-
-            <MudGrid Spacing="2" Class="mt-2">
-                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
-                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
-                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
-            </MudGrid>
-        </MudStack>
-    }
-    else
-    {
-        <MudStack Spacing="6">
-
-            <MudSelect T="WalletDto"
-                       Label="Select a wallet:"
-                       Variant="Variant.Outlined"
-                       @bind-Value="_selectedWallet"
-                       ToStringFunc="@(w => w == null ? "" : $"{w.Name}")">
-
-                @foreach (var wallet in _walletsList)
-                {
-                    <MudSelectItem Value="@wallet" />
-                }
-            </MudSelect>
-
-            <MudGrid Spacing="2" Justify="Justify.Center">
-
-                <MudItem xs="4">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Add"
-                               OnClick="OnCreateClick">
-                        Create
-                    </MudButton>
-                </MudItem>
-
-                <MudItem xs="4">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Warning"
-                               FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Edit"
-                               Disabled="@(_selectedWallet == null)"
-                               OnClick="OnEditClick">
-                        Edit
-                    </MudButton>
-                </MudItem>
-
-                <MudItem xs="4">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Error"
-                               FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Delete"
-                               Disabled="@(_selectedWallet == null)"
-                               OnClick="OnDeleteClick">
-                        Delete
-                    </MudButton>
-                </MudItem>
-
-            </MudGrid>
-
-            @if (_selectedWallet != null)
-            {
-                <MudPaper Class="pa-4 mt-4" Elevation="1">
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Wallet name:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedWallet.Name</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Owner:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedWallet.User.Username</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Wallet currency:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedWallet.BaseCurrency.Code</MudText>
-                </MudPaper>
-            }
-
-        </MudStack>
-    }
-</MudContainer>
+<GenericPageLayout TItem="WalletDto"
+                IsLoading="@(_walletsList == null)"
+                Items="@_walletsList"
+                @bind-SelectedItem="_selectedWallet"
+                OnCreate="OnCreateClick"
+                OnEdit="OnEditClick"
+                OnDelete="OnDeleteClick">
+    <HeaderContent>
+        <MudTh>Owner's name</MudTh>
+        <MudTh>Wallet</MudTh>
+        <MudTh>Wallet's currency</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Owner's name">@context.User.Username</MudTd>
+        <MudTd DataLabel="Wallet">@context.Name</MudTd>
+        <MudTd DataLabel="Wallet's currency">@context.BaseCurrency.Code</MudTd>
+    </RowTemplate>
+</GenericPageLayout>
 
 @code {
     private List<WalletDto>? _walletsList;
     private WalletDto? _selectedWallet;
-    private bool _isFirstRender = true;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            _isFirstRender = false;
-
             await RefreshListAsync();
         }
     }
@@ -114,8 +48,8 @@
         try
         {
             _walletsList = await WalletService.GetListAsync();
-
             _selectedWallet = null;
+
             StateHasChanged();
         }
         catch (Exception ex)

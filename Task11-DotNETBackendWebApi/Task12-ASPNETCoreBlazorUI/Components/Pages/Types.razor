@@ -1,110 +1,44 @@
 ﻿@page "/types"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Sections
 @using Shared.Models.DTOs
 @using Task12_ASPNETCoreBlazorUI.Components.Dialogs
 @using Task12_ASPNETCoreBlazorUI.Services.Contracts
 @using Task12_ASPNETCoreBlazorUI.Models
+@using Task12_ASPNETCoreBlazorUI.Components.Common
 @inject IFinancialTypeService FinancialTypeService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
-    <MudText Typo="Typo.h4" Class="mb-4">Financial types</MudText>
-    <MudText Typo="Typo.body1" Class="mb-6" Color="Color.Secondary">
-        CRUD for financial types.
-    </MudText>
+<SectionContent SectionName="top-appbar-title">Financial Types</SectionContent>
 
-    @if (_typesList == null)
-    {
-        <MudStack Spacing="4">
-            <MudSkeleton Width="40%" Height="20px" />
-            <MudSkeleton Width="100%" Height="56px" SkeletonType="SkeletonType.Rectangle" Class="rounded" />
-
-            <MudGrid Spacing="2" Class="mt-2">
-                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
-                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
-                <MudItem xs="4"><MudSkeleton Width="100%" Height="40px" SkeletonType="SkeletonType.Rectangle" Class="rounded" /></MudItem>
-            </MudGrid>
-        </MudStack>
-    }
-    else
-    {
-        <MudStack Spacing="6">
-
-            <MudSelect T="FinancialTypeDto"
-                       Label="Select a financial type:"
-                       Variant="Variant.Outlined"
-                       @bind-Value="_selectedType"
-                       ToStringFunc="@(t => t == null ? "" : $"{t.Name}")">
-
-                @foreach (var type in _typesList)
-                {
-                    <MudSelectItem Value="@type" />
-                }
-            </MudSelect>
-
-            <MudGrid Spacing="2" Justify="Justify.Center">
-
-                <MudItem xs="4">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Add"
-                               OnClick="OnCreateClick">
-                        Create
-                    </MudButton>
-                </MudItem>
-
-                <MudItem xs="4">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Warning"
-                               FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Edit"
-                               Disabled="@(_selectedType == null)"
-                               OnClick="OnEditClick">
-                        Edit
-                    </MudButton>
-                </MudItem>
-
-                <MudItem xs="4">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Error"
-                               FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Delete"
-                               Disabled="@(_selectedType == null)"
-                               OnClick="OnDeleteClick">
-                        Delete
-                    </MudButton>
-                </MudItem>
-
-            </MudGrid>
-
-            @if (_selectedType != null)
-            {
-                <MudPaper Class="pa-4 mt-4" Elevation="1">
-                    <MudText Typo="Typo.subtitle2">Type name:</MudText>
-                    <MudText Typo="Typo.caption" Class="mt-2">@_selectedType.Name</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Description:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedType.Description</MudText>
-                    <MudText Typo="Typo.subtitle2" Class="mt-2">Is Income:</MudText>
-                    <MudText Typo="Typo.body2">@_selectedType.IsIncome</MudText>
-                </MudPaper>
-            }
-
-        </MudStack>
-    }
-</MudContainer>
+<GenericPageLayout TItem="FinancialTypeDto"
+                IsLoading="@(_typesList == null)"
+                Items="@_typesList"
+                @bind-SelectedItem="_selectedType"
+                OnCreate="OnCreateClick"
+                OnEdit="OnEditClick"
+                OnDelete="OnDeleteClick">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Is income</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Description">@context.Description</MudTd>
+        <MudTd DataLabel="Is income">@context.IsIncome</MudTd>
+    </RowTemplate>
+</GenericPageLayout>
 
 @code {
     private List<FinancialTypeDto>? _typesList;
     private FinancialTypeDto? _selectedType;
-    private bool _isFirstRender = true;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            _isFirstRender = false;
-
             await RefreshListAsync();
         }        
     }
@@ -114,8 +48,8 @@
         try
         {
             _typesList = await FinancialTypeService.GetListAsync();
-
             _selectedType = null;
+
             StateHasChanged();
         }
         catch (Exception ex)
