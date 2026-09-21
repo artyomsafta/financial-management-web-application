@@ -15,6 +15,13 @@
     else
     {
         <MudStack Spacing="4">
+            @if (ExtraToolbarContent != null)
+            {
+                <MudGrid Spacing="2" Class="align-center">
+                    @ExtraToolbarContent
+                </MudGrid>
+            }
+
             <MudGrid Spacing="2" Justify="Justify.Center">
                 <MudItem xs="4">
                     <MudButton Variant="Variant.Filled"
@@ -27,7 +34,7 @@
                 </MudItem>
                 <MudItem xs="4">
                     <MudButton Variant="Variant.Filled"
-                               Color="Color.Warning"
+                               Color="Color.Primary"
                                FullWidth="true"
                                StartIcon="@Icons.Material.Filled.Edit"
                                Disabled="@(SelectedItem == null)"
@@ -46,13 +53,6 @@
                     </MudButton>
                 </MudItem>
             </MudGrid>
-
-            @if (ExtraToolbarContent != null)
-            {
-                <MudGrid Spacing="2" Class="align-center">
-                    @ExtraToolbarContent
-                </MudGrid>
-            }
 
             <MudTable Items="@Items"
                       Dense="true"
