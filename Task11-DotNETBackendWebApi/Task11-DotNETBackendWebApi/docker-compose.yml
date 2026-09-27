@@ -4,14 +4,14 @@ services:
     container_name: mssql_db
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=__REMOVED_SQL_PASSWORD__
+      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:?MSSQL_SA_PASSWORD must be set}
       - MSSQL_PID=Developer
     ports:
       - "1433:1433"
     volumes:
       - mssql_data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P __REMOVED_SQL_PASSWORD__ -C -Q 'SELECT 1'"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${MSSQL_SA_PASSWORD} -C -Q 'SELECT 1'"]
       interval: 10s 
       timeout: 5s
       retries: 10
@@ -24,7 +24,10 @@ services:
       - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=Task11Db;User Id=sa;Password=__REMOVED_SQL_PASSWORD__;TrustServerCertificate=True
+      - ConnectionStrings__DefaultConnection=Server=db;Database=Task11Db;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      - Jwt__Key=${JWT_KEY:?JWT_KEY must be set}
+      - BootstrapAdmin__Username=${BOOTSTRAP_ADMIN_USERNAME:-}
+      - BootstrapAdmin__Password=${BOOTSTRAP_ADMIN_PASSWORD:-}
     depends_on:
       db:
         condition: service_healthy

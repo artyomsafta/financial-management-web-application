@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
 
@@ -16,12 +17,13 @@ public class ClassDbSeederUnitTests
 
         using (var context = new AppDbContext(options))
         {
-            var emptyDbSeeder = new DbSeeder(context);
+            var configuration = new ConfigurationBuilder().Build();
+            var emptyDbSeeder = new DbSeeder(context, configuration);
             emptyDbSeeder.Seed();
 
             Assert.AreEqual(4, context.FinancialTypes.Count());
             Assert.AreEqual(5, context.Currencies.Count());
-            Assert.AreEqual(1, context.Users.Count());
+            Assert.AreEqual(0, context.Users.Count());
         }
     }
 
@@ -55,7 +57,8 @@ public class ClassDbSeederUnitTests
 
             context.SaveChanges();
 
-            var dbWithDataSeeder = new DbSeeder(context);
+            var configuration = new ConfigurationBuilder().Build();
+            var dbWithDataSeeder = new DbSeeder(context, configuration);
             dbWithDataSeeder.Seed();
 
             Assert.AreEqual(1, context.FinancialTypes.Count());

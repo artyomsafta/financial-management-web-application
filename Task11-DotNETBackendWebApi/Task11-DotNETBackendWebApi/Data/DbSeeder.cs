@@ -7,10 +7,12 @@ namespace Task11_DotNETBackendWebApi.Data;
 public class DbSeeder
 {
     private readonly AppDbContext _context;
+    private readonly IConfiguration _configuration;
 
-    public DbSeeder(AppDbContext context)
+    public DbSeeder(AppDbContext context, IConfiguration configuration)
     {
         _context = context;
+        _configuration = configuration;
     }
 
     public void Seed()
@@ -45,14 +47,22 @@ public class DbSeeder
 
         if (!_context.Users.Any())
         {
+            var username = _configuration["BootstrapAdmin:Username"];
+            var password = _configuration["BootstrapAdmin:Password"];
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                return;
+            }
+
             var hasher = new PasswordHasher<User>();
             var adminUser = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__",
+                Username = username,
                 Role = UserRoles.Admin
             };
-            adminUser.PasswordHash = hasher.HashPassword(adminUser, "__REMOVED_BOOTSTRAP_ADMIN_PASSWORD__");
+            adminUser.PasswordHash = hasher.HashPassword(adminUser, password);
 
             _context.Users.Add(adminUser);
             _context.SaveChanges();
