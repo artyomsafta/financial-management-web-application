@@ -1,7 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
+using Shared.Models;
 
 namespace Task11_DotNETBackendWebApiUnitTests;
 
@@ -67,3 +68,4 @@ public class ClassDbSeederUnitTests
         }
     }
 }
+

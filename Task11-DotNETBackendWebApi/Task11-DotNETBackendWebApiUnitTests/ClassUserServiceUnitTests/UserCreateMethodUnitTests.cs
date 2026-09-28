@@ -4,8 +4,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Models;
-using Task11_DotNETBackendWebApi.Models.DTOs;
+using Shared.Models;
+using Shared.Models.DTOs;
+using System.ComponentModel.DataAnnotations;
 using Task11_DotNETBackendWebApi.Services;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
@@ -56,12 +57,13 @@ public class UserCreateMethodUnitTests
     {
         var request = new UserRegisterRequest { Username = username, Password = "A#345678" };
 
-        var successResult = await _userService.CreateAsync(request);
-        var actualUser = successResult.Data;
+        var userId = await _userService.CreateAsync(request);
+        var actualUser = await _context.Users.FindAsync(userId);
 
-        var expectedUser = new UserDto { Id = actualUser.Id, Username = "New user", Role = UserRoles.User };
-
-        actualUser.Should().BeEquivalentTo(expectedUser);
+        actualUser.Should().NotBeNull();
+        actualUser!.Id.Should().Be(userId);
+        actualUser.Username.Should().Be("New user");
+        actualUser.Role.Should().Be(UserRoles.User);
     }
 
     [DataTestMethod]
@@ -78,11 +80,10 @@ public class UserCreateMethodUnitTests
     {
         var request = new UserRegisterRequest { Username = username, Password = "A#345678" };
 
-        var failureResult = await _userService.CreateAsync(request);
-        var failureMessage = "A user with the same username already exists.";
+        Func<Task> action = () => _userService.CreateAsync(request);
 
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(failureMessage);
+        (await action.Should().ThrowAsync<InvalidOperationException>()).Which.Message
+            .Should().Be("A user with the same username already exists.");
     }
 
     [DataTestMethod]
@@ -97,9 +98,10 @@ public class UserCreateMethodUnitTests
     {
         var request = new UserRegisterRequest { Username = "New user", Password = weakPassword };
 
-        var failureResult = await _userService.CreateAsync(request);
+        Func<Task> action = () => _userService.CreateAsync(request);
 
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(expectedErrorMessage);
+        (await action.Should().ThrowAsync<ValidationException>()).Which.Message
+            .Should().Be(expectedErrorMessage);
     }
 }
+

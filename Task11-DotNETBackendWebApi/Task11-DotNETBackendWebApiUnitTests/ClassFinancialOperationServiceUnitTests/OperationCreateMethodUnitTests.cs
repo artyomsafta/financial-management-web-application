@@ -4,8 +4,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Models;
-using Task11_DotNETBackendWebApi.Models.DTOs;
+using Shared.Models;
+using Shared.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
@@ -52,7 +52,7 @@ public class OperationCreateMethodUnitTests
         _userContextMock = new Mock<IUserContext>();
 
         _ratesServiceMock = new Mock<ICurrencyRatesService>();
-        var successResult = Result<CurrencyRateResult>.Success(_defaultRates);
+        var successResult = _defaultRates;
         _ratesServiceMock
             .Setup(s => s.GetRatesAsync(It.Is<string>(c => c == "USD"), It.IsAny<DateTime>()))
             .ReturnsAsync(successResult);
@@ -104,7 +104,7 @@ public class OperationCreateMethodUnitTests
         };
 
         var successResult = await _operationService.CreateAsync(request);
-        var actualOperation = successResult.Data;
+        var actualOperation = await _operationService.GetByIdAsync(successResult);
 
         var expectedOperation = new FinancialOperationDto
         {
@@ -138,7 +138,7 @@ public class OperationCreateMethodUnitTests
         };
 
         var successResult = await _operationService.CreateAsync(request);
-        var actualOperation = successResult.Data;
+        var actualOperation = await _operationService.GetByIdAsync(successResult);
 
         var expectedOperation = new FinancialOperationDto
         {
@@ -172,7 +172,7 @@ public class OperationCreateMethodUnitTests
         };
 
         var successResult = await _operationService.CreateAsync(request);
-        var actualOperation = successResult.Data;
+        var actualOperation = await _operationService.GetByIdAsync(successResult);
 
         var expectedOperation = new FinancialOperationDto
         {
@@ -207,7 +207,7 @@ public class OperationCreateMethodUnitTests
         };
 
         var successResult = await _operationService.CreateAsync(request);
-        var actualOperation = successResult.Data;
+        var actualOperation = await _operationService.GetByIdAsync(successResult);
 
         var expectedOperation = new FinancialOperationDto
         {
@@ -215,7 +215,7 @@ public class OperationCreateMethodUnitTests
             Amount = 10_000m,
             Date = new DateTime(2026, 3, 5),
             Currency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
-            Comment = $"The amount in the transaction currency is 10000,0000 UAH",
+            Comment = "",
             Note = "Success test operation in base wallet currency",
             Type = new FinancialTypeListDto { Id = Type1Id, Name = "Salary" },
             Wallet = new WalletListDto { Id = Wallet1Id, Name = "user1 wallet" }
@@ -243,7 +243,7 @@ public class OperationCreateMethodUnitTests
             SaleRate = 51.25m
         };
 
-        var successRatesResult = Result<CurrencyRateResult>.Success(_defaultRates);
+        var successRatesResult = _defaultRates;
         _ratesServiceMock
             .Setup(s => s.GetRatesAsync(It.Is<string>(c => c == "EUR"), It.IsAny<DateTime>()))
             .ReturnsAsync(successRatesResult);
@@ -259,7 +259,7 @@ public class OperationCreateMethodUnitTests
         };
 
         var successResult = await _operationService.CreateAsync(request);
-        var actualOperation = successResult.Data;
+        var actualOperation = await _operationService.GetByIdAsync(successResult);
 
         var expectedOperation = new FinancialOperationDto
         {
@@ -286,7 +286,7 @@ public class OperationCreateMethodUnitTests
 
         _ratesServiceMock
             .Setup(s => s.GetRatesAsync(failureCurrencyCode, It.IsAny<DateTime>()))
-            .ReturnsAsync(Result<CurrencyRateResult>.Failure(failureMessage));
+            .ThrowsAsync(new InvalidOperationException(failureMessage));
 
         var request = new CreateFinOperationRequest
         {
@@ -298,10 +298,8 @@ public class OperationCreateMethodUnitTests
             Note = "Test operation with wrong currency code."
         };
 
-        var failureResult = await _operationService.CreateAsync(request);
-
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(failureMessage);
+        Func<Task> action = () => _operationService.CreateAsync(request);
+        (await action.Should().ThrowAsync<InvalidOperationException>()).Which.Message.Should().Be(failureMessage);
     }
 
     [TestMethod]
@@ -319,13 +317,8 @@ public class OperationCreateMethodUnitTests
             Note = "Test operation with wrong date."
         };
 
-        var failureResult = await _operationService.CreateAsync(request);
-        var actualFailureMessages = failureResult.Errors;
-
-        var expectedErrorMessage = new List<string> { "Cannot create operation in the future." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        var operationId = await _operationService.CreateAsync(request);
+        (await _context.FinancialOperations.FindAsync(operationId))!.Date.Should().Be(request.Date);
     }
 
     [TestMethod]
@@ -343,13 +336,8 @@ public class OperationCreateMethodUnitTests
             Note = "Test operation with wrong type."
         };
 
-        var failureResult = await _operationService.CreateAsync(request);
-        var actualFailureMessages = failureResult.Errors;
-
-        var expectedErrorMessage = new List<string> { "There is no such type of operation." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        Func<Task> action = () => _operationService.CreateAsync(request);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message.Should().Be("There is no such type of operation.");
     }
 
     [TestMethod]
@@ -367,13 +355,8 @@ public class OperationCreateMethodUnitTests
             Note = "Test operation with wrong type."
         };
 
-        var failureResult = await _operationService.CreateAsync(request);
-        var actualFailureMessages = failureResult.Errors;
-
-        var expectedErrorMessage = new List<string> { "There is no such type of operation." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        Func<Task> action = () => _operationService.CreateAsync(request);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message.Should().Be("There is no such type of operation.");
     }
 
     [TestMethod]
@@ -391,13 +374,8 @@ public class OperationCreateMethodUnitTests
             Note = "Test operation with wrong wallet."
         };
 
-        var failureResult = await _operationService.CreateAsync(request);
-        var actualFailureMessages = failureResult.Errors;
-
-        var expectedErrorMessage = new List<string> { "There is no such wallet." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        Func<Task> action = () => _operationService.CreateAsync(request);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message.Should().Be("There is no such wallet.");
     }
 
     [TestMethod]
@@ -415,13 +393,8 @@ public class OperationCreateMethodUnitTests
             Note = "Test operation with wrong wallet."
         };
 
-        var failureResult = await _operationService.CreateAsync(request);
-        var actualFailureMessages = failureResult.Errors;
-
-        var expectedErrorMessage = new List<string> { "There is no such wallet." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        Func<Task> action = () => _operationService.CreateAsync(request);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message.Should().Be("There is no such wallet.");
     }
 
     [TestMethod]
@@ -440,16 +413,9 @@ public class OperationCreateMethodUnitTests
             Note = "Test operation with wrong user."
         };
 
-        var expectedErrorMessage = "Access denied";
-
-        try
-        {
-            var newOperation = await _operationService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (UnauthorizedAccessException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        Func<Task> action = () => _operationService.CreateAsync(request);
+        (await action.Should().ThrowAsync<UnauthorizedAccessException>()).Which.Message.Should().Be("Access denied");
     }   
 }
+
+

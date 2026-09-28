@@ -4,8 +4,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Models;
-using Task11_DotNETBackendWebApi.Models.DTOs;
+using Shared.Models;
+using Shared.Models.DTOs;
+using System.ComponentModel.DataAnnotations;
 using Task11_DotNETBackendWebApi.Services;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
@@ -74,10 +75,10 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var walletId = Wallet1Id;
 
-        var request = new CreateWalletRequest { UserId = User1Id, Name = walletName, BaseCurrency = baseCurrency };
+        var request = new UpdateWalletRequest { Name = walletName, BaseCurrency = baseCurrency };
 
         var successResult = await _walletService.UpdateAsync(walletId, request);
-        var isUpdateSuccess = successResult.IsSuccess;
+        var isUpdateSuccess = successResult;
         isUpdateSuccess.Should().BeTrue();
 
         var expectedWallet = new WalletDto
@@ -111,10 +112,10 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var walletId = Wallet1Id;
 
-        var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = "UAH" };
+        var request = new UpdateWalletRequest { Name = "user1 wallet", BaseCurrency = "UAH" };
 
         var successResult = await _walletService.UpdateAsync(walletId, request);
-        var isUpdateSuccess = successResult.IsSuccess;
+        var isUpdateSuccess = successResult;
         isUpdateSuccess.Should().BeTrue();
 
         var expectedWallet = new WalletDto
@@ -148,19 +149,10 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
         var walletId = Wallet1Id;
 
-        var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = "UAH" };
+        var request = new UpdateWalletRequest { Name = "user1 wallet", BaseCurrency = "UAH" };
 
-        var expectedErrorMessage = "Access denied";
-
-        try
-        {
-            var isUpdateSuccess = await _walletService.UpdateAsync(walletId, request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (UnauthorizedAccessException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        Func<Task> action = () => _walletService.UpdateAsync(walletId, request);
+        (await action.Should().ThrowAsync<UnauthorizedAccessException>()).Which.Message.Should().Be("Access denied");
     }
 
     [DataTestMethod]
@@ -175,14 +167,10 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var walletId = Wallet1Id;
 
-        var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = failureCurrencyCode };
+        var request = new UpdateWalletRequest { Name = "user1 wallet", BaseCurrency = failureCurrencyCode };
 
-        var failureMessage = "The currency code is incorrect.";
-
-        var failureResult = await _walletService.UpdateAsync(walletId, request);
-
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(failureMessage);
+        Func<Task> action = () => _walletService.UpdateAsync(walletId, request);
+        (await action.Should().ThrowAsync<ValidationException>()).Which.Message.Should().Be("The currency code is incorrect.");
     }
 
     [DataTestMethod]
@@ -199,14 +187,10 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var walletId = Wallet1Id;
 
-        var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = failureCurrencyCode };
+        var request = new UpdateWalletRequest { Name = "user1 wallet", BaseCurrency = failureCurrencyCode };
 
-        var failureMessage = "Currently, the base currency of the wallet can only be UAH";
-
-        var failureResult = await _walletService.UpdateAsync(walletId, request);
-
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(failureMessage);
+        Func<Task> action = () => _walletService.UpdateAsync(walletId, request);
+        (await action.Should().ThrowAsync<ValidationException>()).Which.Message.Should().Be("Currently, the base currency of the wallet can only be UAH");
     }
 
     [TestMethod]
@@ -215,29 +199,23 @@ public class WalletUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var walletId = WalletNotFoundId;
 
-        var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = "UAH" };
+        var request = new UpdateWalletRequest { Name = "user1 wallet", BaseCurrency = "UAH" };
 
-        var failureMessage = "Wallet not found";
-
-        var failureResult = await _walletService.UpdateAsync(walletId, request);
-
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(failureMessage);
+        Func<Task> action = () => _walletService.UpdateAsync(walletId, request);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message.Should().Be("Wallet not found");
     }
 
     [TestMethod]
-    public async Task Test_UpdateAsync_UserNotFoundCase()
+    public async Task Test_UpdateAsync_DoesNotReassignOrValidateRequestUserCase()
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var walletId = Wallet1Id;
 
-        var request = new CreateWalletRequest { UserId = UserNotFoundId, Name = "user1 wallet", BaseCurrency = "UAH" };
+        var request = new UpdateWalletRequest { Name = "user1 wallet", BaseCurrency = "UAH" };
 
-        var failureMessage = $"User with ID {request.UserId} not found";
-
-        var failureResult = await _walletService.UpdateAsync(walletId, request);
-
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(failureMessage);
+        (await _walletService.UpdateAsync(walletId, request)).Should().BeTrue();
+        (await _context.Wallets.FindAsync(walletId))!.UserId.Should().Be(User1Id);
     }
 }
+
+

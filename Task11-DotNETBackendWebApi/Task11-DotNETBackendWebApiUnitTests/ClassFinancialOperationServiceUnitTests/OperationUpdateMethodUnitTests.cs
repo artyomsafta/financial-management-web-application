@@ -1,11 +1,11 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Models;
-using Task11_DotNETBackendWebApi.Models.DTOs;
+using Shared.Models;
+using Shared.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
@@ -60,7 +60,7 @@ public class OperationUpdateMethodUnitTests
         _userContextMock = new Mock<IUserContext>();
 
         _ratesServiceMock = new Mock<ICurrencyRatesService>();
-        var successResult = Result<CurrencyRateResult>.Success(_defaultRates);
+        var successResult = _defaultRates;
         _ratesServiceMock
             .Setup(s => s.GetRatesAsync(It.Is<string>(c => c == "USD"), It.IsAny<DateTime>()))
             .ReturnsAsync(successResult);
@@ -153,10 +153,9 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type1Id,
-            WalletId = Wallet1Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
             Currency = "USD",
@@ -164,7 +163,7 @@ public class OperationUpdateMethodUnitTests
         };
 
         var successResult = await _operationService.UpdateAsync(operationId, request);
-        var isUpdateSuccess = successResult.IsSuccess;
+        var isUpdateSuccess = successResult;
         isUpdateSuccess.Should().BeTrue();
 
         var expectedOperation = new FinancialOperationDto
@@ -208,10 +207,9 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
         var operationId = Wallet1OperationId;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type1Id,
-            WalletId = Wallet1Id,
             Amount = 2_000m,
             Date = new DateTime(2026, 3, 9),
             Currency = "USD",
@@ -219,7 +217,7 @@ public class OperationUpdateMethodUnitTests
         };
 
         var successResult = await _operationService.UpdateAsync(operationId, request);
-        var isUpdateSuccess = successResult.IsSuccess;
+        var isUpdateSuccess = successResult;
         isUpdateSuccess.Should().BeTrue();
 
         var expectedOperation = new FinancialOperationDto
@@ -263,10 +261,9 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
 
         var operationId = Wallet2Operation2Id;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type4Id,
-            WalletId = Wallet2Id,
             Amount = 100m,
             Date = new DateTime(2026, 3, 9),
             Currency = "USD",
@@ -274,7 +271,7 @@ public class OperationUpdateMethodUnitTests
         };
 
         var successResult = await _operationService.UpdateAsync(operationId, request);
-        var isUpdateSuccess = successResult.IsSuccess;
+        var isUpdateSuccess = successResult;
         isUpdateSuccess.Should().BeTrue();
 
         var expectedValue = "Groceries";
@@ -286,6 +283,7 @@ public class OperationUpdateMethodUnitTests
             .FirstOrDefaultAsync();
 
         actualValue.Should().BeEquivalentTo(expectedValue);
+        (await _context.FinancialOperations.FindAsync(operationId))!.WalletId.Should().Be(Wallet2Id);
     }
 
     [TestMethod]
@@ -295,10 +293,9 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
 
         var operationId = Wallet2Operation2Id;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type2Id,
-            WalletId = Wallet2Id,
             Amount = 200m,
             Date = new DateTime(2026, 3, 9),
             Currency = "USD",
@@ -306,7 +303,7 @@ public class OperationUpdateMethodUnitTests
         };
 
         var successResult = await _operationService.UpdateAsync(operationId, request);
-        var isUpdateSuccess = successResult.IsSuccess;
+        var isUpdateSuccess = successResult;
         isUpdateSuccess.Should().BeTrue();
 
         var expectedOperation = new FinancialOperationDto
@@ -364,15 +361,14 @@ public class OperationUpdateMethodUnitTests
             SaleRate = 51.25m
         };
 
-        var successRatesResult = Result<CurrencyRateResult>.Success(_defaultRates);
+        var successRatesResult = _defaultRates;
         _ratesServiceMock
             .Setup(s => s.GetRatesAsync(It.Is<string>(c => c == "EUR"), It.IsAny<DateTime>()))
             .ReturnsAsync(successRatesResult);
 
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type1Id,
-            WalletId = Wallet1Id,
             Amount = 2_000m,
             Date = new DateTime(2026, 3, 9),
             Currency = newCurrencyCode,
@@ -380,7 +376,7 @@ public class OperationUpdateMethodUnitTests
         };
 
         var successResult = await _operationService.UpdateAsync(operationId, request);
-        var isUpdateSuccess = successResult.IsSuccess;
+        var isUpdateSuccess = successResult;
         isUpdateSuccess.Should().BeTrue();
 
         var expectedOperation = new FinancialOperationDto
@@ -427,23 +423,20 @@ public class OperationUpdateMethodUnitTests
 
         _ratesServiceMock
             .Setup(s => s.GetRatesAsync(failureCurrencyCode, It.IsAny<DateTime>()))
-            .ReturnsAsync(Result<CurrencyRateResult>.Failure(failureMessage));
+            .ThrowsAsync(new InvalidOperationException(failureMessage));
 
         var operationId = Wallet1OperationId;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type1Id,
-            WalletId = Wallet1Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
             Currency = failureCurrencyCode,
             Note = "Test operation with wrong currency code."
         };
 
-        var failureResult = await _operationService.UpdateAsync(operationId, request);
-
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(failureMessage);
+        Func<Task> action = () => _operationService.UpdateAsync(operationId, request);
+        (await action.Should().ThrowAsync<InvalidOperationException>()).Which.Message.Should().Be(failureMessage);
     }
 
     [TestMethod]
@@ -452,23 +445,17 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type1Id,
-            WalletId = Wallet1Id,
             Amount = 3_000m,
             Date = new DateTime(2036, 3, 9),
             Currency = "USD",
             Note = "Test operation with wrong date."
         };
 
-        var failureResult = await _operationService.UpdateAsync(operationId, request);
-        var actualFailureMessages = failureResult.Errors;
-
-        var expectedErrorMessage = new List<string> { "Cannot create operation in the future." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        (await _operationService.UpdateAsync(operationId, request)).Should().BeTrue();
+        (await _context.FinancialOperations.FindAsync(operationId))!.Date.Should().Be(request.Date);
     }
 
     [TestMethod]
@@ -477,23 +464,18 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = OperationNotFoundId;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type1Id,
-            WalletId = Wallet1Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
             Currency = "USD",
             Note = "Test operation with wrong Id."
         };
 
-        var failureResult = await _operationService.UpdateAsync(operationId, request);
-        var actualFailureMessages = failureResult.Errors;
-
-        var expectedErrorMessage = new List<string> { "The financial operation does not exist." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        Func<Task> action = () => _operationService.UpdateAsync(operationId, request);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message
+            .Should().Be("The financial operation does not exist.");
     }
 
     [TestMethod]
@@ -503,23 +485,18 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
 
         var operationId = Wallet2Operation3Id;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type2Id,
-            WalletId = Wallet2Id,
             Amount = 300m,
             Date = new DateTime(2026, 3, 9),
             Currency = "USD",
             Note = "Attempt to update a deleted operation"
         };
 
-        var failureResult = await _operationService.UpdateAsync(operationId, request);
-        var actualFailureMessages = failureResult.Errors;
-
-        var expectedErrorMessage = new List<string> { "The financial operation does not exist." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        Func<Task> action = () => _operationService.UpdateAsync(operationId, request);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message
+            .Should().Be("The financial operation does not exist.");
     }
 
     [TestMethod]
@@ -528,23 +505,18 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = TypeNotFoundId,
-            WalletId = Wallet1Id,
             Amount = 2_000m,
             Date = new DateTime(2026, 3, 9),
             Currency = "USD",
             Note = "Test operation with wrong type."
         };
 
-        var failureResult = await _operationService.UpdateAsync(operationId, request);
-        var actualFailureMessages = failureResult.Errors;
-
-        var expectedErrorMessage = new List<string> { "There is no such type of operation." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        Func<Task> action = () => _operationService.UpdateAsync(operationId, request);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message
+            .Should().Be("There is no such type of operation.");
     }
 
     [TestMethod]
@@ -553,23 +525,18 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type3Id,
-            WalletId = Wallet1Id,
             Amount = 2_000m,
             Date = new DateTime(2026, 3, 9),
             Currency = "USD",
             Note = "Test operation with wrong type."
         };
 
-        var failureResult = await _operationService.UpdateAsync(operationId, request);
-        var actualFailureMessages = failureResult.Errors;
-
-        var expectedErrorMessage = new List<string> { "There is no such type of operation." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        Func<Task> action = () => _operationService.UpdateAsync(operationId, request);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message
+            .Should().Be("There is no such type of operation.");
     }
 
     [TestMethod]
@@ -578,23 +545,22 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type1Id,
-            WalletId = WalletNotFoundId,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
             Currency = "USD",
             Note = "Test operation with non-found wallet."
         };
 
-        var failureResult = await _operationService.UpdateAsync(operationId, request);
-        var actualFailureMessages = failureResult.Errors;
+        var updateResult = await _operationService.UpdateAsync(operationId, request);
 
-        var expectedErrorMessage = new List<string> { "There is no such wallet." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        updateResult.Should().BeTrue();
+        var updatedOperation = await _context.FinancialOperations.FindAsync(operationId);
+        updatedOperation.Should().NotBeNull();
+        updatedOperation!.WalletId.Should().Be(Wallet1Id);
+        updatedOperation.Note.Should().Be(request.Note);
     }
 
     [TestMethod]
@@ -603,48 +569,47 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
         var operationId = Wallet1OperationId;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type1Id,
-            WalletId = Wallet3Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
             Currency = "USD",
             Note = "Test operation with deleted wallet."
         };
 
-        var failureResult = await _operationService.UpdateAsync(operationId, request);
-        var actualFailureMessages = failureResult.Errors;
+        var updateResult = await _operationService.UpdateAsync(operationId, request);
 
-        var expectedErrorMessage = new List<string> { "There is no such wallet." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        updateResult.Should().BeTrue();
+        var updatedOperation = await _context.FinancialOperations.FindAsync(operationId);
+        updatedOperation.Should().NotBeNull();
+        updatedOperation!.WalletId.Should().Be(Wallet1Id);
+        updatedOperation.Note.Should().Be(request.Note);
     }
 
     [TestMethod]
     public async Task Test_UpdateAsync_WrongWalletCase()
     {
-        _userContextMock.Setup(с => с.IsAdmin).Returns(true);
+        _userContextMock.Setup(с => с.IsAdmin).Returns(false);
+        _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
         var operationId = Wallet1OperationId;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type1Id,
-            WalletId = Wallet2Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
             Currency = "USD",
             Note = "Test operation with wrong wallet."
         };
 
-        var failureResult = await _operationService.UpdateAsync(operationId, request);
-        var actualFailureMessages = failureResult.Errors;
+        var updateResult = await _operationService.UpdateAsync(operationId, request);
 
-        var expectedErrorMessage = new List<string> { "You have selected the wrong wallet." };
-
-        failureResult.IsSuccess.Should().BeFalse();
-        actualFailureMessages.Should().BeEquivalentTo(expectedErrorMessage);
+        updateResult.Should().BeTrue();
+        var updatedOperation = await _context.FinancialOperations.FindAsync(operationId);
+        updatedOperation.Should().NotBeNull();
+        updatedOperation!.WalletId.Should().Be(Wallet1Id);
+        (await _context.Wallets.FindAsync(updatedOperation.WalletId))!.UserId.Should().Be(User1Id);
     }
 
     [TestMethod]
@@ -654,26 +619,16 @@ public class OperationUpdateMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
 
         var operationId = Wallet1OperationId;
-        var request = new CreateFinOperationRequest
+        var request = new UpdateFinOperationRequest
         {
             TypeId = Type1Id,
-            WalletId = Wallet1Id,
             Amount = 3_000m,
             Date = new DateTime(2026, 3, 9),
             Currency = "USD",
             Note = "Test operation with wrong user."
         };
 
-        var expectedErrorMessage = "Access denied";
-
-        try
-        {
-            var isUpdateSuccess = await _operationService.UpdateAsync(operationId, request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (UnauthorizedAccessException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        Func<Task> action = () => _operationService.UpdateAsync(operationId, request);
+        (await action.Should().ThrowAsync<UnauthorizedAccessException>()).Which.Message.Should().Be("Access denied");
     } 
 }

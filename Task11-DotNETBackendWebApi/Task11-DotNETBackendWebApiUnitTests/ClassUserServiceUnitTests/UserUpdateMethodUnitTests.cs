@@ -4,8 +4,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Models;
-using Task11_DotNETBackendWebApi.Models.DTOs;
+using Shared.Models;
+using Shared.Models.DTOs;
+using System.ComponentModel.DataAnnotations;
 using Task11_DotNETBackendWebApi.Services;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
@@ -44,7 +45,7 @@ public class UserUpdateMethodUnitTests
     {
         using (var context = new AppDbContext(_options))
         {
-            var adminUser = new User { Id = AdminUserId, Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__", Role = UserRoles.Admin, IsDeleted = false };
+            var adminUser = new User { Id = AdminUserId, Username = "admin", Role = UserRoles.Admin, IsDeleted = false };
             var user1 = new User { Id = User1Id, Username = "user1", Role = UserRoles.User, IsDeleted = false };
             var user2 = new User { Id = User2Id, Username = "user2", Role = UserRoles.User, IsDeleted = false };
 
@@ -66,7 +67,7 @@ public class UserUpdateMethodUnitTests
         var request = new UserRegisterRequest { Username = username, Password = "A#345678" };
 
         var successResult = await _userService.UpdateAsync(userId, request);
-        var isUpdateSuccess = successResult.IsSuccess;
+        var isUpdateSuccess = successResult;
         isUpdateSuccess.Should().BeTrue();
 
         var expectedUser = new UserDto { Id = userId, Username = "Updated user1", Role = UserRoles.User };
@@ -96,7 +97,7 @@ public class UserUpdateMethodUnitTests
         var request = new UserRegisterRequest { Username = username, Password = "A#345678" };
 
         var successResult = await _userService.UpdateAsync(userId, request);
-        var isUpdateSuccess = successResult.IsSuccess;
+        var isUpdateSuccess = successResult;
         isUpdateSuccess.Should().BeTrue();
 
         var expectedUser = new UserDto { Id = userId, Username = "Updated user1", Role = UserRoles.User };
@@ -120,12 +121,10 @@ public class UserUpdateMethodUnitTests
         var userId = UserNotFoundId;
         var request = new UserRegisterRequest { Username = "Updated user1", Password = "A#345678" };
 
-        var failureResult = await _userService.UpdateAsync(userId, request);
+        Func<Task> action = () => _userService.UpdateAsync(userId, request);
 
-        var failureMessage = $"User with ID {userId} not found";
-
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(failureMessage);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message
+            .Should().Be($"User with ID {userId} not found");
     }
 
     [TestMethod]
@@ -137,17 +136,10 @@ public class UserUpdateMethodUnitTests
         var userId = User1Id;
         var request = new UserRegisterRequest { Username = "Updated user1", Password = "A#345678" };
 
-        var expectedErrorMessage = "Access denied";
+        Func<Task> action = () => _userService.UpdateAsync(userId, request);
 
-        try
-        {
-            var isUpdateSuccess = await _userService.UpdateAsync(userId, request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (UnauthorizedAccessException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        (await action.Should().ThrowAsync<UnauthorizedAccessException>()).Which.Message
+            .Should().Be("Access denied");
     }
 
     [DataTestMethod]
@@ -168,11 +160,10 @@ public class UserUpdateMethodUnitTests
         var userId = User2Id;
         var request = new UserRegisterRequest { Username = username, Password = "A#345678" };
 
-        var failureResult = await _userService.UpdateAsync(userId, request);
-        var failureMessage = "A user with the same username already exists.";
+        Func<Task> action = () => _userService.UpdateAsync(userId, request);
 
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(failureMessage);
+        (await action.Should().ThrowAsync<InvalidOperationException>()).Which.Message
+            .Should().Be("A user with the same username already exists.");
     }
 
     [DataTestMethod]
@@ -191,9 +182,10 @@ public class UserUpdateMethodUnitTests
         var userId = User1Id;
         var request = new UserRegisterRequest { Username = "Updated user1", Password = weakPassword };
 
-        var failureResult = await _userService.UpdateAsync(userId, request);
+        Func<Task> action = () => _userService.UpdateAsync(userId, request);
 
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(expectedErrorMessage);
+        (await action.Should().ThrowAsync<ValidationException>()).Which.Message
+            .Should().Be(expectedErrorMessage);
     }
 }
+

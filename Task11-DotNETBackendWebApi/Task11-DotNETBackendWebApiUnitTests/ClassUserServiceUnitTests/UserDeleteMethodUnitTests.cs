@@ -48,7 +48,7 @@ public class UserDeleteMethodUnitTests
     {
         using (var context = new AppDbContext(_options))
         {
-            var adminUser = new User { Id = AdminUserId, Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__", Role = UserRoles.Admin, IsDeleted = false };
+            var adminUser = new User { Id = AdminUserId, Username = "admin", Role = UserRoles.Admin, IsDeleted = false };
             var user1 = new User { Id = User1Id, Username = "user1", Role = UserRoles.User, IsDeleted = false };
             var user2 = new User { Id = User2Id, Username = "user2", Role = UserRoles.User, IsDeleted = false };
             var user3 = new User { Id = User3Id, Username = "user3", Role = UserRoles.User, IsDeleted = false };
@@ -69,7 +69,7 @@ public class UserDeleteMethodUnitTests
         var userId = User1Id;
 
         var successResult = await _userService.DeleteAsync(userId);
-        var isDeleteSuccess = successResult.IsSuccess;
+        var isDeleteSuccess = successResult;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedUser = await _context.Users.FindAsync(userId);
@@ -84,7 +84,7 @@ public class UserDeleteMethodUnitTests
         var userId = User1Id;
 
         var successResult = await _userService.DeleteAsync(userId);
-        var isDeleteSuccess = successResult.IsSuccess;
+        var isDeleteSuccess = successResult;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedUser = await _context.Users.FindAsync(userId);
@@ -98,7 +98,7 @@ public class UserDeleteMethodUnitTests
         var userId = User3Id;
 
         var successResult = await _userService.DeleteAsync(userId);
-        var isDeleteSuccess = successResult.IsSuccess;
+        var isDeleteSuccess = successResult;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedUser = await _context.Users.FindAsync(userId);
@@ -111,12 +111,10 @@ public class UserDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var userId = UserNotFoundId;
 
-        var failureResult = await _userService.DeleteAsync(userId);
-        var isDeleteSuccess = failureResult.IsSuccess;
-        isDeleteSuccess.Should().BeFalse();
+        Func<Task> action = () => _userService.DeleteAsync(userId);
 
-        var failureMessage = $"User with ID {userId} not found";
-        failureResult.Errors.Should().Contain(failureMessage);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message
+            .Should().Be($"User with ID {userId} not found");
     }
 
     [TestMethod]
@@ -126,17 +124,10 @@ public class UserDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
         var userId = User1Id;
 
-        var expectedErrorMessage = "Access denied";
+        Func<Task> action = () => _userService.DeleteAsync(userId);
 
-        try
-        {
-            var isDeleteSuccess = await _userService.DeleteAsync(userId);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (UnauthorizedAccessException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        (await action.Should().ThrowAsync<UnauthorizedAccessException>()).Which.Message
+            .Should().Be("Access denied");
     }
 
     [TestMethod]
@@ -146,11 +137,10 @@ public class UserDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
         var userId = User2Id;
 
-        var failureResult = await _userService.DeleteAsync(userId);
-        var isDeleteSuccess = failureResult.IsSuccess;
-        isDeleteSuccess.Should().BeFalse();
+        Func<Task> action = () => _userService.DeleteAsync(userId);
 
-        var failureMessage = "You cannot delete a user that has active wallets.";
-        failureResult.Errors.Should().Contain(failureMessage);
+        (await action.Should().ThrowAsync<InvalidOperationException>()).Which.Message
+            .Should().Be("You cannot delete a user that has active wallets.");
     }
 }
+

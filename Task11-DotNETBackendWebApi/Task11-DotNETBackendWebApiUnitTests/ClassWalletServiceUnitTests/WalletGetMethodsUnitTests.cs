@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Models.DTOs;
+using Shared.Models.DTOs;
 using Task11_DotNETBackendWebApi.Services;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
@@ -53,7 +53,7 @@ public class WalletGetMethodsUnitTests
     {
         using (var context = new AppDbContext(_options))
         {
-            var adminUser = new User { Id = AdminUserId, Username = "__REMOVED_BOOTSTRAP_ADMIN_USERNAME__", Role = UserRoles.Admin, IsDeleted = false };
+            var adminUser = new User { Id = AdminUserId, Username = "admin", Role = UserRoles.Admin, IsDeleted = false };
             var user1 = new User { Id = User1Id, Username = "user1", Role = UserRoles.User, IsDeleted = false };
             var user2 = new User { Id = User2Id, Username = "user2", Role = UserRoles.User, IsDeleted = false };
             var user3 = new User { Id = User3Id, Username = "user3", Role = UserRoles.User, IsDeleted = false };
@@ -113,7 +113,7 @@ public class WalletGetMethodsUnitTests
         };
 
         var successResult = await _walletService.GetByIdAsync(Wallet1Id);
-        var actualWallet = successResult.Data;
+        var actualWallet = successResult;
 
         actualWallet.Should().BeEquivalentTo(expectedWallet);
     }
@@ -133,7 +133,7 @@ public class WalletGetMethodsUnitTests
         };
 
         var successResult = await _walletService.GetByIdAsync(Wallet1Id);
-        var actualWallet = successResult.Data;
+        var actualWallet = successResult;
 
         actualWallet.Should().BeEquivalentTo(expectedWallet);
     }
@@ -143,12 +143,10 @@ public class WalletGetMethodsUnitTests
     {
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
 
-        var failureResult = await _walletService.GetByIdAsync(WalletNotFoundId);
-        var isFindSuccess = failureResult.IsSuccess;
-        isFindSuccess.Should().BeFalse();
+        Func<Task> action = () => _walletService.GetByIdAsync(WalletNotFoundId);
 
-        var failureMessage = $"Wallet with ID {WalletNotFoundId} not found";
-        failureResult.Errors.Should().Contain(failureMessage);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message
+            .Should().Be($"Wallet with ID {WalletNotFoundId} not found");
     }
 
     [TestMethod]
@@ -157,16 +155,10 @@ public class WalletGetMethodsUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(false);
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
 
-        var expectedErrorMessage = "Access denied";
+        Func<Task> action = () => _walletService.GetByIdAsync(Wallet2Id);
 
-        try
-        {
-            var wrongWallet = await _walletService.GetByIdAsync(Wallet2Id);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (UnauthorizedAccessException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message
+            .Should().Be($"Wallet with ID {Wallet2Id} not found");
     }
 }
+

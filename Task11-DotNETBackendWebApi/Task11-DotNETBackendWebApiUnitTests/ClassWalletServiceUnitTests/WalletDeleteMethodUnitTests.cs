@@ -99,7 +99,7 @@ public class WalletDeleteMethodUnitTests
         var walletId = Wallet1Id;
 
         var successResult = await _walletService.DeleteAsync(walletId);
-        var isDeleteSuccess = successResult.IsSuccess;
+        var isDeleteSuccess = successResult;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedWallet = await _context.Wallets.FindAsync(walletId);
@@ -114,7 +114,7 @@ public class WalletDeleteMethodUnitTests
         var walletId = Wallet1Id;
 
         var successResult = await _walletService.DeleteAsync(walletId);
-        var isDeleteSuccess = successResult.IsSuccess;
+        var isDeleteSuccess = successResult;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedWallet = await _context.Wallets.FindAsync(walletId);
@@ -129,7 +129,7 @@ public class WalletDeleteMethodUnitTests
         var walletId = Wallet2Id;
 
         var successResult = await _walletService.DeleteAsync(walletId);
-        var isDeleteSuccess = successResult.IsSuccess;
+        var isDeleteSuccess = successResult;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedWallet = await _context.Wallets.FindAsync(walletId);
@@ -142,12 +142,8 @@ public class WalletDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var walletId = WalletNotFoundId;
 
-        var failureResult = await _walletService.DeleteAsync(walletId);
-        var isDeleteSuccess = failureResult.IsSuccess;
-        isDeleteSuccess.Should().BeFalse();
-
-        var failureMessage = "Wallet not found";
-        failureResult.Errors.Should().Contain(failureMessage);
+        Func<Task> action = () => _walletService.DeleteAsync(walletId);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message.Should().Be("Wallet not found");
     }
 
     [TestMethod]
@@ -157,17 +153,8 @@ public class WalletDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
         var walletId = Wallet1Id;
 
-        var expectedErrorMessage = "Access denied";
-
-        try
-        {
-            var isDeleteSuccess = await _walletService.DeleteAsync(walletId);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (UnauthorizedAccessException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        Func<Task> action = () => _walletService.DeleteAsync(walletId);
+        (await action.Should().ThrowAsync<UnauthorizedAccessException>()).Which.Message.Should().Be("Access denied");
     }
 
     [TestMethod]
@@ -177,11 +164,9 @@ public class WalletDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User3Id);
         var walletId = Wallet3Id;
 
-        var failureResult = await _walletService.DeleteAsync(walletId);
-        var isDeleteSuccess = failureResult.IsSuccess;
-        isDeleteSuccess.Should().BeFalse();
-
-        var failureMessage = "Cannot delete a wallet that has associated financial operations.";
-        failureResult.Errors.Should().Contain(failureMessage);
+        Func<Task> action = () => _walletService.DeleteAsync(walletId);
+        (await action.Should().ThrowAsync<InvalidOperationException>()).Which.Message
+            .Should().Be("Cannot delete a wallet that has associated financial operations.");
     }
 }
+

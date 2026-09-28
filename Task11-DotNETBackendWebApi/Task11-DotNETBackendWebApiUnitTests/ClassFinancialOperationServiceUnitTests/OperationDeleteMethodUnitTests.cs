@@ -133,7 +133,7 @@ public class OperationDeleteMethodUnitTests
         var operationId = Wallet1OperationId;
 
         var successResult = await _operationService.DeleteAsync(operationId);
-        var isDeleteSuccess = successResult.IsSuccess;
+        var isDeleteSuccess = successResult;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedOperation = await _context.FinancialOperations.FindAsync(operationId);
@@ -148,7 +148,7 @@ public class OperationDeleteMethodUnitTests
         var operationId = Wallet1OperationId;
 
         var successResult = await _operationService.DeleteAsync(operationId);
-        var isDeleteSuccess = successResult.IsSuccess;
+        var isDeleteSuccess = successResult;
         isDeleteSuccess.Should().BeTrue();
 
         var deletedOperation = await _context.FinancialOperations.FindAsync(operationId);
@@ -161,12 +161,10 @@ public class OperationDeleteMethodUnitTests
         _userContextMock.Setup(с => с.IsAdmin).Returns(true);
         var operationId = OperationNotFoundId;
 
-        var failureResult = await _operationService.DeleteAsync(operationId);
-        var isDeleteSuccess = failureResult.IsSuccess;
-        isDeleteSuccess.Should().BeFalse();
+        Func<Task> action = () => _operationService.DeleteAsync(operationId);
 
-        var failureMessage = "The financial operation does not exist.";
-        failureResult.Errors.Should().Contain(failureMessage);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message
+            .Should().Be("The financial operation does not exist.");
     }
 
     [TestMethod]
@@ -176,12 +174,10 @@ public class OperationDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User2Id);
         var operationId = Wallet2Operation3Id;
 
-        var failureResult = await _operationService.DeleteAsync(operationId);
-        var isDeleteSuccess = failureResult.IsSuccess;
-        isDeleteSuccess.Should().BeFalse();
+        Func<Task> action = () => _operationService.DeleteAsync(operationId);
 
-        var failureMessage = "The financial operation does not exist.";
-        failureResult.Errors.Should().Contain(failureMessage);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message
+            .Should().Be("The financial operation does not exist.");
     }
 
     [TestMethod]
@@ -191,16 +187,9 @@ public class OperationDeleteMethodUnitTests
         _userContextMock.Setup(c => c.UserId).Returns(User1Id);
         var operationId = Wallet2Operation2Id;
 
-        var expectedErrorMessage = "Access denied";
+        Func<Task> action = () => _operationService.DeleteAsync(operationId);
 
-        try
-        {
-            var isDeleteSuccess = await _operationService.DeleteAsync(operationId);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (UnauthorizedAccessException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        (await action.Should().ThrowAsync<UnauthorizedAccessException>()).Which.Message.Should().Be("Access denied");
     }
 }
+

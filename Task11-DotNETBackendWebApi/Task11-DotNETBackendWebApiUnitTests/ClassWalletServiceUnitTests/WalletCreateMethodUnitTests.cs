@@ -4,8 +4,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Task11_DotNETBackendWebApi.Data;
 using Task11_DotNETBackendWebApi.Data.Entities;
-using Task11_DotNETBackendWebApi.Models;
-using Task11_DotNETBackendWebApi.Models.DTOs;
+using Shared.Models;
+using Shared.Models.DTOs;
+using System.ComponentModel.DataAnnotations;
 using Task11_DotNETBackendWebApi.Services;
 using Task11_DotNETBackendWebApi.Services.Contracts;
 
@@ -69,18 +70,14 @@ public class WalletCreateMethodUnitTests
 
         var request = new CreateWalletRequest { UserId = User1Id, Name = walletName, BaseCurrency = baseCurrency };
 
-        var successResult = await _walletService.CreateAsync(request);
-        var actualWallet = successResult.Data;
+        var walletId = await _walletService.CreateAsync(request);
+        var actualWallet = await _context.Wallets.Include(w => w.Currency).Include(w => w.User).SingleAsync(w => w.Id == walletId);
 
-        var expectedWallet = new WalletDto 
-        { 
-            Id = actualWallet.Id, 
-            Name = "user1 wallet", 
-            BaseCurrency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
-            User = new UserDto { Id = User1Id, Username = "user1", Role = UserRoles.User }
-        };
-
-        actualWallet.Should().BeEquivalentTo(expectedWallet);
+        actualWallet.Name.Should().Be("user1 wallet");
+        actualWallet.UserId.Should().Be(User1Id);
+        actualWallet.Currency.Id.Should().Be(CurrencyUahId);
+        actualWallet.Currency.Code.Should().Be("UAH");
+        actualWallet.User.Username.Should().Be("user1");
     }
 
     [TestMethod]
@@ -91,18 +88,13 @@ public class WalletCreateMethodUnitTests
 
         var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = "UAH" };
 
-        var successResult = await _walletService.CreateAsync(request);
-        var actualWallet = successResult.Data;
+        var walletId = await _walletService.CreateAsync(request);
+        var actualWallet = await _context.Wallets.Include(w => w.Currency).Include(w => w.User).SingleAsync(w => w.Id == walletId);
 
-        var expectedWallet = new WalletDto
-        {
-            Id = actualWallet.Id,
-            Name = "user1 wallet",
-            BaseCurrency = new CurrencyListDto { Id = CurrencyUahId, Code = "UAH" },
-            User = new UserDto { Id = User1Id, Username = "user1", Role = UserRoles.User }
-        };
-
-        actualWallet.Should().BeEquivalentTo(expectedWallet);
+        actualWallet.Name.Should().Be("user1 wallet");
+        actualWallet.UserId.Should().Be(User1Id);
+        actualWallet.Currency.Code.Should().Be("UAH");
+        actualWallet.User.Username.Should().Be("user1");
     }
 
     [TestMethod]
@@ -113,17 +105,8 @@ public class WalletCreateMethodUnitTests
 
         var request = new CreateWalletRequest { UserId = User2Id, Name = "user2 wallet", BaseCurrency = "UAH" };
 
-        var expectedErrorMessage = "Access denied";
-
-        try
-        {
-            var wrongWallet = await _walletService.CreateAsync(request);
-            Assert.Fail("Expected Exception was not thrown.");
-        }
-        catch (UnauthorizedAccessException actualError)
-        {
-            Assert.AreEqual(expectedErrorMessage, actualError.Message);
-        }
+        Func<Task> action = () => _walletService.CreateAsync(request);
+        (await action.Should().ThrowAsync<UnauthorizedAccessException>()).Which.Message.Should().Be("Access denied");
     }
 
     [DataTestMethod]
@@ -138,12 +121,8 @@ public class WalletCreateMethodUnitTests
 
         var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = failureCurrencyCode };
 
-        var failureMessage = "The currency code is incorrect.";
-
-        var failureResult = await _walletService.CreateAsync(request);
-
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(failureMessage);
+        Func<Task> action = () => _walletService.CreateAsync(request);
+        (await action.Should().ThrowAsync<ValidationException>()).Which.Message.Should().Be("The currency code is incorrect.");
     }
 
     [DataTestMethod]
@@ -160,12 +139,8 @@ public class WalletCreateMethodUnitTests
 
         var request = new CreateWalletRequest { UserId = User1Id, Name = "user1 wallet", BaseCurrency = failureCurrencyCode };
 
-        var failureMessage = "Currently, the base currency of the wallet can only be UAH";
-
-        var failureResult = await _walletService.CreateAsync(request);
-
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(failureMessage);
+        Func<Task> action = () => _walletService.CreateAsync(request);
+        (await action.Should().ThrowAsync<ValidationException>()).Which.Message.Should().Be("Currently, the base currency of the wallet can only be UAH");
     }
 
     [TestMethod]
@@ -175,11 +150,8 @@ public class WalletCreateMethodUnitTests
 
         var request = new CreateWalletRequest { UserId = UserNotFoundId, Name = "user1 wallet", BaseCurrency = "UAH" };
 
-        var failureMessage = $"User with ID {request.UserId} not found";
-
-        var failureResult = await _walletService.CreateAsync(request);
-
-        failureResult.IsSuccess.Should().BeFalse();
-        failureResult.Errors.Should().Contain(failureMessage);
+        Func<Task> action = () => _walletService.CreateAsync(request);
+        (await action.Should().ThrowAsync<KeyNotFoundException>()).Which.Message.Should().Be($"User with ID {request.UserId} not found");
     }
 }
+
